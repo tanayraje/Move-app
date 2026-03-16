@@ -3,7 +3,8 @@ import { format, addDays, differenceInDays } from "date-fns";
 import {
   Plus, GripVertical, MapPin, Trash2, CalendarDays,
   Plane, Train, Bus, Car, Building2, UtensilsCrossed,
-  Bike, FileText, Paperclip, Check, Square, Clock, Upload
+  Bike, FileText, Paperclip, Check, Square, Clock, Upload,
+  IndianRupee, ArrowLeftRight
 } from "lucide-react";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
@@ -11,12 +12,18 @@ import { CSS } from '@dnd-kit/utilities';
 
 import {
   useItinerary, useSaveItineraryItem, useDeleteItineraryItem,
-  useReorderItinerary, useDocuments, useAddDocument
+  useReorderItinerary, useDocuments, useAddDocument,
+  useSaveExpense, useDeleteExpense
 } from "@/hooks/use-store";
-import { Trip, ItineraryItem, ElementType, TravelType, ItineraryCategory, TripDocument, ChecklistItem } from "@/lib/types";
+import {
+  Trip, ItineraryItem, ElementType, TravelType, ItineraryCategory,
+  TripDocument, ChecklistItem, ExpenseCategory
+} from "@/lib/types";
 import { generateId, cn } from "@/lib/utils";
 import { Button, Input, Label, Select, BottomSheet, FAB } from "@/components/ui";
+import { formatCurrency, convertFromINR, RATES_PER_INR } from "@/lib/countries";
 
+// ─── Constants ────────────────────────────────────────────────────────────────
 const ELEMENT_COLORS: Record<ElementType, string> = {
   travel: 'bg-blue-500',
   accommodation: 'bg-violet-500',
@@ -45,6 +52,14 @@ const TRAVEL_ICONS: Record<TravelType, React.ElementType> = {
   car: Car,
 };
 
+const ELEMENT_TO_EXPENSE_CAT: Record<ElementType, ExpenseCategory> = {
+  travel: 'transport',
+  accommodation: 'accommodation',
+  meal: 'food',
+  activity: 'activities',
+};
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 function elementTypeToCategory(t: ElementType, travelType?: TravelType): ItineraryCategory {
   if (t === 'travel') return (travelType as ItineraryCategory) || 'flight';
   if (t === 'accommodation') return 'hotel';
@@ -69,7 +84,7 @@ function getDuration(start: string, end: string): string {
   if (!start || !end) return '';
   const s = parseTime(start);
   const e = parseTime(end);
-  const diff = e >= s ? e - s : 24 * 60 - s + e; // handle overnight
+  const diff = e >= s ? e - s : 24 * 60 - s + e;
   if (diff <= 0) return '';
   const h = Math.floor(diff / 60);
   const m = diff % 60;
@@ -85,6 +100,7 @@ function sortItems(items: ItineraryItem[]): ItineraryItem[] {
   });
 }
 
+// ─── Main Tab ─────────────────────────────────────────────────────────────────
 export default function ItineraryTab({ trip }: { trip: Trip }) {
   const { data: allItems = [] } = useItinerary(trip.id);
   const { mutate: reorder } = useReorderItinerary();
@@ -104,14 +120,16 @@ export default function ItineraryTab({ trip }: { trip: Trip }) {
     sortedItems.filter(i => i.date === selectedDate), [sortedItems, selectedDate]
   );
 
-  // Total time scheduled for the selected day
   const totalDayMinutes = useMemo(() =>
     filteredItems.reduce((sum, item) => {
       const s = parseTime(item.startTime);
       const e = parseTime(item.endTime);
       return sum + (e >= s ? e - s : 0);
-    }, 0),
-    [filteredItems]
+    }, 0), [filteredItems]
+  );
+
+  const totalDayCost = useMemo(() =>
+    filteredItems.reduce((sum, item) => sum + (item.cost ?? 0), 0), [filteredItems]
   );
 
   const sensors = useSensors(
@@ -132,12 +150,10 @@ export default function ItineraryTab({ trip }: { trip: Trip }) {
       const prev = reordered[idx - 1];
       const dur = Math.max(parseTime(item.endTime) - parseTime(item.startTime), 30);
       const newStart = prev.endTime;
-      const newEnd = addMinutesToTime(newStart, dur);
-      return { ...item, startTime: newStart, endTime: newEnd };
+      return { ...item, startTime: newStart, endTime: addMinutesToTime(newStart, dur) };
     });
 
-    const otherItems = allItems.filter(i => i.date !== selectedDate);
-    reorder({ tripId: trip.id, items: [...otherItems, ...repositioned] });
+    reorder({ tripId: trip.id, items: [...allItems.filter(i => i.date !== selectedDate), ...repositioned] });
   }, [filteredItems, allItems, selectedDate, trip.id, reorder]);
 
   return (
@@ -184,13 +200,14 @@ export default function ItineraryTab({ trip }: { trip: Trip }) {
           <>
             {/* Day summary bar */}
             <div className="flex items-center justify-between mb-4 px-1">
-              <span className="text-sm font-semibold text-foreground/70">
-                {filteredItems.length} item{filteredItems.length !== 1 ? 's' : ''}
-              </span>
-              {totalDayMinutes > 0 && (
-                <div className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground bg-muted px-3 py-1.5 rounded-full">
-                  <Clock className="w-3.5 h-3.5" />
-                  {getDuration('00:00', addMinutesToTime('00:00', totalDayMinutes))} scheduled
+              <div className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground bg-muted px-3 py-1.5 rounded-full">
+                <Clock className="w-3.5 h-3.5" />
+                {getDuration('00:00', addMinutesToTime('00:00', totalDayMinutes)) || '0m'} scheduled
+              </div>
+              {totalDayCost > 0 && (
+                <div className="flex items-center gap-1 text-xs font-bold text-primary bg-primary/10 px-3 py-1.5 rounded-full">
+                  <IndianRupee className="w-3.5 h-3.5" />
+                  {formatCurrency(totalDayCost, 'INR')} today
                 </div>
               )}
             </div>
@@ -203,6 +220,7 @@ export default function ItineraryTab({ trip }: { trip: Trip }) {
                       key={item.id}
                       item={item}
                       documents={documents}
+                      trip={trip}
                       onEdit={() => setEditItem(item)}
                     />
                   ))}
@@ -218,7 +236,7 @@ export default function ItineraryTab({ trip }: { trip: Trip }) {
       <AddEditSheet
         isOpen={isAddOpen}
         onClose={() => setIsAddOpen(false)}
-        tripId={trip.id}
+        trip={trip}
         defaultDate={selectedDate}
         documents={documents}
         allItems={allItems}
@@ -227,7 +245,7 @@ export default function ItineraryTab({ trip }: { trip: Trip }) {
         <AddEditSheet
           isOpen={!!editItem}
           onClose={() => setEditItem(null)}
-          tripId={trip.id}
+          trip={trip}
           defaultDate={editItem.date}
           documents={documents}
           allItems={allItems}
@@ -239,9 +257,12 @@ export default function ItineraryTab({ trip }: { trip: Trip }) {
 }
 
 // ─── Sortable Item ────────────────────────────────────────────────────────────
-function SortableItem({ item, documents, onEdit }: { item: ItineraryItem; documents: TripDocument[]; onEdit: () => void }) {
+function SortableItem({
+  item, documents, trip, onEdit
+}: { item: ItineraryItem; documents: TripDocument[]; trip: Trip; onEdit: () => void }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id });
   const { mutate: deleteItem } = useDeleteItineraryItem();
+  const { mutate: deleteExpense } = useDeleteExpense();
   const { mutate: saveItem } = useSaveItineraryItem();
 
   const style = { transform: CSS.Transform.toString(transform), transition };
@@ -249,6 +270,7 @@ function SortableItem({ item, documents, onEdit }: { item: ItineraryItem; docume
   const isMajor = item.elementType === 'travel' || item.elementType === 'accommodation';
   const attachedDocs = documents.filter(d => (item.attachedDocIds || []).includes(d.id));
   const duration = getDuration(item.startTime, item.endTime);
+  const destCurrency = trip.destinationCurrency || 'INR';
 
   const totalChecklist = item.checklist?.length ?? 0;
   const doneChecklist = item.checklist?.filter(c => c.done).length ?? 0;
@@ -261,6 +283,12 @@ function SortableItem({ item, documents, onEdit }: { item: ItineraryItem; docume
   const toggleChecklistItem = (checkId: string) => {
     if (!item.checklist) return;
     saveItem({ ...item, checklist: item.checklist.map(c => c.id === checkId ? { ...c, done: !c.done } : c) });
+  };
+
+  const handleDelete = () => {
+    if (!confirm('Delete this item?')) return;
+    if (item.expenseId) deleteExpense({ id: item.expenseId, tripId: item.tripId });
+    deleteItem({ tripId: item.tripId, id: item.id });
   };
 
   return (
@@ -277,26 +305,34 @@ function SortableItem({ item, documents, onEdit }: { item: ItineraryItem; docume
       )}>
         <div className="p-4 flex gap-3">
           <div className="flex-1 min-w-0">
-            {/* Header row */}
+            {/* Header */}
             <div className="flex items-start justify-between gap-2 mb-1">
               <div className="flex items-center gap-1.5 min-w-0">
                 <Icon className="w-4 h-4 shrink-0 text-foreground/60" />
                 <h4 className="font-bold text-foreground text-base leading-tight truncate">{item.title}</h4>
               </div>
-              <div className="flex items-center gap-1.5 shrink-0">
-                <span className="text-xs font-bold text-foreground/50 bg-muted px-2 py-0.5 rounded-md whitespace-nowrap">
-                  {item.startTime}–{item.endTime}
-                </span>
-              </div>
+              <span className="text-xs font-bold text-foreground/50 bg-muted px-2 py-0.5 rounded-md whitespace-nowrap shrink-0">
+                {item.startTime}–{item.endTime}
+              </span>
             </div>
 
-            {/* Duration badge */}
-            {duration && (
-              <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1.5">
-                <Clock className="w-3 h-3" />
-                <span className="font-medium">{duration}</span>
-              </div>
-            )}
+            {/* Duration + cost row */}
+            <div className="flex items-center gap-3 mb-1.5">
+              {duration && (
+                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <Clock className="w-3 h-3" />
+                  <span className="font-medium">{duration}</span>
+                </div>
+              )}
+              {item.cost != null && item.cost > 0 && (
+                <div className="flex items-center gap-1 text-xs font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                  <span>{formatCurrency(item.cost, 'INR')}</span>
+                  {destCurrency !== 'INR' && (
+                    <span className="text-primary/60 font-normal">· {formatCurrency(convertFromINR(item.cost, destCurrency), destCurrency)}</span>
+                  )}
+                </div>
+              )}
+            </div>
 
             {/* Travel from→to */}
             {item.fromLocation && item.toLocation && (
@@ -337,9 +373,7 @@ function SortableItem({ item, documents, onEdit }: { item: ItineraryItem; docume
                 </div>
                 {item.checklist.map(ci => (
                   <button key={ci.id} onClick={() => toggleChecklistItem(ci.id)} className="flex items-center gap-2 w-full text-left py-1">
-                    {ci.done
-                      ? <Check className="w-4 h-4 text-primary shrink-0" />
-                      : <Square className="w-4 h-4 text-muted-foreground shrink-0" />}
+                    {ci.done ? <Check className="w-4 h-4 text-primary shrink-0" /> : <Square className="w-4 h-4 text-muted-foreground shrink-0" />}
                     <span className={cn("text-sm", ci.done ? "line-through text-muted-foreground" : "text-foreground")}>{ci.text}</span>
                   </button>
                 ))}
@@ -371,10 +405,7 @@ function SortableItem({ item, documents, onEdit }: { item: ItineraryItem; docume
             <button onClick={onEdit} className="p-2 text-muted-foreground hover:text-primary transition-colors">
               <FileText className="w-4 h-4" />
             </button>
-            <button
-              onClick={() => { if (confirm('Delete this item?')) deleteItem({ tripId: item.tripId, id: item.id }); }}
-              className="p-2 text-muted-foreground hover:text-red-500 transition-colors"
-            >
+            <button onClick={handleDelete} className="p-2 text-muted-foreground hover:text-red-500 transition-colors">
               <Trash2 className="w-4 h-4" />
             </button>
           </div>
@@ -388,16 +419,21 @@ function SortableItem({ item, documents, onEdit }: { item: ItineraryItem; docume
 interface SheetProps {
   isOpen: boolean;
   onClose: () => void;
-  tripId: string;
+  trip: Trip;
   defaultDate: string;
   documents: TripDocument[];
   allItems: ItineraryItem[];
   existingItem?: ItineraryItem;
 }
 
-function AddEditSheet({ isOpen, onClose, tripId, defaultDate, documents, allItems, existingItem }: SheetProps) {
+function AddEditSheet({ isOpen, onClose, trip, defaultDate, documents, allItems, existingItem }: SheetProps) {
   const { mutateAsync: saveItem, isPending } = useSaveItineraryItem();
   const { mutateAsync: addDocument } = useAddDocument();
+  const { mutateAsync: saveExpense } = useSaveExpense();
+  const { mutate: deleteExpense } = useDeleteExpense();
+
+  const destCurrency = trip.destinationCurrency || 'INR';
+  const showCurrencyToggle = destCurrency !== 'INR';
 
   const [elementType, setElementType] = useState<ElementType>(existingItem?.elementType || 'activity');
   const [travelType, setTravelType] = useState<TravelType>(existingItem?.travelType || 'flight');
@@ -408,8 +444,23 @@ function AddEditSheet({ isOpen, onClose, tripId, defaultDate, documents, allItem
   const [checklist, setChecklist] = useState<ChecklistItem[]>(existingItem?.checklist || []);
   const [showDocPicker, setShowDocPicker] = useState(false);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [costInput, setCostInput] = useState<string>(
+    existingItem?.cost ? String(existingItem.cost) : ''
+  );
+  const [costInDest, setCostInDest] = useState(false); // false = INR, true = dest currency
 
   const isEditing = !!existingItem;
+
+  // Converts cost input to INR for storage
+  const getCostInINR = (): number => {
+    const val = parseFloat(costInput);
+    if (!val || isNaN(val)) return 0;
+    if (costInDest && destCurrency !== 'INR') {
+      const rate = RATES_PER_INR[destCurrency] ?? 1;
+      return val / rate; // dest → INR
+    }
+    return val;
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -423,9 +474,9 @@ function AddEditSheet({ isOpen, onClose, tripId, defaultDate, documents, allItem
     let toLocation = '';
 
     if (elementType === 'travel') {
-      title = `${travelType.charAt(0).toUpperCase() + travelType.slice(1)}: ${fd.get('fromLocation')} → ${fd.get('toLocation')}`;
       fromLocation = fd.get('fromLocation') as string;
       toLocation = fd.get('toLocation') as string;
+      title = `${travelType.charAt(0).toUpperCase() + travelType.slice(1)}: ${fromLocation} → ${toLocation}`;
       st = fd.get('departureTime') as string;
       et = fd.get('arrivalTime') as string;
     } else if (elementType === 'accommodation') {
@@ -445,15 +496,15 @@ function AddEditSheet({ isOpen, onClose, tripId, defaultDate, documents, allItem
       et = addMinutesToTime(st, duration);
     }
 
-    // If a new file was uploaded, save it as a Document AND attach to this card
+    // Handle file upload → also create Document
     let finalDocIds = [...selectedDocIds];
     if (uploadFile) {
       const catMap: Record<ElementType, string> = {
         travel: 'ticket', accommodation: 'hotel', meal: 'other', activity: 'ticket'
       };
-      const newDoc: TripDocument = {
+      const newDoc = {
         id: generateId(),
-        tripId,
+        tripId: trip.id,
         name: (fd.get('uploadName') as string) || uploadFile.name,
         category: catMap[elementType] as any,
         notes: '',
@@ -467,9 +518,32 @@ function AddEditSheet({ isOpen, onClose, tripId, defaultDate, documents, allItem
       finalDocIds = [...finalDocIds, newDoc.id];
     }
 
+    // Handle cost → sync to Expenses
+    const costINR = getCostInINR();
+    let expenseId = existingItem?.expenseId;
+
+    if (costINR > 0) {
+      const expCat = ELEMENT_TO_EXPENSE_CAT[elementType];
+      const expEntry = {
+        id: expenseId || generateId(),
+        tripId: trip.id,
+        title,
+        amount: costINR,
+        category: expCat,
+        date: new Date(date).toISOString(),
+        createdAt: existingItem?.cost ? (Date.now()) : Date.now(),
+      };
+      await saveExpense(expEntry);
+      expenseId = expEntry.id;
+    } else if (expenseId && costINR === 0) {
+      // Cost cleared → remove linked expense
+      deleteExpense({ id: expenseId, tripId: trip.id });
+      expenseId = undefined;
+    }
+
     await saveItem({
       id: existingItem?.id || generateId(),
-      tripId,
+      tripId: trip.id,
       elementType,
       travelType: elementType === 'travel' ? travelType : undefined,
       title,
@@ -484,6 +558,8 @@ function AddEditSheet({ isOpen, onClose, tripId, defaultDate, documents, allItem
       order: 0,
       attachedDocIds: finalDocIds,
       checklist: checklist.length > 0 ? checklist : undefined,
+      cost: costINR > 0 ? costINR : undefined,
+      expenseId,
     });
     onClose();
   };
@@ -651,6 +727,65 @@ function AddEditSheet({ isOpen, onClose, tripId, defaultDate, documents, allItem
           </>
         )}
 
+        {/* ── COST FIELD (all types) ── */}
+        <div>
+          <div className="flex items-center justify-between mb-1.5">
+            <Label className="mb-0">Cost (optional)</Label>
+            {showCurrencyToggle && (
+              <button
+                type="button"
+                onClick={() => {
+                  // Convert the displayed value when toggling
+                  const val = parseFloat(costInput);
+                  if (val && !isNaN(val)) {
+                    const rate = RATES_PER_INR[destCurrency] ?? 1;
+                    if (costInDest) {
+                      // dest → INR
+                      setCostInput(String(Math.round(val / rate)));
+                    } else {
+                      // INR → dest
+                      setCostInput(String(Math.round(val * rate)));
+                    }
+                  }
+                  setCostInDest(v => !v);
+                }}
+                className="flex items-center gap-1.5 text-xs font-bold bg-primary/10 text-primary px-2.5 py-1 rounded-full"
+              >
+                <ArrowLeftRight className="w-3 h-3" />
+                {costInDest ? destCurrency : 'INR'} ↔ {costInDest ? 'INR' : destCurrency}
+              </button>
+            )}
+          </div>
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm font-bold pointer-events-none">
+              {costInDest ? destCurrency : '₹'}
+            </span>
+            <Input
+              type="number"
+              step="0.01"
+              min="0"
+              value={costInput}
+              onChange={e => setCostInput(e.target.value)}
+              placeholder="0"
+              className="pl-10 text-lg font-bold h-14"
+            />
+          </div>
+          {costInput && parseFloat(costInput) > 0 && showCurrencyToggle && (
+            <p className="text-xs text-muted-foreground mt-1 ml-1">
+              ≈ {costInDest
+                ? formatCurrency(getCostInINR(), 'INR')
+                : formatCurrency(convertFromINR(parseFloat(costInput), destCurrency), destCurrency)
+              } · auto-logged to{' '}
+              <span className="font-semibold capitalize">{ELEMENT_TO_EXPENSE_CAT[elementType]}</span> budget
+            </p>
+          )}
+          {costInput && parseFloat(costInput) > 0 && !showCurrencyToggle && (
+            <p className="text-xs text-muted-foreground mt-1 ml-1">
+              Auto-logged to <span className="font-semibold capitalize">{ELEMENT_TO_EXPENSE_CAT[elementType]}</span> budget
+            </p>
+          )}
+        </div>
+
         {/* Notes */}
         <div>
           <Label htmlFor="notes">Notes (optional)</Label>
@@ -684,7 +819,7 @@ function AddEditSheet({ isOpen, onClose, tripId, defaultDate, documents, allItem
           )}
         </div>
 
-        {/* Upload a document directly */}
+        {/* Upload document */}
         <div>
           <Label>Upload Document (optional)</Label>
           <label className={cn(
@@ -703,7 +838,7 @@ function AddEditSheet({ isOpen, onClose, tripId, defaultDate, documents, allItem
               <Input id="uploadName" name="uploadName" defaultValue={uploadFile.name} placeholder="e.g. Return Ticket" />
             </div>
           )}
-          <p className="text-xs text-muted-foreground mt-1 ml-1">Will be saved to the Documents section and attached here</p>
+          <p className="text-xs text-muted-foreground mt-1 ml-1">Saved to Documents tab and attached here</p>
         </div>
 
         {/* Attach existing documents */}

@@ -47,6 +47,8 @@ export interface ItineraryItem {
   attachedDocIds?: string[];
   checklist?: ChecklistItem[];
   fromPlaceId?: string; // if auto-generated from a Place
+  cost?: number; // stored in INR
+  expenseId?: string; // linked Expense record id
 }
 
 export type DocumentCategory = 'flight' | 'hotel' | 'visa' | 'ticket' | 'activity' | 'other';
