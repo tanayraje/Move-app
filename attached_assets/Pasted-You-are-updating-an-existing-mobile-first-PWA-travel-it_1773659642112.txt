@@ -1,0 +1,233 @@
+You are updating an existing mobile-first PWA travel itinerary app called "Move".
+
+Do NOT rebuild the application. Modify the current codebase and extend existing components.
+
+Maintain:
+- mobile-first design
+- drag-and-drop itinerary behaviour
+- localStorage for trip data
+- IndexedDB for document storage
+- PWA functionality
+
+--------------------------------
+
+FEATURE 1: PRIMARY DESTINATION DROPDOWN
+
+Goal
+Replace the free text "Primary Destination" field with a dropdown selector.
+
+Requirements
+1. Provide a searchable dropdown list of countries.
+2. When a country is selected:
+   - store country name
+   - store currency code
+3. This currency will later be used in the expense module.
+4. Use a lightweight country dataset (country name + currency).
+
+UI
+Trip creation form:
+Primary Destination → searchable dropdown.
+
+--------------------------------
+
+FEATURE 2: ELEMENT TYPE SYSTEM FOR ITINERARY ITEMS
+
+Goal
+When adding an itinerary item, the user must first select the type of element.
+
+Element types
+
+Travel  
+Accommodation  
+Meal  
+Activity  
+
+Each type must show different fields.
+
+--------------------------------
+
+Travel element
+
+Fields:
+- travel title
+- from location
+- to location
+- departure date/time
+- arrival date/time
+- ticket upload
+- travel type (flight/train/bus/car)
+- notes
+
+Behaviour
+Creates a timeline block from departure to arrival.
+
+--------------------------------
+
+Accommodation element
+
+Fields:
+- accommodation name
+- address/location
+- check-in date/time
+- check-out date/time
+- booking confirmation upload
+- notes
+
+Behaviour
+Creates a block covering the full stay.
+
+--------------------------------
+
+Meal element
+
+Fields:
+- restaurant name
+- location
+- date
+- time
+- notes
+
+Behaviour
+Creates a short timeline block.
+
+--------------------------------
+
+Activity element
+
+Fields:
+- activity name
+- location
+- date
+- duration (minutes or hours)
+- notes
+
+Behaviour
+User selects start time and duration.
+
+The system automatically calculates end time.
+
+--------------------------------
+
+FEATURE 3: CHRONOLOGICAL SORTING + DRAG RESCHEDULING
+
+Goal
+Maintain strict chronological ordering.
+
+Requirements
+
+1. When a card is created:
+   - automatically place it in correct chronological order.
+
+2. When a card is dragged to a new time slot:
+   - update start time and end time
+   - update date if moved to another day.
+
+3. Timeline should immediately re-sort after drag.
+
+4. Prevent overlapping events where possible.
+
+--------------------------------
+
+FEATURE 4: DOCUMENT LINKING TO ITINERARY ITEMS
+
+Goal
+Documents should be attachable to itinerary cards.
+
+Requirements
+
+1. Documents are uploaded in the Documents section.
+2. When editing an itinerary item:
+   - show "Attach Document".
+3. User can choose from uploaded documents.
+4. Linked documents appear on the card as a small icon.
+5. Tapping the icon opens the document instantly.
+
+--------------------------------
+
+FEATURE 5: BUDGET SYSTEM
+
+Goal
+Add a structured trip budget.
+
+Budget structure
+
+Overall trip budget.
+
+Budget categories:
+- Travel
+- Food
+- Accommodation
+- Activities
+- Misc
+
+Requirements
+
+1. User sets overall trip budget.
+2. User can assign budget amounts to categories.
+3. Expense entries reduce the respective category budget.
+4. Show remaining amount for:
+   - category
+   - overall trip.
+
+UI
+Budget dashboard with progress indicators.
+
+--------------------------------
+
+FEATURE 6: CURRENCY SWITCHING
+
+Goal
+Allow currency toggle.
+
+Requirements
+
+1. Default currency: INR.
+2. Also load currency of the selected destination country.
+3. Add a toggle switch in the expense header.
+
+Example
+INR ↔ VND
+
+Behaviour
+Switching currency updates displayed values using stored conversion rates.
+
+Do not modify stored base values.
+
+--------------------------------
+
+FEATURE 7: PLACES LINKED TO TIMELINE
+
+Goal
+Places saved in the Places section should be linkable to itinerary days.
+
+Requirements
+
+Places fields
+- place name
+- location
+- notes
+- optional date
+
+Behaviour
+
+1. If a date is added to a place:
+   - automatically generate a timeline card.
+2. Allow user to assign time later.
+3. Allow checklist items inside the timeline card.
+
+Checklist example
+□ Buy tickets  
+□ Take photos  
+□ Try local dish
+
+Checklist progress should display inside the card.
+
+--------------------------------
+
+OUTPUT REQUIREMENTS
+
+Provide:
+1. Updated code only for modified files.
+2. List of changed files.
+3. Short explanation of changes.
+4. Ensure all new features work on mobile touch devices.

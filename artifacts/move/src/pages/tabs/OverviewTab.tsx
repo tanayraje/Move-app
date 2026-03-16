@@ -1,8 +1,9 @@
 import React from "react";
-import { differenceInDays, format } from "date-fns";
+import { differenceInDays, format, isBefore, isAfter } from "date-fns";
 import { useItinerary, useExpenses, useDocuments, usePlaces } from "@/hooks/use-store";
 import { Trip } from "@/lib/types";
-import { Calendar, FileText, Receipt, MapPin, Plane } from "lucide-react";
+import { Calendar, FileText, Receipt, MapPin, Plane, Clock } from "lucide-react";
+import { formatCurrency } from "@/lib/countries";
 
 export default function OverviewTab({ trip }: { trip: Trip }) {
   const { data: itinerary = [] } = useItinerary(trip.id);
@@ -10,57 +11,109 @@ export default function OverviewTab({ trip }: { trip: Trip }) {
   const { data: documents = [] } = useDocuments(trip.id);
   const { data: places = [] } = usePlaces(trip.id);
 
-  const daysUntil = differenceInDays(new Date(trip.startDate), new Date());
-  const totalCost = expenses.reduce((sum, e) => sum + e.amount, 0);
+  const now = new Date();
+  const tripStart = new Date(trip.startDate);
+  const tripEnd = new Date(trip.endDate);
+  const daysUntil = differenceInDays(tripStart, now);
+  const totalSpent = expenses.reduce((s, e) => s + e.amount, 0);
+  const budgetTotal = trip.budget?.total ?? 0;
   const visitedPlaces = places.filter(p => p.visited).length;
 
+  // Next upcoming itinerary item
+  const nowStr = `${format(now, 'yyyy-MM-dd')}T${format(now, 'HH:mm')}`;
+  const upcomingItems = [...itinerary]
+    .filter(i => `${i.date}T${i.startTime}` >= nowStr)
+    .sort((a, b) => `${a.date}T${a.startTime}`.localeCompare(`${b.date}T${b.startTime}`));
+  const nextItem = upcomingItems[0] ?? null;
+
+  const tripStatus = () => {
+    if (isAfter(now, tripEnd)) return 'Past Trip';
+    if (isBefore(now, tripStart)) return daysUntil === 0 ? 'Starts Today!' : `${daysUntil} day${daysUntil === 1 ? '' : 's'} to go`;
+    return 'Currently Travelling';
+  };
+
   return (
-    <div className="p-6 h-full flex flex-col gap-4">
-      
+    <div className="p-5 flex flex-col gap-4 pb-16">
+
+      {/* Hero card */}
       <div className="bg-primary text-primary-foreground rounded-[2rem] p-6 shadow-xl shadow-primary/20 relative overflow-hidden">
-        <div className="absolute -right-4 -bottom-4 opacity-10">
-          <Plane className="w-48 h-48" />
+        <div className="absolute -right-6 -bottom-6 opacity-10">
+          <Plane className="w-44 h-44" />
         </div>
         <div className="relative z-10">
-          <p className="text-primary-foreground/80 font-medium mb-1">Status</p>
-          <h2 className="text-4xl font-display font-extrabold mb-4">
-            {daysUntil > 0 ? `${daysUntil} days left` : daysUntil === 0 ? "Starts Today!" : "In Progress or Past"}
-          </h2>
-          <div className="inline-flex items-center bg-white/20 backdrop-blur-md px-3 py-1.5 rounded-xl text-sm font-semibold">
-            {format(new Date(trip.startDate), 'MMM d')} - {format(new Date(trip.endDate), 'MMM d, yyyy')}
+          <p className="text-primary-foreground/70 font-medium text-sm mb-0.5">{trip.destination}</p>
+          <h2 className="text-3xl font-display font-extrabold mb-3">{tripStatus()}</h2>
+          <div className="flex items-center gap-2 text-sm font-medium bg-white/20 backdrop-blur-md px-3 py-1.5 rounded-xl w-fit">
+            <Calendar className="w-4 h-4" />
+            {format(tripStart, 'MMM d')} – {format(tripEnd, 'MMM d, yyyy')}
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 mt-2">
+      {/* Next item */}
+      {nextItem && (
+        <div className="bg-card border border-border rounded-2xl p-4">
+          <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">Next Up</p>
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+              <Clock className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="font-bold text-foreground">{nextItem.title}</p>
+              <p className="text-sm text-muted-foreground mt-0.5">
+                {format(new Date(nextItem.date), 'MMM d')} · {nextItem.startTime}–{nextItem.endTime}
+              </p>
+              {nextItem.location && (
+                <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
+                  <MapPin className="w-3 h-3" />{nextItem.location}
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Stats grid */}
+      <div className="grid grid-cols-2 gap-3">
         <StatCard icon={Calendar} label="Timeline Items" value={itinerary.length} />
-        <StatCard icon={Receipt} label="Total Spent" value={`$${totalCost.toFixed(0)}`} />
-        <StatCard icon={MapPin} label="Places Saved" value={`${visitedPlaces}/${places.length} visited`} />
+        <StatCard icon={Receipt} label="Total Spent" value={formatCurrency(totalSpent, 'INR')} />
+        <StatCard icon={MapPin} label="Places" value={`${visitedPlaces}/${places.length}`} sub="visited" />
         <StatCard icon={FileText} label="Documents" value={documents.length} />
       </div>
 
-      <div className="mt-6 bg-card border border-border p-5 rounded-3xl shadow-sm">
-        <h3 className="font-bold text-foreground mb-4">Trip Destination</h3>
-        <div className="aspect-[2/1] bg-muted rounded-2xl flex items-center justify-center overflow-hidden relative">
-           {/* Placeholder for map - purely decorative for now since no map API */}
-           <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1524661135-423995f22d0b?w=800&auto=format&fit=crop&q=60')] bg-cover bg-center opacity-40 mix-blend-luminosity grayscale"></div>
-           <MapPin className="w-8 h-8 text-foreground/50 z-10" />
-           <span className="z-10 font-display font-bold text-xl ml-2">{trip.destination}</span>
+      {/* Budget summary */}
+      {budgetTotal > 0 && (
+        <div className="bg-card border border-border rounded-2xl p-4">
+          <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">Budget</p>
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm text-foreground font-medium">
+              {formatCurrency(totalSpent, 'INR')} spent of {formatCurrency(budgetTotal, 'INR')}
+            </span>
+            <span className={`text-xs font-bold ${totalSpent > budgetTotal ? 'text-red-500' : 'text-primary'}`}>
+              {totalSpent > budgetTotal ? 'Over budget' : formatCurrency(budgetTotal - totalSpent, 'INR') + ' left'}
+            </span>
+          </div>
+          <div className="h-2 bg-muted rounded-full overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all ${totalSpent > budgetTotal ? 'bg-red-500' : 'bg-primary'}`}
+              style={{ width: `${Math.min((totalSpent / budgetTotal) * 100, 100)}%` }}
+            />
+          </div>
         </div>
-      </div>
-
+      )}
     </div>
   );
 }
 
-function StatCard({ icon: Icon, label, value }: { icon: any, label: string, value: string | number }) {
+function StatCard({ icon: Icon, label, value, sub }: { icon: any; label: string; value: string | number; sub?: string }) {
   return (
-    <div className="bg-card border border-border/60 p-5 rounded-3xl shadow-sm flex flex-col">
-      <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary mb-4">
+    <div className="bg-card border border-border/60 p-4 rounded-2xl shadow-sm flex flex-col">
+      <div className="w-9 h-9 bg-primary/10 rounded-xl flex items-center justify-center text-primary mb-3">
         <Icon className="w-5 h-5" />
       </div>
       <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider mb-1">{label}</p>
       <p className="text-2xl font-display font-bold text-foreground">{value}</p>
+      {sub && <p className="text-xs text-muted-foreground mt-0.5">{sub}</p>}
     </div>
   );
 }

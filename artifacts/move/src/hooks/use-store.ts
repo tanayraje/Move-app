@@ -1,8 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Trip, ItineraryItem, TripDocument, Expense, Place } from '@/lib/types';
+import { Trip, ItineraryItem, TripDocument, Expense, Place, TripBudget } from '@/lib/types';
 import { getDocumentsByTrip, saveDocument, deleteDocumentDB } from '@/lib/db';
 
-// Generic LocalStorage helper
 const getLS = <T>(key: string, fallback: T): T => {
   try {
     const item = localStorage.getItem(key);
@@ -47,13 +46,27 @@ export function useCreateTrip() {
   });
 }
 
+export function useUpdateTrip() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (trip: Trip) => {
+      const trips = getLS<Trip[]>('move_trips', []);
+      setLS('move_trips', trips.map(t => t.id === trip.id ? trip : t));
+      return trip;
+    },
+    onSuccess: (trip) => {
+      qc.invalidateQueries({ queryKey: ['trips'] });
+      qc.invalidateQueries({ queryKey: ['trips', trip.id] });
+    }
+  });
+}
+
 export function useDeleteTrip() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
       const trips = getLS<Trip[]>('move_trips', []);
       setLS('move_trips', trips.filter(t => t.id !== id));
-      // Cleanup associated data
       localStorage.removeItem(`move_itinerary_${id}`);
       localStorage.removeItem(`move_expenses_${id}`);
       localStorage.removeItem(`move_places_${id}`);
@@ -109,7 +122,6 @@ export function useReorderItinerary() {
   });
 }
 
-
 // --- DOCUMENTS (IndexedDB) ---
 export function useDocuments(tripId: string) {
   return useQuery({
@@ -150,7 +162,9 @@ export function useSaveExpense() {
     mutationFn: async (item: Expense) => {
       const key = `move_expenses_${item.tripId}`;
       const items = getLS<Expense[]>(key, []);
-      items.push(item);
+      const existing = items.findIndex(i => i.id === item.id);
+      if (existing >= 0) items[existing] = item;
+      else items.push(item);
       setLS(key, items);
       return item;
     },
