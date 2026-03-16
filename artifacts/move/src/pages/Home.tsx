@@ -60,7 +60,7 @@ function TripCard({ trip }: { trip: any }) {
 
   return (
     <div className="relative group">
-      <Link href={`/trip/${trip.id}/itinerary`} className="block bg-card rounded-[2rem] p-5 shadow-lg shadow-black/5 border border-border/50 hover:shadow-xl hover:border-primary/20 transition-all duration-300 active:scale-[0.98]">
+      <Link href={`/trip/${trip.id}/overview`} className="block bg-card rounded-[2rem] p-5 shadow-lg shadow-black/5 border border-border/50 hover:shadow-xl hover:border-primary/20 transition-all duration-300 active:scale-[0.98]">
         <div className="flex justify-between items-start mb-8">
           <div>
             <h3 className="text-xl font-bold text-foreground">{trip.name}</h3>

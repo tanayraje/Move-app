@@ -3,13 +3,16 @@ import { format, addDays, differenceInDays } from "date-fns";
 import {
   Plus, GripVertical, MapPin, Trash2, CalendarDays,
   Plane, Train, Bus, Car, Building2, UtensilsCrossed,
-  Bike, FileText, Paperclip, Check, Square
+  Bike, FileText, Paperclip, Check, Square, Clock, Upload
 } from "lucide-react";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
-import { useItinerary, useSaveItineraryItem, useDeleteItineraryItem, useReorderItinerary, useDocuments } from "@/hooks/use-store";
+import {
+  useItinerary, useSaveItineraryItem, useDeleteItineraryItem,
+  useReorderItinerary, useDocuments, useAddDocument
+} from "@/hooks/use-store";
 import { Trip, ItineraryItem, ElementType, TravelType, ItineraryCategory, TripDocument, ChecklistItem } from "@/lib/types";
 import { generateId, cn } from "@/lib/utils";
 import { Button, Input, Label, Select, BottomSheet, FAB } from "@/components/ui";
@@ -26,13 +29,6 @@ const ELEMENT_BORDER: Record<ElementType, string> = {
   accommodation: 'border-l-violet-500',
   meal: 'border-l-amber-400',
   activity: 'border-l-orange-500',
-};
-
-const ELEMENT_BG: Record<ElementType, string> = {
-  travel: 'bg-blue-50',
-  accommodation: 'bg-violet-50',
-  meal: 'bg-amber-50',
-  activity: 'bg-orange-50',
 };
 
 const ELEMENT_ICONS: Record<ElementType, React.ElementType> = {
@@ -57,6 +53,7 @@ function elementTypeToCategory(t: ElementType, travelType?: TravelType): Itinera
 }
 
 function parseTime(t: string): number {
+  if (!t) return 0;
   const [h, m] = t.split(':').map(Number);
   return h * 60 + m;
 }
@@ -68,12 +65,23 @@ function addMinutesToTime(time: string, minutes: number): string {
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
 }
 
-// Sort items chronologically by date + startTime
+function getDuration(start: string, end: string): string {
+  if (!start || !end) return '';
+  const s = parseTime(start);
+  const e = parseTime(end);
+  const diff = e >= s ? e - s : 24 * 60 - s + e; // handle overnight
+  if (diff <= 0) return '';
+  const h = Math.floor(diff / 60);
+  const m = diff % 60;
+  if (h === 0) return `${m}m`;
+  if (m === 0) return `${h}h`;
+  return `${h}h ${m}m`;
+}
+
 function sortItems(items: ItineraryItem[]): ItineraryItem[] {
   return [...items].sort((a, b) => {
-    const dateCompare = a.date.localeCompare(b.date);
-    if (dateCompare !== 0) return dateCompare;
-    return a.startTime.localeCompare(b.startTime);
+    const dc = a.date.localeCompare(b.date);
+    return dc !== 0 ? dc : a.startTime.localeCompare(b.startTime);
   });
 }
 
@@ -93,8 +101,17 @@ export default function ItineraryTab({ trip }: { trip: Trip }) {
 
   const sortedItems = useMemo(() => sortItems(allItems), [allItems]);
   const filteredItems = useMemo(() =>
-    sortedItems.filter(i => i.date === selectedDate),
-    [sortedItems, selectedDate]
+    sortedItems.filter(i => i.date === selectedDate), [sortedItems, selectedDate]
+  );
+
+  // Total time scheduled for the selected day
+  const totalDayMinutes = useMemo(() =>
+    filteredItems.reduce((sum, item) => {
+      const s = parseTime(item.startTime);
+      const e = parseTime(item.endTime);
+      return sum + (e >= s ? e - s : 0);
+    }, 0),
+    [filteredItems]
   );
 
   const sensors = useSensors(
@@ -110,11 +127,9 @@ export default function ItineraryTab({ trip }: { trip: Trip }) {
     if (oldIndex === -1 || newIndex === -1) return;
 
     const reordered = arrayMove(filteredItems, oldIndex, newIndex);
-    // After rearranging, re-assign times sequentially based on original durations
     const repositioned = reordered.map((item, idx) => {
       if (idx === 0) return item;
       const prev = reordered[idx - 1];
-      const prevEnd = parseTime(prev.endTime);
       const dur = Math.max(parseTime(item.endTime) - parseTime(item.startTime), 30);
       const newStart = prev.endTime;
       const newEnd = addMinutesToTime(newStart, dur);
@@ -156,7 +171,7 @@ export default function ItineraryTab({ trip }: { trip: Trip }) {
       </div>
 
       {/* Timeline */}
-      <div className="px-4 py-6 pb-32">
+      <div className="px-4 py-5 pb-32">
         {filteredItems.length === 0 ? (
           <div className="text-center text-muted-foreground mt-16">
             <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
@@ -166,20 +181,35 @@ export default function ItineraryTab({ trip }: { trip: Trip }) {
             <p className="text-sm mt-1 opacity-70">Tap + to add something.</p>
           </div>
         ) : (
-          <div className="relative border-l-2 border-border/40 ml-5 pl-6 space-y-4">
-            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-              <SortableContext items={filteredItems.map(i => i.id)} strategy={verticalListSortingStrategy}>
-                {filteredItems.map(item => (
-                  <SortableItem
-                    key={item.id}
-                    item={item}
-                    documents={documents}
-                    onEdit={() => setEditItem(item)}
-                  />
-                ))}
-              </SortableContext>
-            </DndContext>
-          </div>
+          <>
+            {/* Day summary bar */}
+            <div className="flex items-center justify-between mb-4 px-1">
+              <span className="text-sm font-semibold text-foreground/70">
+                {filteredItems.length} item{filteredItems.length !== 1 ? 's' : ''}
+              </span>
+              {totalDayMinutes > 0 && (
+                <div className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground bg-muted px-3 py-1.5 rounded-full">
+                  <Clock className="w-3.5 h-3.5" />
+                  {getDuration('00:00', addMinutesToTime('00:00', totalDayMinutes))} scheduled
+                </div>
+              )}
+            </div>
+
+            <div className="relative border-l-2 border-border/40 ml-5 pl-6 space-y-4">
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                <SortableContext items={filteredItems.map(i => i.id)} strategy={verticalListSortingStrategy}>
+                  {filteredItems.map(item => (
+                    <SortableItem
+                      key={item.id}
+                      item={item}
+                      documents={documents}
+                      onEdit={() => setEditItem(item)}
+                    />
+                  ))}
+                </SortableContext>
+              </DndContext>
+            </div>
+          </>
         )}
       </div>
 
@@ -218,6 +248,7 @@ function SortableItem({ item, documents, onEdit }: { item: ItineraryItem; docume
   const Icon = item.elementType ? ELEMENT_ICONS[item.elementType] : Plane;
   const isMajor = item.elementType === 'travel' || item.elementType === 'accommodation';
   const attachedDocs = documents.filter(d => (item.attachedDocIds || []).includes(d.id));
+  const duration = getDuration(item.startTime, item.endTime);
 
   const totalChecklist = item.checklist?.length ?? 0;
   const doneChecklist = item.checklist?.filter(c => c.done).length ?? 0;
@@ -229,18 +260,11 @@ function SortableItem({ item, documents, onEdit }: { item: ItineraryItem; docume
 
   const toggleChecklistItem = (checkId: string) => {
     if (!item.checklist) return;
-    saveItem({
-      ...item,
-      checklist: item.checklist.map(c => c.id === checkId ? { ...c, done: !c.done } : c)
-    });
+    saveItem({ ...item, checklist: item.checklist.map(c => c.id === checkId ? { ...c, done: !c.done } : c) });
   };
 
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className={cn("relative group transition-opacity", isDragging && "opacity-50")}
-    >
+    <div ref={setNodeRef} style={style} className={cn("relative group transition-opacity", isDragging && "opacity-50")}>
       {/* Timeline dot */}
       <div className={cn(
         "absolute -left-[31px] w-4 h-4 rounded-full border-4 border-background z-10",
@@ -253,22 +277,32 @@ function SortableItem({ item, documents, onEdit }: { item: ItineraryItem; docume
       )}>
         <div className="p-4 flex gap-3">
           <div className="flex-1 min-w-0">
-            {/* Header */}
+            {/* Header row */}
             <div className="flex items-start justify-between gap-2 mb-1">
               <div className="flex items-center gap-1.5 min-w-0">
                 <Icon className="w-4 h-4 shrink-0 text-foreground/60" />
                 <h4 className="font-bold text-foreground text-base leading-tight truncate">{item.title}</h4>
               </div>
-              <span className="text-xs font-bold text-foreground/50 bg-muted px-2 py-0.5 rounded-md whitespace-nowrap shrink-0">
-                {item.startTime}–{item.endTime}
-              </span>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <span className="text-xs font-bold text-foreground/50 bg-muted px-2 py-0.5 rounded-md whitespace-nowrap">
+                  {item.startTime}–{item.endTime}
+                </span>
+              </div>
             </div>
 
-            {/* Sub-locations (travel) */}
+            {/* Duration badge */}
+            {duration && (
+              <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1.5">
+                <Clock className="w-3 h-3" />
+                <span className="font-medium">{duration}</span>
+              </div>
+            )}
+
+            {/* Travel from→to */}
             {item.fromLocation && item.toLocation && (
               <div className="flex items-center text-sm text-muted-foreground mt-1 gap-1">
                 <span className="truncate">{item.fromLocation}</span>
-                <span>→</span>
+                <span className="font-bold">→</span>
                 <span className="truncate">{item.toLocation}</span>
               </div>
             )}
@@ -295,7 +329,6 @@ function SortableItem({ item, documents, onEdit }: { item: ItineraryItem; docume
                   <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Checklist</span>
                   <span className="text-xs text-muted-foreground">{doneChecklist}/{totalChecklist}</span>
                 </div>
-                {/* Progress bar */}
                 <div className="h-1.5 bg-muted rounded-full overflow-hidden mb-2">
                   <div
                     className="h-full bg-primary rounded-full transition-all"
@@ -303,15 +336,10 @@ function SortableItem({ item, documents, onEdit }: { item: ItineraryItem; docume
                   />
                 </div>
                 {item.checklist.map(ci => (
-                  <button
-                    key={ci.id}
-                    onClick={() => toggleChecklistItem(ci.id)}
-                    className="flex items-center gap-2 w-full text-left py-1 group/check"
-                  >
+                  <button key={ci.id} onClick={() => toggleChecklistItem(ci.id)} className="flex items-center gap-2 w-full text-left py-1">
                     {ci.done
                       ? <Check className="w-4 h-4 text-primary shrink-0" />
-                      : <Square className="w-4 h-4 text-muted-foreground shrink-0" />
-                    }
+                      : <Square className="w-4 h-4 text-muted-foreground shrink-0" />}
                     <span className={cn("text-sm", ci.done ? "line-through text-muted-foreground" : "text-foreground")}>{ci.text}</span>
                   </button>
                 ))}
@@ -369,6 +397,8 @@ interface SheetProps {
 
 function AddEditSheet({ isOpen, onClose, tripId, defaultDate, documents, allItems, existingItem }: SheetProps) {
   const { mutateAsync: saveItem, isPending } = useSaveItineraryItem();
+  const { mutateAsync: addDocument } = useAddDocument();
+
   const [elementType, setElementType] = useState<ElementType>(existingItem?.elementType || 'activity');
   const [travelType, setTravelType] = useState<TravelType>(existingItem?.travelType || 'flight');
   const [duration, setDuration] = useState(60);
@@ -377,6 +407,7 @@ function AddEditSheet({ isOpen, onClose, tripId, defaultDate, documents, allItem
   const [checklistText, setChecklistText] = useState('');
   const [checklist, setChecklist] = useState<ChecklistItem[]>(existingItem?.checklist || []);
   const [showDocPicker, setShowDocPicker] = useState(false);
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
 
   const isEditing = !!existingItem;
 
@@ -384,8 +415,8 @@ function AddEditSheet({ isOpen, onClose, tripId, defaultDate, documents, allItem
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
     const date = (fd.get('date') as string) || defaultDate;
-    let st = fd.get('startTime') as string || startTime;
-    let et = fd.get('endTime') as string;
+    let st = startTime;
+    let et = '';
     let title = '';
     let location = '';
     let fromLocation = '';
@@ -414,7 +445,29 @@ function AddEditSheet({ isOpen, onClose, tripId, defaultDate, documents, allItem
       et = addMinutesToTime(st, duration);
     }
 
-    const newItem: ItineraryItem = {
+    // If a new file was uploaded, save it as a Document AND attach to this card
+    let finalDocIds = [...selectedDocIds];
+    if (uploadFile) {
+      const catMap: Record<ElementType, string> = {
+        travel: 'ticket', accommodation: 'hotel', meal: 'other', activity: 'ticket'
+      };
+      const newDoc: TripDocument = {
+        id: generateId(),
+        tripId,
+        name: (fd.get('uploadName') as string) || uploadFile.name,
+        category: catMap[elementType] as any,
+        notes: '',
+        fileName: uploadFile.name,
+        fileType: uploadFile.type,
+        fileSize: uploadFile.size,
+        blob: uploadFile,
+        createdAt: Date.now(),
+      };
+      await addDocument(newDoc);
+      finalDocIds = [...finalDocIds, newDoc.id];
+    }
+
+    await saveItem({
       id: existingItem?.id || generateId(),
       tripId,
       elementType,
@@ -429,11 +482,9 @@ function AddEditSheet({ isOpen, onClose, tripId, defaultDate, documents, allItem
       notes: fd.get('notes') as string || '',
       category: elementTypeToCategory(elementType, travelType),
       order: 0,
-      attachedDocIds: selectedDocIds,
+      attachedDocIds: finalDocIds,
       checklist: checklist.length > 0 ? checklist : undefined,
-    };
-
-    await saveItem(newItem);
+    });
     onClose();
   };
 
@@ -453,25 +504,19 @@ function AddEditSheet({ isOpen, onClose, tripId, defaultDate, documents, allItem
   return (
     <BottomSheet isOpen={isOpen} onClose={onClose} title={isEditing ? "Edit Item" : "Add to Timeline"}>
       <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+
         {/* Element type selector */}
         {!isEditing && (
           <div>
             <Label>Type</Label>
             <div className="grid grid-cols-4 gap-2">
               {ELEMENT_TYPES.map(({ id, label, icon: Icon }) => (
-                <button
-                  key={id}
-                  type="button"
-                  onClick={() => setElementType(id)}
+                <button key={id} type="button" onClick={() => setElementType(id)}
                   className={cn(
                     "flex flex-col items-center gap-1.5 py-3 rounded-xl border-2 transition-all text-sm font-semibold",
-                    elementType === id
-                      ? `border-primary bg-primary/10 text-primary`
-                      : "border-border bg-card text-muted-foreground"
-                  )}
-                >
-                  <Icon className="w-5 h-5" />
-                  {label}
+                    elementType === id ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-muted-foreground"
+                  )}>
+                  <Icon className="w-5 h-5" />{label}
                 </button>
               ))}
             </div>
@@ -599,14 +644,14 @@ function AddEditSheet({ isOpen, onClose, tripId, defaultDate, documents, allItem
               </div>
             </div>
             {startTime && (
-              <p className="text-xs text-muted-foreground -mt-3 ml-1">
-                Ends at {addMinutesToTime(startTime, duration)}
+              <p className="text-xs text-muted-foreground -mt-3 ml-1 flex items-center gap-1">
+                <Clock className="w-3 h-3" /> Ends at {addMinutesToTime(startTime, duration)}
               </p>
             )}
           </>
         )}
 
-        {/* Notes (all types) */}
+        {/* Notes */}
         <div>
           <Label htmlFor="notes">Notes (optional)</Label>
           <Input id="notes" name="notes" placeholder="Confirmation, tips, reminders…" defaultValue={existingItem?.notes} />
@@ -625,13 +670,12 @@ function AddEditSheet({ isOpen, onClose, tripId, defaultDate, documents, allItem
             <Button type="button" variant="outline" size="sm" onClick={addChecklistItem} className="shrink-0 h-12 px-3">Add</Button>
           </div>
           {checklist.length > 0 && (
-            <div className="space-y-1.5 mt-2 bg-muted/30 rounded-xl p-3 border border-border/50">
+            <div className="space-y-1.5 mt-1 bg-muted/30 rounded-xl p-3 border border-border/50">
               {checklist.map((ci, idx) => (
                 <div key={ci.id} className="flex items-center gap-2">
                   <Square className="w-4 h-4 text-muted-foreground shrink-0" />
                   <span className="flex-1 text-sm text-foreground">{ci.text}</span>
-                  <button type="button" onClick={() => setChecklist(prev => prev.filter((_, i) => i !== idx))}
-                    className="text-muted-foreground hover:text-red-500 p-1">
+                  <button type="button" onClick={() => setChecklist(prev => prev.filter((_, i) => i !== idx))} className="text-muted-foreground hover:text-red-500 p-1">
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </div>
@@ -640,37 +684,53 @@ function AddEditSheet({ isOpen, onClose, tripId, defaultDate, documents, allItem
           )}
         </div>
 
-        {/* Document attachment */}
+        {/* Upload a document directly */}
+        <div>
+          <Label>Upload Document (optional)</Label>
+          <label className={cn(
+            "flex items-center gap-3 w-full px-4 py-3 rounded-xl border-2 border-dashed cursor-pointer transition-all",
+            uploadFile ? "border-primary bg-primary/5" : "border-border hover:border-primary/40 hover:bg-muted/30"
+          )}>
+            <Upload className={cn("w-5 h-5 shrink-0", uploadFile ? "text-primary" : "text-muted-foreground")} />
+            <span className={cn("text-sm flex-1 truncate", uploadFile ? "text-foreground font-medium" : "text-muted-foreground")}>
+              {uploadFile ? uploadFile.name : "Tap to upload a file…"}
+            </span>
+            <input type="file" className="hidden" accept="application/pdf,image/*" onChange={e => setUploadFile(e.target.files?.[0] || null)} />
+          </label>
+          {uploadFile && (
+            <div className="mt-2">
+              <Label htmlFor="uploadName">Document Name</Label>
+              <Input id="uploadName" name="uploadName" defaultValue={uploadFile.name} placeholder="e.g. Return Ticket" />
+            </div>
+          )}
+          <p className="text-xs text-muted-foreground mt-1 ml-1">Will be saved to the Documents section and attached here</p>
+        </div>
+
+        {/* Attach existing documents */}
         {documents.length > 0 && (
           <div>
-            <Label>Attach Documents</Label>
+            <Label>Attach Existing Documents</Label>
             <button
               type="button"
               onClick={() => setShowDocPicker(!showDocPicker)}
               className="flex items-center justify-between w-full h-12 px-4 rounded-xl border-2 border-border bg-card text-base transition-all hover:border-primary/40"
             >
-              <span className="text-muted-foreground">
-                {selectedDocIds.length > 0 ? `${selectedDocIds.length} document(s) attached` : 'Select documents to attach'}
+              <span className="text-muted-foreground text-sm">
+                {selectedDocIds.length > 0 ? `${selectedDocIds.length} selected` : 'Select from saved documents'}
               </span>
               <Paperclip className="w-4 h-4 text-muted-foreground" />
             </button>
             {showDocPicker && (
               <div className="mt-2 bg-card border border-border rounded-xl overflow-hidden">
                 {documents.map(doc => {
-                  const isSelected = selectedDocIds.includes(doc.id);
+                  const isSel = selectedDocIds.includes(doc.id);
                   return (
-                    <button
-                      key={doc.id}
-                      type="button"
-                      onClick={() => setSelectedDocIds(prev =>
-                        isSelected ? prev.filter(id => id !== doc.id) : [...prev, doc.id]
-                      )}
+                    <button key={doc.id} type="button"
+                      onClick={() => setSelectedDocIds(prev => isSel ? prev.filter(id => id !== doc.id) : [...prev, doc.id])}
                       className="flex items-center gap-3 w-full px-4 py-3 border-b border-border/30 last:border-0 hover:bg-muted/40"
                     >
-                      <div className={cn("w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition-all",
-                        isSelected ? "bg-primary border-primary" : "border-border"
-                      )}>
-                        {isSelected && <Check className="w-3 h-3 text-white" />}
+                      <div className={cn("w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition-all", isSel ? "bg-primary border-primary" : "border-border")}>
+                        {isSel && <Check className="w-3 h-3 text-white" />}
                       </div>
                       <FileText className="w-4 h-4 text-muted-foreground shrink-0" />
                       <span className="flex-1 text-sm text-foreground truncate text-left">{doc.name}</span>

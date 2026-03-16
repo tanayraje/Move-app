@@ -130,11 +130,9 @@ export const RATES_PER_INR: Record<string, number> = {
   AFN: 0.85,
   COP: 49.5,
   PEN: 0.046,
-  IDR: 191,
   RON: 0.055,
   UAH: 0.50,
   ISK: 1.65,
-  GBP: 0.0095,
 };
 
 export function convertFromINR(amountINR: number, toCurrency: string): number {

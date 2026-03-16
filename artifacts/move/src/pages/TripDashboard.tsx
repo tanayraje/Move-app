@@ -14,18 +14,18 @@ import OverviewTab from "./tabs/OverviewTab";
 export default function TripDashboard({ params }: { params: { id: string, tab?: string } }) {
   const tripId = params.id;
   const { data: trip, isLoading } = useTrip(tripId);
-  const [match, paramsActive] = useRoute("/trip/:id/:tab");
-  const activeTab = paramsActive?.tab || 'itinerary';
+  const [, paramsActive] = useRoute("/trip/:id/:tab");
+  const activeTab = paramsActive?.tab || 'overview';
 
   if (isLoading) return <div className="p-8 text-center">Loading trip...</div>;
   if (!trip) return <div className="p-8 text-center text-muted-foreground">Trip not found. <Link href="/" className="text-primary ml-2">Go back</Link></div>;
 
   const tabs = [
+    { id: 'overview', label: 'Overview', icon: LayoutDashboard },
     { id: 'itinerary', label: 'Timeline', icon: CalendarDays },
     { id: 'documents', label: 'Docs', icon: FileText },
     { id: 'expenses', label: 'Costs', icon: Receipt },
     { id: 'places', label: 'Places', icon: MapPin },
-    { id: 'overview', label: 'Overview', icon: LayoutDashboard },
   ];
 
   return (
@@ -38,7 +38,7 @@ export default function TripDashboard({ params }: { params: { id: string, tab?: 
         <div className="flex-1 truncate">
           <h1 className="text-xl font-display font-bold text-foreground truncate">{trip.name}</h1>
           <p className="text-xs text-muted-foreground font-medium truncate">
-            {trip.destination} • {format(new Date(trip.startDate), 'MMM d')} - {format(new Date(trip.endDate), 'MMM d')}
+            {trip.destination} · {format(new Date(trip.startDate), 'MMM d')} – {format(new Date(trip.endDate), 'MMM d')}
           </p>
         </div>
       </header>
@@ -46,11 +46,13 @@ export default function TripDashboard({ params }: { params: { id: string, tab?: 
       {/* Main Content Area */}
       <main className="flex-1 relative pb-[env(safe-area-inset-bottom,20px)] mb-20 overflow-x-hidden">
         <Switch>
+          <Route path="/trip/:id/overview"><OverviewTab trip={trip} /></Route>
           <Route path="/trip/:id/itinerary"><ItineraryTab trip={trip} /></Route>
           <Route path="/trip/:id/documents"><DocumentsTab trip={trip} /></Route>
           <Route path="/trip/:id/expenses"><ExpensesTab trip={trip} /></Route>
           <Route path="/trip/:id/places"><PlacesTab trip={trip} /></Route>
-          <Route path="/trip/:id/overview"><OverviewTab trip={trip} /></Route>
+          {/* Default — overview */}
+          <Route path="/trip/:id"><OverviewTab trip={trip} /></Route>
         </Switch>
       </main>
 
@@ -64,7 +66,9 @@ export default function TripDashboard({ params }: { params: { id: string, tab?: 
               <Link key={tab.id} href={`/trip/${trip.id}/${tab.id}`} className="relative flex flex-col items-center justify-center w-full py-2 group">
                 <div className={cn(
                   "flex items-center justify-center w-10 h-10 rounded-2xl transition-all duration-300",
-                  isActive ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25 scale-110" : "text-muted-foreground group-hover:bg-muted group-hover:text-foreground"
+                  isActive
+                    ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25 scale-110"
+                    : "text-muted-foreground group-hover:bg-muted group-hover:text-foreground"
                 )}>
                   <Icon className={cn("w-5 h-5", isActive ? "stroke-[2.5]" : "stroke-2")} />
                 </div>
@@ -75,7 +79,7 @@ export default function TripDashboard({ params }: { params: { id: string, tab?: 
                   {tab.label}
                 </span>
               </Link>
-            )
+            );
           })}
         </div>
       </nav>
