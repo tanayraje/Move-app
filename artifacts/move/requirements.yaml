@@ -1,0 +1,15 @@
+packages:
+  "framer-motion": "For smooth page transitions and beautiful modal/sheet animations"
+  "date-fns": "For formatting and manipulating trip dates and itinerary times"
+  "@hello-pangea/dnd": "For drag-and-drop reordering of itinerary items on mobile"
+  "lucide-react": "For beautiful, consistent iconography across the app"
+  "clsx": "For conditional class name joining"
+  "tailwind-merge": "For merging tailwind classes safely"
+
+images: []
+
+notes:
+  - This is a fully client-side PWA. No external backend is used.
+  - All textual data is stored in localStorage.
+  - All file/document data is stored in IndexedDB to support binary blobs.
+  - Service worker caching is implemented for offline support.

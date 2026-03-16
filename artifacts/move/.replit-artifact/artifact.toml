@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Move - Travel Planner"
+version = "1.0.0"
+id = "artifacts/move"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+localPort = 19078
+name = "web"
+paths = ["/"]
+
+[services.development]
+run = "pnpm --filter @workspace/move run dev"
+
+[services.env]
+PORT = "19078"
+BASE_PATH = "/"
+
+[services.production]
+build = ["pnpm", "--filter", "@workspace/move", "run", "build"]
+publicDir = "artifacts/move/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"

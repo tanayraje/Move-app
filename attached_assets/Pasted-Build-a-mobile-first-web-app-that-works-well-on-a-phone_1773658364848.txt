@@ -1,0 +1,122 @@
+Build a mobile-first web app that works well on a phone and can be installed as a PWA.
+
+App name: Move
+Purpose: A travel itinerary planner.
+
+Design priority:
+Functionality over visual design. Clean and minimal interface optimized for vertical phone screens.
+
+MAIN STRUCTURE
+
+Trips Screen
+- Create a new trip
+- Fields:
+  - trip name
+  - destination
+  - start date
+  - end date
+- Trips appear as a list
+
+Trip Dashboard
+
+Inside each trip show 5 tabs:
+
+1. Itinerary (Calendar style)
+
+The itinerary should behave like a simplified Google Calendar.
+
+View:
+- Vertical timeline for each day
+- Time scale from 00:00 to 24:00
+- Scrollable day view
+
+Add itinerary block:
+Fields:
+- title
+- location
+- start time
+- end time
+- notes
+- category (flight / train / hotel / activity / travel / food / other)
+
+Time blocks:
+- Each item appears as a block occupying its time range
+- Example: Flight 10:30–13:15 shows as a long block on the timeline
+
+Drag and drop scheduling:
+- User can drag blocks up or down to change time
+- User can drag blocks to different days
+- Blocks should automatically update their start/end time after moving
+
+Reordering:
+- Drag blocks to rearrange order easily
+- Smooth touch-based drag interaction for phones
+
+Blocked travel time:
+- Travel events (flight/train/bus) should visually appear as larger blocks
+- Other activities must fit around them
+
+Quick reschedule:
+- User can drag activities into empty time slots
+- Overlapping blocks should be prevented
+
+2. Documents
+- Upload travel documents
+- Accept PDF and images
+- Fields:
+  - document name
+  - category (flight / hotel / visa / ticket / activity / other)
+  - notes
+- Store files using IndexedDB
+- Documents should open instantly when tapped
+- Available offline
+
+3. Expenses
+- Add expense
+- Fields:
+  - title
+  - amount
+  - category
+- Show running total for the trip
+
+4. Places
+- Save places to visit
+- Fields:
+  - place name
+  - location
+  - notes
+- Allow marking as visited
+
+5. Overview
+- Show:
+  - next itinerary item
+  - number of saved documents
+  - total expenses
+
+TECHNICAL REQUIREMENTS
+
+- HTML
+- CSS
+- vanilla JavaScript
+- no heavy frameworks
+- mobile-first responsive layout
+- large tap targets
+- smooth drag-and-drop interactions for touch screens
+
+DATA STORAGE
+
+- trips and itinerary: localStorage
+- uploaded files: IndexedDB
+
+PWA REQUIREMENTS
+
+- manifest.json
+- service worker
+- installable to home screen
+- works offline
+
+OUTPUT REQUIRED
+
+- full code
+- file structure
+- instructions to run and deploy
