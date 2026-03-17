@@ -4,7 +4,8 @@ import {
   Plus, GripVertical, MapPin, Trash2, CalendarDays,
   Plane, Train, Bus, Car, Building2, UtensilsCrossed,
   Bike, FileText, Paperclip, Check, Square, Clock, Upload,
-  ArrowLeftRight, Pencil, X, Link2
+  ArrowLeftRight, Pencil, X, ChevronDown, ChevronRight,
+  Coffee, Wine, Sun, Sunset
 } from "lucide-react";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
@@ -13,7 +14,7 @@ import { CSS } from '@dnd-kit/utilities';
 import {
   useItinerary, useSaveItineraryItem, useDeleteItineraryItem,
   useReorderItinerary, useDocuments, useAddDocument,
-  useSaveExpense, useDeleteExpense, useUpdateTrip
+  useSaveExpense, useDeleteExpense, useUpdateTrip, useDeleteDocument
 } from "@/hooks/use-store";
 import {
   Trip, ItineraryItem, ElementType, TravelType, ItineraryCategory,
@@ -24,6 +25,15 @@ import { Button, Input, Label, Select, BottomSheet, FAB } from "@/components/ui"
 import { formatCurrency, convertFromINR, RATES_PER_INR } from "@/lib/countries";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
+type MealSubType = 'breakfast' | 'lunch' | 'dinner' | 'drinks';
+
+const MEAL_SUBTYPES: { id: MealSubType; label: string; icon: React.ElementType; defaultTime: string }[] = [
+  { id: 'breakfast', label: 'Breakfast', icon: Coffee,      defaultTime: '08:00' },
+  { id: 'lunch',     label: 'Lunch',     icon: Sun,         defaultTime: '13:00' },
+  { id: 'dinner',    label: 'Dinner',    icon: Sunset,      defaultTime: '20:00' },
+  { id: 'drinks',    label: 'Drinks',    icon: Wine,        defaultTime: '21:00' },
+];
+
 const ELEMENT_COLORS: Record<ElementType, string> = {
   travel: 'bg-blue-500',
   accommodation: 'bg-violet-500',
@@ -124,14 +134,11 @@ export default function ItineraryTab({ trip }: { trip: Trip }) {
   );
 
   const sortedItems = useMemo(() => sortItems(allItems), [allItems]);
-
-  // Separate accommodation items (shown as banners) from others (shown as cards)
   const filteredItems = useMemo(() =>
     sortedItems.filter(i => i.date === selectedDate && i.elementType !== 'accommodation'),
     [sortedItems, selectedDate]
   );
 
-  // Accommodations spanning the selected date
   const activeAccommodations = useMemo(() =>
     allItems.filter(i =>
       i.elementType === 'accommodation' &&
@@ -273,7 +280,6 @@ export default function ItineraryTab({ trip }: { trip: Trip }) {
             )}
           </div>
 
-          {/* Day stats */}
           <div className="flex flex-col items-end gap-1">
             {totalDayMinutes > 0 && (
               <div className="flex items-center gap-1 text-xs font-bold text-muted-foreground bg-muted px-2.5 py-1 rounded-full">
@@ -309,7 +315,7 @@ export default function ItineraryTab({ trip }: { trip: Trip }) {
             <p className="text-sm mt-1 opacity-70">Tap + to add something.</p>
           </div>
         ) : filteredItems.length === 0 ? null : (
-          <div className="relative border-l-2 border-border/40 ml-5 pl-6 space-y-4 mt-4">
+          <div className="relative border-l-2 border-border/40 ml-5 pl-6 space-y-3 mt-4">
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
               <SortableContext items={filteredItems.map(i => i.id)} strategy={verticalListSortingStrategy}>
                 {filteredItems.map(item => (
@@ -356,6 +362,7 @@ export default function ItineraryTab({ trip }: { trip: Trip }) {
 function AccommodationBanner({ item, trip, onEdit }: { item: ItineraryItem; trip: Trip; onEdit: () => void }) {
   const { mutate: deleteItem } = useDeleteItineraryItem();
   const { mutate: deleteExpense } = useDeleteExpense();
+  const [expanded, setExpanded] = useState(false);
   const nights = item.endDate ? stayNights(item.date, item.endDate) : 1;
   const destCurrency = trip.destinationCurrency || 'INR';
 
@@ -366,55 +373,64 @@ function AccommodationBanner({ item, trip, onEdit }: { item: ItineraryItem; trip
   };
 
   return (
-    <div className="bg-violet-50 dark:bg-violet-950/30 border border-violet-200 dark:border-violet-800 rounded-2xl p-4 mb-3">
-      <div className="flex items-start justify-between gap-2 mb-2">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-xl bg-violet-500 text-white flex items-center justify-center shrink-0">
-            <Building2 className="w-4 h-4" />
-          </div>
-          <div>
-            <p className="text-xs font-bold text-violet-500 uppercase tracking-wider leading-none mb-0.5">Staying At</p>
-            <h4 className="font-bold text-foreground text-base leading-tight">{item.title}</h4>
-          </div>
+    <div className="bg-card border-2 border-violet-200 dark:border-violet-800 rounded-2xl mb-3 overflow-hidden shadow-sm">
+      {/* Always-visible header — click to expand */}
+      <button
+        type="button"
+        onClick={() => setExpanded(v => !v)}
+        className="w-full flex items-center gap-3 p-4 text-left"
+      >
+        <div className="w-8 h-8 rounded-xl bg-violet-500 text-white flex items-center justify-center shrink-0">
+          <Building2 className="w-4 h-4" />
         </div>
-        <div className="flex items-center gap-1">
-          <button onClick={onEdit} className="p-1.5 text-muted-foreground hover:text-violet-500 transition-colors">
-            <Pencil className="w-4 h-4" />
-          </button>
-          <button onClick={handleDelete} className="p-1.5 text-muted-foreground hover:text-red-500 transition-colors">
-            <Trash2 className="w-4 h-4" />
-          </button>
+        <div className="flex-1 min-w-0">
+          <p className="text-[10px] font-bold text-violet-500 uppercase tracking-wider leading-none mb-0.5">Staying At</p>
+          <h4 className="font-bold text-foreground text-base leading-tight truncate">{item.title}</h4>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {format(new Date(item.date), 'MMM d')}
+            {item.startTime && ` ${item.startTime}`}
+            {' – '}
+            {item.endDate ? format(new Date(item.endDate), 'MMM d') : '—'}
+            {item.endTime && ` ${item.endTime}`}
+            {' · '}{nights} night{nights !== 1 ? 's' : ''}
+          </p>
         </div>
-      </div>
+        <ChevronDown className={cn("w-4 h-4 text-muted-foreground shrink-0 transition-transform", expanded && "rotate-180")} />
+      </button>
 
-      <div className="flex flex-wrap gap-2 text-xs font-medium text-violet-700 dark:text-violet-300">
-        {item.location && (
-          <div className="flex items-center gap-1 bg-violet-100 dark:bg-violet-900/40 px-2.5 py-1 rounded-full">
-            <MapPin className="w-3 h-3" />
-            {item.location}
+      {/* Expanded details */}
+      {expanded && (
+        <div className="border-t border-border/50 px-4 pb-4 pt-3 space-y-2">
+          {item.location && (
+            <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+              <MapPin className="w-3.5 h-3.5 shrink-0" />
+              <span>{item.location}</span>
+            </div>
+          )}
+          {item.cost != null && item.cost > 0 && (
+            <div className="inline-flex items-center gap-1 text-xs font-bold text-primary bg-primary/10 px-2.5 py-1 rounded-full">
+              <span>₹{Math.round(item.cost).toLocaleString('en-IN')}</span>
+              {destCurrency !== 'INR' && (
+                <span className="text-primary/60 font-normal">
+                  · {formatCurrency(convertFromINR(item.cost, destCurrency), destCurrency)}
+                </span>
+              )}
+            </div>
+          )}
+          {item.notes && (
+            <p className="text-sm text-foreground/70 bg-muted/40 px-3 py-2 rounded-xl border border-border/40">
+              {item.notes}
+            </p>
+          )}
+          <div className="flex items-center justify-end gap-1 pt-1 border-t border-border/40">
+            <button onClick={onEdit} className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-primary transition-colors px-3 py-1.5 rounded-lg hover:bg-primary/5">
+              <Pencil className="w-3.5 h-3.5" /> Edit
+            </button>
+            <button onClick={handleDelete} className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-red-500 transition-colors px-3 py-1.5 rounded-lg hover:bg-red-50">
+              <Trash2 className="w-3.5 h-3.5" /> Delete
+            </button>
           </div>
-        )}
-        <div className="flex items-center gap-1 bg-violet-100 dark:bg-violet-900/40 px-2.5 py-1 rounded-full">
-          <CalendarDays className="w-3 h-3" />
-          {format(new Date(item.date), 'MMM d')}
-          {item.startTime && ` ${item.startTime}`}
-          {' → '}
-          {item.endDate ? format(new Date(item.endDate), 'MMM d') : '—'}
-          {item.endTime && ` ${item.endTime}`}
-          {' · '}{nights}n
         </div>
-        {item.cost != null && item.cost > 0 && (
-          <div className="flex items-center gap-1 bg-violet-100 dark:bg-violet-900/40 px-2.5 py-1 rounded-full">
-            ₹{Math.round(item.cost).toLocaleString('en-IN')}
-            {destCurrency !== 'INR' && ` · ${formatCurrency(convertFromINR(item.cost, destCurrency), destCurrency)}`}
-          </div>
-        )}
-      </div>
-
-      {item.notes && (
-        <p className="text-sm text-foreground/70 mt-2 bg-white/50 dark:bg-white/5 px-3 py-2 rounded-xl border border-violet-100 dark:border-violet-800/50">
-          {item.notes}
-        </p>
       )}
     </div>
   );
@@ -428,6 +444,9 @@ function SortableItem({
   const { mutate: deleteItem } = useDeleteItineraryItem();
   const { mutate: deleteExpense } = useDeleteExpense();
   const { mutate: saveItem } = useSaveItineraryItem();
+  const { mutate: deleteDoc } = useDeleteDocument();
+
+  const [expanded, setExpanded] = useState(false);
 
   const style = { transform: CSS.Transform.toString(transform), transition };
   const Icon = item.elementType ? ELEMENT_ICONS[item.elementType] : Plane;
@@ -438,10 +457,22 @@ function SortableItem({
 
   const totalChecklist = item.checklist?.length ?? 0;
   const doneChecklist = item.checklist?.filter(c => c.done).length ?? 0;
+  const mealInfo = item.mealSubType
+    ? MEAL_SUBTYPES.find(m => m.id === item.mealSubType)
+    : null;
+  const MealIcon = mealInfo?.icon ?? UtensilsCrossed;
 
   const openDoc = (doc: TripDocument) => {
     const url = URL.createObjectURL(doc.blob);
     window.open(url, '_blank');
+  };
+
+  const detachDoc = (docId: string) => {
+    if (!confirm('Remove this file from the item?')) return;
+    // Detach from item
+    saveItem({ ...item, attachedDocIds: (item.attachedDocIds || []).filter(id => id !== docId) });
+    // Delete from IndexedDB
+    deleteDoc({ id: docId, tripId: item.tripId });
   };
 
   const toggleChecklistItem = (checkId: string) => {
@@ -459,7 +490,7 @@ function SortableItem({
     <div ref={setNodeRef} style={style} className={cn("relative transition-opacity", isDragging && "opacity-50")}>
       {/* Timeline dot */}
       <div className={cn(
-        "absolute -left-[31px] top-5 w-4 h-4 rounded-full border-4 border-background z-10",
+        "absolute -left-[31px] top-4 w-4 h-4 rounded-full border-4 border-background z-10",
         item.elementType ? ELEMENT_COLORS[item.elementType] : 'bg-primary'
       )} />
 
@@ -467,136 +498,148 @@ function SortableItem({
         "bg-card rounded-2xl shadow-sm border border-border overflow-hidden",
         isMajor ? `border-l-4 ${ELEMENT_BORDER[item.elementType]}` : ""
       )}>
-        {/* Drag handle bar at top */}
+        {/* Drag handle */}
         <div
           {...attributes}
           {...listeners}
-          className="flex items-center justify-center w-full h-7 bg-muted/40 border-b border-border/40 cursor-grab active:cursor-grabbing touch-none"
+          className="flex items-center justify-center w-full h-6 bg-muted/30 border-b border-border/30 cursor-grab active:cursor-grabbing touch-none"
         >
-          <GripVertical className="w-4 h-4 text-muted-foreground/50 rotate-90" />
+          <GripVertical className="w-4 h-4 text-muted-foreground/40 rotate-90" />
         </div>
 
-        <div className="p-4">
-          {/* Type + time */}
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-1.5">
-              <div className={cn("w-6 h-6 rounded-lg flex items-center justify-center", item.elementType ? ELEMENT_COLORS[item.elementType] : 'bg-primary')}>
-                <Icon className="w-3.5 h-3.5 text-white" />
-              </div>
-              <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                {item.elementType}
-              </span>
-            </div>
-            <span className="text-xs font-bold text-foreground/50 bg-muted px-2 py-0.5 rounded-md whitespace-nowrap">
-              {item.startTime}–{item.endTime}
-            </span>
+        {/* Collapsed header — always visible, tap to expand */}
+        <button
+          type="button"
+          onClick={() => setExpanded(v => !v)}
+          className="w-full flex items-center gap-3 px-4 py-3 text-left"
+        >
+          <div className={cn("w-7 h-7 rounded-lg flex items-center justify-center shrink-0", item.elementType ? ELEMENT_COLORS[item.elementType] : 'bg-primary')}>
+            {item.elementType === 'meal' && mealInfo
+              ? <MealIcon className="w-3.5 h-3.5 text-white" />
+              : <Icon className="w-3.5 h-3.5 text-white" />}
           </div>
-
-          {/* Title */}
-          <h4 className="font-bold text-foreground text-base leading-tight mb-2">{item.title}</h4>
-
-          {/* Travel from→to */}
-          {item.fromLocation && item.toLocation && (
-            <div className="flex items-center text-sm text-muted-foreground mb-2 gap-1 bg-muted/40 px-3 py-1.5 rounded-xl">
-              <span className="truncate font-medium">{item.fromLocation}</span>
-              <span className="font-bold text-foreground/40 shrink-0">→</span>
-              <span className="truncate font-medium">{item.toLocation}</span>
-            </div>
-          )}
-
-          {/* Location */}
-          {item.location && !item.fromLocation && (
-            <div className="flex items-center text-sm text-muted-foreground mb-2">
-              <MapPin className="w-3.5 h-3.5 mr-1.5 shrink-0" />
-              <span className="truncate">{item.location}</span>
-            </div>
-          )}
-
-          {/* Duration */}
-          {duration && (
-            <div className="flex items-center gap-1 text-xs text-muted-foreground mb-2">
-              <Clock className="w-3.5 h-3.5" />
-              <span className="font-medium">{duration}</span>
-            </div>
-          )}
-
-          {/* Cost */}
-          {item.cost != null && item.cost > 0 && (
-            <div className="inline-flex items-center gap-1 text-xs font-bold text-primary bg-primary/10 px-2.5 py-1 rounded-full mb-2">
-              <span>₹{Math.round(item.cost).toLocaleString('en-IN')}</span>
-              {destCurrency !== 'INR' && (
-                <span className="text-primary/60 font-normal">
-                  · {formatCurrency(convertFromINR(item.cost, destCurrency), destCurrency)}
-                </span>
-              )}
-            </div>
-          )}
-
-          {/* Notes */}
-          {item.notes && (
-            <p className="text-sm text-foreground/70 bg-muted/40 px-3 py-2 rounded-xl border border-border/40 mb-2">
-              {item.notes}
+          <div className="flex-1 min-w-0">
+            <h4 className="font-bold text-foreground text-sm leading-tight truncate">{item.title}</h4>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {item.startTime}–{item.endTime}
+              {duration && ` · ${duration}`}
             </p>
-          )}
+          </div>
+          <ChevronDown className={cn("w-4 h-4 text-muted-foreground shrink-0 transition-transform", expanded && "rotate-180")} />
+        </button>
 
-          {/* Checklist */}
-          {item.checklist && item.checklist.length > 0 && (
-            <div className="mb-2 bg-muted/30 rounded-xl p-3 border border-border/40">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Checklist</span>
-                <span className="text-xs text-muted-foreground">{doneChecklist}/{totalChecklist}</span>
+        {/* Expanded content */}
+        {expanded && (
+          <div className="border-t border-border/40 px-4 pb-4 pt-3 space-y-2">
+            {/* Meal sub-type tag */}
+            {mealInfo && (
+              <span className="inline-flex items-center gap-1 text-xs font-bold text-amber-600 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
+                <MealIcon className="w-3 h-3" />{mealInfo.label}
+              </span>
+            )}
+
+            {/* Travel from→to */}
+            {item.fromLocation && item.toLocation && (
+              <div className="flex items-center text-sm text-muted-foreground gap-1 bg-muted/40 px-3 py-1.5 rounded-xl">
+                <span className="truncate font-medium">{item.fromLocation}</span>
+                <span className="font-bold text-foreground/40 shrink-0">→</span>
+                <span className="truncate font-medium">{item.toLocation}</span>
               </div>
-              <div className="h-1.5 bg-muted rounded-full overflow-hidden mb-2">
-                <div
-                  className="h-full bg-primary rounded-full transition-all"
-                  style={{ width: totalChecklist ? `${(doneChecklist / totalChecklist) * 100}%` : '0%' }}
-                />
+            )}
+
+            {/* Location */}
+            {item.location && !item.fromLocation && (
+              <div className="flex items-center text-sm text-muted-foreground">
+                <MapPin className="w-3.5 h-3.5 mr-1.5 shrink-0" />
+                <span className="truncate">{item.location}</span>
               </div>
-              {item.checklist.map(ci => (
-                <button key={ci.id} onClick={() => toggleChecklistItem(ci.id)} className="flex items-center gap-2 w-full text-left py-1">
-                  {ci.done
-                    ? <Check className="w-4 h-4 text-primary shrink-0" />
-                    : <Square className="w-4 h-4 text-muted-foreground shrink-0" />}
-                  <span className={cn("text-sm", ci.done ? "line-through text-muted-foreground" : "text-foreground")}>{ci.text}</span>
-                </button>
-              ))}
-            </div>
-          )}
+            )}
 
-          {/* Attached docs */}
-          {attachedDocs.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-2">
-              {attachedDocs.map(doc => (
-                <button
-                  key={doc.id}
-                  onClick={() => openDoc(doc)}
-                  className="flex items-center gap-1.5 bg-primary/10 text-primary text-xs font-medium px-2.5 py-1 rounded-full"
-                >
-                  <Paperclip className="w-3 h-3" />
-                  <span className="truncate max-w-[100px]">{doc.name}</span>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
+            {/* Cost */}
+            {item.cost != null && item.cost > 0 && (
+              <div className="inline-flex items-center gap-1 text-xs font-bold text-primary bg-primary/10 px-2.5 py-1 rounded-full">
+                <span>₹{Math.round(item.cost).toLocaleString('en-IN')}</span>
+                {destCurrency !== 'INR' && (
+                  <span className="text-primary/60 font-normal">
+                    · {formatCurrency(convertFromINR(item.cost, destCurrency), destCurrency)}
+                  </span>
+                )}
+              </div>
+            )}
 
-        {/* Action row at bottom */}
-        <div className="flex items-center justify-end gap-1 border-t border-border/40 px-3 py-2">
-          <button
-            onClick={onEdit}
-            className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-primary transition-colors px-3 py-1.5 rounded-lg hover:bg-primary/5"
-          >
-            <Pencil className="w-3.5 h-3.5" />
-            Edit
-          </button>
-          <button
-            onClick={handleDelete}
-            className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-red-500 transition-colors px-3 py-1.5 rounded-lg hover:bg-red-50"
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-            Delete
-          </button>
-        </div>
+            {/* Notes */}
+            {item.notes && (
+              <p className="text-sm text-foreground/70 bg-muted/40 px-3 py-2 rounded-xl border border-border/40">
+                {item.notes}
+              </p>
+            )}
+
+            {/* Checklist */}
+            {item.checklist && item.checklist.length > 0 && (
+              <div className="bg-muted/30 rounded-xl p-3 border border-border/40">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Checklist</span>
+                  <span className="text-xs text-muted-foreground">{doneChecklist}/{totalChecklist}</span>
+                </div>
+                <div className="h-1.5 bg-muted rounded-full overflow-hidden mb-2">
+                  <div
+                    className="h-full bg-primary rounded-full transition-all"
+                    style={{ width: totalChecklist ? `${(doneChecklist / totalChecklist) * 100}%` : '0%' }}
+                  />
+                </div>
+                {item.checklist.map(ci => (
+                  <button key={ci.id} onClick={() => toggleChecklistItem(ci.id)} className="flex items-center gap-2 w-full text-left py-1">
+                    {ci.done
+                      ? <Check className="w-4 h-4 text-primary shrink-0" />
+                      : <Square className="w-4 h-4 text-muted-foreground shrink-0" />}
+                    <span className={cn("text-sm", ci.done ? "line-through text-muted-foreground" : "text-foreground")}>{ci.text}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Attached docs — with delete button */}
+            {attachedDocs.length > 0 && (
+              <div className="space-y-1.5">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Files</p>
+                {attachedDocs.map(doc => (
+                  <div key={doc.id} className="flex items-center gap-2 bg-muted/40 rounded-xl px-3 py-2 border border-border/40">
+                    <Paperclip className="w-3.5 h-3.5 text-primary shrink-0" />
+                    <button
+                      onClick={() => openDoc(doc)}
+                      className="flex-1 text-xs font-medium text-primary truncate text-left"
+                    >
+                      {doc.name}
+                    </button>
+                    <button
+                      onClick={() => detachDoc(doc.id)}
+                      className="p-1 text-muted-foreground hover:text-red-500 transition-colors shrink-0"
+                      title="Remove file"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Action row */}
+            <div className="flex items-center justify-end gap-1 pt-1 border-t border-border/40">
+              <button
+                onClick={onEdit}
+                className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-primary transition-colors px-3 py-1.5 rounded-lg hover:bg-primary/5"
+              >
+                <Pencil className="w-3.5 h-3.5" /> Edit
+              </button>
+              <button
+                onClick={handleDelete}
+                className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-red-500 transition-colors px-3 py-1.5 rounded-lg hover:bg-red-50"
+              >
+                <Trash2 className="w-3.5 h-3.5" /> Delete
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -624,6 +667,8 @@ function AddEditSheet({ isOpen, onClose, trip, defaultDate, documents, allItems,
 
   const [elementType, setElementType] = useState<ElementType>(existingItem?.elementType || 'activity');
   const [travelType, setTravelType] = useState<TravelType>(existingItem?.travelType || 'flight');
+  const [mealSubType, setMealSubType] = useState<MealSubType>(existingItem?.mealSubType || 'lunch');
+  const [mealTime, setMealTime] = useState(existingItem?.startTime || '13:00');
   const [duration, setDuration] = useState(60);
   const [startTime, setStartTime] = useState(existingItem?.startTime || '09:00');
   const [selectedDocIds, setSelectedDocIds] = useState<string[]>(existingItem?.attachedDocIds || []);
@@ -637,6 +682,15 @@ function AddEditSheet({ isOpen, onClose, trip, defaultDate, documents, allItems,
   const [costInDest, setCostInDest] = useState(false);
 
   const isEditing = !!existingItem;
+
+  // When meal subtype changes, auto-update the time
+  const handleMealSubTypeChange = (sub: MealSubType) => {
+    setMealSubType(sub);
+    if (!existingItem) {
+      const info = MEAL_SUBTYPES.find(m => m.id === sub);
+      if (info) setMealTime(info.defaultTime);
+    }
+  };
 
   const getCostInINR = (): number => {
     const val = parseFloat(costInput);
@@ -675,8 +729,8 @@ function AddEditSheet({ isOpen, onClose, trip, defaultDate, documents, allItems,
     } else if (elementType === 'meal') {
       title = fd.get('restaurantName') as string;
       location = fd.get('mealLocation') as string;
-      st = fd.get('mealTime') as string;
-      et = addMinutesToTime(st, 90);
+      st = mealTime;
+      et = addMinutesToTime(st, 60);
     } else if (elementType === 'activity') {
       title = fd.get('activityName') as string;
       location = fd.get('activityLocation') as string;
@@ -731,6 +785,7 @@ function AddEditSheet({ isOpen, onClose, trip, defaultDate, documents, allItems,
       tripId: trip.id,
       elementType,
       travelType: elementType === 'travel' ? travelType : undefined,
+      mealSubType: elementType === 'meal' ? mealSubType : undefined,
       title,
       location,
       fromLocation: fromLocation || undefined,
@@ -785,7 +840,7 @@ function AddEditSheet({ isOpen, onClose, trip, defaultDate, documents, allItems,
           </div>
         )}
 
-        {/* Date (not shown for accommodation — it uses check-in date field) */}
+        {/* Date */}
         {elementType !== 'accommodation' && (
           <div>
             <Label htmlFor="date">Date</Label>
@@ -849,8 +904,7 @@ function AddEditSheet({ isOpen, onClose, trip, defaultDate, documents, allItems,
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label htmlFor="checkInDate">Check-in Date</Label>
-                <Input id="checkInDate" name="date" type="date"
-                  defaultValue={existingItem?.date || defaultDate} required />
+                <Input id="checkInDate" name="date" type="date" defaultValue={existingItem?.date || defaultDate} required />
               </div>
               <div>
                 <Label htmlFor="checkInTime">Check-in Time</Label>
@@ -860,8 +914,7 @@ function AddEditSheet({ isOpen, onClose, trip, defaultDate, documents, allItems,
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label htmlFor="checkOutDate">Check-out Date</Label>
-                <Input id="checkOutDate" name="checkOutDate" type="date"
-                  defaultValue={existingItem?.endDate || defaultDate} required />
+                <Input id="checkOutDate" name="checkOutDate" type="date" defaultValue={existingItem?.endDate || defaultDate} required />
               </div>
               <div>
                 <Label htmlFor="checkOutTime">Check-out Time</Label>
@@ -874,6 +927,21 @@ function AddEditSheet({ isOpen, onClose, trip, defaultDate, documents, allItems,
         {/* MEAL fields */}
         {elementType === 'meal' && (
           <>
+            {/* Meal sub-type picker */}
+            <div>
+              <Label>Meal Type</Label>
+              <div className="grid grid-cols-4 gap-2">
+                {MEAL_SUBTYPES.map(({ id, label, icon: MIcon }) => (
+                  <button key={id} type="button" onClick={() => handleMealSubTypeChange(id)}
+                    className={cn(
+                      "flex flex-col items-center gap-1.5 py-3 rounded-xl border-2 transition-all text-xs font-semibold",
+                      mealSubType === id ? "border-amber-400 bg-amber-50 text-amber-700" : "border-border bg-card text-muted-foreground"
+                    )}>
+                    <MIcon className="w-4 h-4" />{label}
+                  </button>
+                ))}
+              </div>
+            </div>
             <div>
               <Label htmlFor="restaurantName">Restaurant / Place</Label>
               <Input id="restaurantName" name="restaurantName" placeholder="Café de Flore" defaultValue={existingItem?.title} required />
@@ -884,7 +952,17 @@ function AddEditSheet({ isOpen, onClose, trip, defaultDate, documents, allItems,
             </div>
             <div>
               <Label htmlFor="mealTime">Time</Label>
-              <Input id="mealTime" name="mealTime" type="time" defaultValue={existingItem?.startTime || '13:00'} required />
+              <Input
+                id="mealTime"
+                name="mealTime"
+                type="time"
+                value={mealTime}
+                onChange={e => setMealTime(e.target.value)}
+                required
+              />
+              <p className="text-xs text-muted-foreground mt-1 ml-1 flex items-center gap-1">
+                <Clock className="w-3 h-3" /> Ends at {addMinutesToTime(mealTime, 60)} (1 hour)
+              </p>
             </div>
           </>
         )}

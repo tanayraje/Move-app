@@ -50,6 +50,7 @@ export interface ItineraryItem {
   fromPlaceId?: string; // if auto-generated from a Place
   cost?: number; // stored in INR
   expenseId?: string; // linked Expense record id
+  mealSubType?: 'breakfast' | 'lunch' | 'dinner' | 'drinks';
 }
 
 export type DocumentCategory = 'flight' | 'hotel' | 'visa' | 'ticket' | 'activity' | 'other';
