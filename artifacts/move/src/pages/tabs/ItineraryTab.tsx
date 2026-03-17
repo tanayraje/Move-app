@@ -1,10 +1,10 @@
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback, useRef } from "react";
 import { format, addDays, differenceInDays } from "date-fns";
 import {
   Plus, GripVertical, MapPin, Trash2, CalendarDays,
   Plane, Train, Bus, Car, Building2, UtensilsCrossed,
   Bike, FileText, Paperclip, Check, Square, Clock, Upload,
-  IndianRupee, ArrowLeftRight
+  ArrowLeftRight, Pencil, X, Link2
 } from "lucide-react";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
@@ -13,7 +13,7 @@ import { CSS } from '@dnd-kit/utilities';
 import {
   useItinerary, useSaveItineraryItem, useDeleteItineraryItem,
   useReorderItinerary, useDocuments, useAddDocument,
-  useSaveExpense, useDeleteExpense
+  useSaveExpense, useDeleteExpense, useUpdateTrip
 } from "@/hooks/use-store";
 import {
   Trip, ItineraryItem, ElementType, TravelType, ItineraryCategory,
@@ -100,15 +100,23 @@ function sortItems(items: ItineraryItem[]): ItineraryItem[] {
   });
 }
 
+function stayNights(checkIn: string, checkOut: string): number {
+  return Math.max(differenceInDays(new Date(checkOut), new Date(checkIn)), 1);
+}
+
 // ─── Main Tab ─────────────────────────────────────────────────────────────────
 export default function ItineraryTab({ trip }: { trip: Trip }) {
   const { data: allItems = [] } = useItinerary(trip.id);
   const { mutate: reorder } = useReorderItinerary();
+  const { mutate: updateTrip } = useUpdateTrip();
   const { data: documents = [] } = useDocuments(trip.id);
 
   const [selectedDate, setSelectedDate] = useState<string>(trip.startDate);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editItem, setEditItem] = useState<ItineraryItem | null>(null);
+  const [editingCity, setEditingCity] = useState(false);
+  const [cityDraft, setCityDraft] = useState('');
+  const cityInputRef = useRef<HTMLInputElement>(null);
 
   const daysCount = differenceInDays(new Date(trip.endDate), new Date(trip.startDate)) + 1;
   const days = Array.from({ length: daysCount }).map((_, i) =>
@@ -116,8 +124,21 @@ export default function ItineraryTab({ trip }: { trip: Trip }) {
   );
 
   const sortedItems = useMemo(() => sortItems(allItems), [allItems]);
+
+  // Separate accommodation items (shown as banners) from others (shown as cards)
   const filteredItems = useMemo(() =>
-    sortedItems.filter(i => i.date === selectedDate), [sortedItems, selectedDate]
+    sortedItems.filter(i => i.date === selectedDate && i.elementType !== 'accommodation'),
+    [sortedItems, selectedDate]
+  );
+
+  // Accommodations spanning the selected date
+  const activeAccommodations = useMemo(() =>
+    allItems.filter(i =>
+      i.elementType === 'accommodation' &&
+      i.date <= selectedDate &&
+      (i.endDate ?? i.date) >= selectedDate
+    ),
+    [allItems, selectedDate]
   );
 
   const totalDayMinutes = useMemo(() =>
@@ -131,6 +152,15 @@ export default function ItineraryTab({ trip }: { trip: Trip }) {
   const totalDayCost = useMemo(() =>
     filteredItems.reduce((sum, item) => sum + (item.cost ?? 0), 0), [filteredItems]
   );
+
+  const dayCities = trip.dayCities ?? {};
+  const currentCity = dayCities[selectedDate] ?? '';
+
+  const saveCity = (val: string) => {
+    const trimmed = val.trim();
+    updateTrip({ ...trip, dayCities: { ...dayCities, [selectedDate]: trimmed } });
+    setEditingCity(false);
+  };
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -153,31 +183,48 @@ export default function ItineraryTab({ trip }: { trip: Trip }) {
       return { ...item, startTime: newStart, endTime: addMinutesToTime(newStart, dur) };
     });
 
-    reorder({ tripId: trip.id, items: [...allItems.filter(i => i.date !== selectedDate), ...repositioned] });
+    reorder({ tripId: trip.id, items: [...allItems.filter(i => i.date !== selectedDate || i.elementType === 'accommodation'), ...repositioned] });
   }, [filteredItems, allItems, selectedDate, trip.id, reorder]);
 
   return (
     <div className="flex flex-col h-full relative">
       {/* Day Selector */}
-      <div className="sticky top-0 z-20 bg-background pt-3 pb-3 px-4 overflow-x-auto no-scrollbar border-b border-border/50">
+      <div className="sticky top-0 z-20 bg-background pt-3 pb-2 px-4 overflow-x-auto no-scrollbar border-b border-border/50">
         <div className="flex gap-2 min-w-max">
           {days.map((day) => {
             const isSelected = selectedDate === day;
             const hasItems = sortedItems.some(i => i.date === day);
+            const hasAccom = allItems.some(i =>
+              i.elementType === 'accommodation' && i.date <= day && (i.endDate ?? i.date) >= day
+            );
+            const city = dayCities[day] ?? '';
             return (
               <button
                 key={day}
                 onClick={() => setSelectedDate(day)}
                 className={cn(
-                  "flex flex-col items-center justify-center w-14 h-16 rounded-2xl transition-all font-medium border-2 relative",
+                  "flex flex-col items-center justify-center px-2 py-2 min-w-[56px] rounded-2xl transition-all font-medium border-2 relative",
+                  city ? "h-20" : "h-16",
                   isSelected
                     ? "bg-primary border-primary text-primary-foreground shadow-md shadow-primary/20"
                     : "bg-card border-border text-foreground/70 hover:border-primary/30"
                 )}
               >
+                {city && (
+                  <span className={cn(
+                    "text-[10px] font-bold truncate max-w-[52px] leading-none mb-0.5",
+                    isSelected ? "text-primary-foreground/80" : "text-primary"
+                  )}>{city}</span>
+                )}
                 <span className="text-xs uppercase opacity-80">{format(new Date(day), 'EEE')}</span>
                 <span className="text-lg font-bold mt-0.5">{format(new Date(day), 'd')}</span>
-                {hasItems && !isSelected && (
+                {hasAccom && (
+                  <span className={cn(
+                    "text-[9px] font-bold mt-0.5 leading-none",
+                    isSelected ? "text-primary-foreground/60" : "text-violet-400"
+                  )}>STAY</span>
+                )}
+                {hasItems && !isSelected && !hasAccom && (
                   <span className="absolute bottom-1.5 w-1.5 h-1.5 rounded-full bg-primary/60" />
                 )}
               </button>
@@ -187,47 +234,96 @@ export default function ItineraryTab({ trip }: { trip: Trip }) {
       </div>
 
       {/* Timeline */}
-      <div className="px-4 py-5 pb-32">
-        {filteredItems.length === 0 ? (
-          <div className="text-center text-muted-foreground mt-16">
+      <div className="px-4 py-4 pb-32 overflow-y-auto flex-1">
+        {/* City + date header */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex flex-col">
+            <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+              {format(new Date(selectedDate), 'EEEE, MMMM d')}
+            </span>
+            {editingCity ? (
+              <div className="flex items-center gap-2 mt-1">
+                <input
+                  ref={cityInputRef}
+                  autoFocus
+                  value={cityDraft}
+                  onChange={e => setCityDraft(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') saveCity(cityDraft);
+                    if (e.key === 'Escape') setEditingCity(false);
+                  }}
+                  placeholder="City name…"
+                  className="text-base font-bold bg-transparent border-b-2 border-primary outline-none text-foreground placeholder:text-muted-foreground/50 min-w-0 w-40"
+                />
+                <button onClick={() => saveCity(cityDraft)} className="text-primary"><Check className="w-4 h-4" /></button>
+                <button onClick={() => setEditingCity(false)} className="text-muted-foreground"><X className="w-4 h-4" /></button>
+              </div>
+            ) : (
+              <button
+                onClick={() => { setCityDraft(currentCity); setEditingCity(true); }}
+                className="flex items-center gap-1.5 mt-0.5 group/city"
+              >
+                {currentCity ? (
+                  <span className="text-base font-bold text-foreground">{currentCity}</span>
+                ) : (
+                  <span className="text-sm text-muted-foreground/60 italic">Tap to add city…</span>
+                )}
+                <Pencil className="w-3.5 h-3.5 text-muted-foreground/40 group-hover/city:text-primary transition-colors" />
+              </button>
+            )}
+          </div>
+
+          {/* Day stats */}
+          <div className="flex flex-col items-end gap-1">
+            {totalDayMinutes > 0 && (
+              <div className="flex items-center gap-1 text-xs font-bold text-muted-foreground bg-muted px-2.5 py-1 rounded-full">
+                <Clock className="w-3 h-3" />
+                {getDuration('00:00', addMinutesToTime('00:00', totalDayMinutes))}
+              </div>
+            )}
+            {totalDayCost > 0 && (
+              <div className="flex items-center gap-1 text-xs font-bold text-primary bg-primary/10 px-2.5 py-1 rounded-full">
+                ₹{Math.round(totalDayCost).toLocaleString('en-IN')}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Accommodation banners */}
+        {activeAccommodations.map(accom => (
+          <AccommodationBanner
+            key={accom.id}
+            item={accom}
+            trip={trip}
+            onEdit={() => setEditItem(accom)}
+          />
+        ))}
+
+        {/* Regular items */}
+        {filteredItems.length === 0 && activeAccommodations.length === 0 ? (
+          <div className="text-center text-muted-foreground mt-12">
             <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
               <CalendarDays className="w-8 h-8 opacity-40" />
             </div>
             <p className="font-medium">Nothing planned for this day.</p>
             <p className="text-sm mt-1 opacity-70">Tap + to add something.</p>
           </div>
-        ) : (
-          <>
-            {/* Day summary bar */}
-            <div className="flex items-center justify-between mb-4 px-1">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground bg-muted px-3 py-1.5 rounded-full">
-                <Clock className="w-3.5 h-3.5" />
-                {getDuration('00:00', addMinutesToTime('00:00', totalDayMinutes)) || '0m'} scheduled
-              </div>
-              {totalDayCost > 0 && (
-                <div className="flex items-center gap-1 text-xs font-bold text-primary bg-primary/10 px-3 py-1.5 rounded-full">
-                  <IndianRupee className="w-3.5 h-3.5" />
-                  {formatCurrency(totalDayCost, 'INR')} today
-                </div>
-              )}
-            </div>
-
-            <div className="relative border-l-2 border-border/40 ml-5 pl-6 space-y-4">
-              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                <SortableContext items={filteredItems.map(i => i.id)} strategy={verticalListSortingStrategy}>
-                  {filteredItems.map(item => (
-                    <SortableItem
-                      key={item.id}
-                      item={item}
-                      documents={documents}
-                      trip={trip}
-                      onEdit={() => setEditItem(item)}
-                    />
-                  ))}
-                </SortableContext>
-              </DndContext>
-            </div>
-          </>
+        ) : filteredItems.length === 0 ? null : (
+          <div className="relative border-l-2 border-border/40 ml-5 pl-6 space-y-4 mt-4">
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+              <SortableContext items={filteredItems.map(i => i.id)} strategy={verticalListSortingStrategy}>
+                {filteredItems.map(item => (
+                  <SortableItem
+                    key={item.id}
+                    item={item}
+                    documents={documents}
+                    trip={trip}
+                    onEdit={() => setEditItem(item)}
+                  />
+                ))}
+              </SortableContext>
+            </DndContext>
+          </div>
         )}
       </div>
 
@@ -256,6 +352,74 @@ export default function ItineraryTab({ trip }: { trip: Trip }) {
   );
 }
 
+// ─── Accommodation Banner ─────────────────────────────────────────────────────
+function AccommodationBanner({ item, trip, onEdit }: { item: ItineraryItem; trip: Trip; onEdit: () => void }) {
+  const { mutate: deleteItem } = useDeleteItineraryItem();
+  const { mutate: deleteExpense } = useDeleteExpense();
+  const nights = item.endDate ? stayNights(item.date, item.endDate) : 1;
+  const destCurrency = trip.destinationCurrency || 'INR';
+
+  const handleDelete = () => {
+    if (!confirm('Remove this accommodation?')) return;
+    if (item.expenseId) deleteExpense({ id: item.expenseId, tripId: item.tripId });
+    deleteItem({ tripId: item.tripId, id: item.id });
+  };
+
+  return (
+    <div className="bg-violet-50 dark:bg-violet-950/30 border border-violet-200 dark:border-violet-800 rounded-2xl p-4 mb-3">
+      <div className="flex items-start justify-between gap-2 mb-2">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-xl bg-violet-500 text-white flex items-center justify-center shrink-0">
+            <Building2 className="w-4 h-4" />
+          </div>
+          <div>
+            <p className="text-xs font-bold text-violet-500 uppercase tracking-wider leading-none mb-0.5">Staying At</p>
+            <h4 className="font-bold text-foreground text-base leading-tight">{item.title}</h4>
+          </div>
+        </div>
+        <div className="flex items-center gap-1">
+          <button onClick={onEdit} className="p-1.5 text-muted-foreground hover:text-violet-500 transition-colors">
+            <Pencil className="w-4 h-4" />
+          </button>
+          <button onClick={handleDelete} className="p-1.5 text-muted-foreground hover:text-red-500 transition-colors">
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap gap-2 text-xs font-medium text-violet-700 dark:text-violet-300">
+        {item.location && (
+          <div className="flex items-center gap-1 bg-violet-100 dark:bg-violet-900/40 px-2.5 py-1 rounded-full">
+            <MapPin className="w-3 h-3" />
+            {item.location}
+          </div>
+        )}
+        <div className="flex items-center gap-1 bg-violet-100 dark:bg-violet-900/40 px-2.5 py-1 rounded-full">
+          <CalendarDays className="w-3 h-3" />
+          {format(new Date(item.date), 'MMM d')}
+          {item.startTime && ` ${item.startTime}`}
+          {' → '}
+          {item.endDate ? format(new Date(item.endDate), 'MMM d') : '—'}
+          {item.endTime && ` ${item.endTime}`}
+          {' · '}{nights}n
+        </div>
+        {item.cost != null && item.cost > 0 && (
+          <div className="flex items-center gap-1 bg-violet-100 dark:bg-violet-900/40 px-2.5 py-1 rounded-full">
+            ₹{Math.round(item.cost).toLocaleString('en-IN')}
+            {destCurrency !== 'INR' && ` · ${formatCurrency(convertFromINR(item.cost, destCurrency), destCurrency)}`}
+          </div>
+        )}
+      </div>
+
+      {item.notes && (
+        <p className="text-sm text-foreground/70 mt-2 bg-white/50 dark:bg-white/5 px-3 py-2 rounded-xl border border-violet-100 dark:border-violet-800/50">
+          {item.notes}
+        </p>
+      )}
+    </div>
+  );
+}
+
 // ─── Sortable Item ────────────────────────────────────────────────────────────
 function SortableItem({
   item, documents, trip, onEdit
@@ -267,7 +431,7 @@ function SortableItem({
 
   const style = { transform: CSS.Transform.toString(transform), transition };
   const Icon = item.elementType ? ELEMENT_ICONS[item.elementType] : Plane;
-  const isMajor = item.elementType === 'travel' || item.elementType === 'accommodation';
+  const isMajor = item.elementType === 'travel';
   const attachedDocs = documents.filter(d => (item.attachedDocIds || []).includes(d.id));
   const duration = getDuration(item.startTime, item.endTime);
   const destCurrency = trip.destinationCurrency || 'INR';
@@ -292,10 +456,10 @@ function SortableItem({
   };
 
   return (
-    <div ref={setNodeRef} style={style} className={cn("relative group transition-opacity", isDragging && "opacity-50")}>
+    <div ref={setNodeRef} style={style} className={cn("relative transition-opacity", isDragging && "opacity-50")}>
       {/* Timeline dot */}
       <div className={cn(
-        "absolute -left-[31px] w-4 h-4 rounded-full border-4 border-background z-10",
+        "absolute -left-[31px] top-5 w-4 h-4 rounded-full border-4 border-background z-10",
         item.elementType ? ELEMENT_COLORS[item.elementType] : 'bg-primary'
       )} />
 
@@ -303,112 +467,135 @@ function SortableItem({
         "bg-card rounded-2xl shadow-sm border border-border overflow-hidden",
         isMajor ? `border-l-4 ${ELEMENT_BORDER[item.elementType]}` : ""
       )}>
-        <div className="p-4 flex gap-3">
-          <div className="flex-1 min-w-0">
-            {/* Header */}
-            <div className="flex items-start justify-between gap-2 mb-1">
-              <div className="flex items-center gap-1.5 min-w-0">
-                <Icon className="w-4 h-4 shrink-0 text-foreground/60" />
-                <h4 className="font-bold text-foreground text-base leading-tight truncate">{item.title}</h4>
+        {/* Drag handle bar at top */}
+        <div
+          {...attributes}
+          {...listeners}
+          className="flex items-center justify-center w-full h-7 bg-muted/40 border-b border-border/40 cursor-grab active:cursor-grabbing touch-none"
+        >
+          <GripVertical className="w-4 h-4 text-muted-foreground/50 rotate-90" />
+        </div>
+
+        <div className="p-4">
+          {/* Type + time */}
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-1.5">
+              <div className={cn("w-6 h-6 rounded-lg flex items-center justify-center", item.elementType ? ELEMENT_COLORS[item.elementType] : 'bg-primary')}>
+                <Icon className="w-3.5 h-3.5 text-white" />
               </div>
-              <span className="text-xs font-bold text-foreground/50 bg-muted px-2 py-0.5 rounded-md whitespace-nowrap shrink-0">
-                {item.startTime}–{item.endTime}
+              <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                {item.elementType}
               </span>
             </div>
+            <span className="text-xs font-bold text-foreground/50 bg-muted px-2 py-0.5 rounded-md whitespace-nowrap">
+              {item.startTime}–{item.endTime}
+            </span>
+          </div>
 
-            {/* Duration + cost row */}
-            <div className="flex items-center gap-3 mb-1.5">
-              {duration && (
-                <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                  <Clock className="w-3 h-3" />
-                  <span className="font-medium">{duration}</span>
-                </div>
-              )}
-              {item.cost != null && item.cost > 0 && (
-                <div className="flex items-center gap-1 text-xs font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
-                  <span>{formatCurrency(item.cost, 'INR')}</span>
-                  {destCurrency !== 'INR' && (
-                    <span className="text-primary/60 font-normal">· {formatCurrency(convertFromINR(item.cost, destCurrency), destCurrency)}</span>
-                  )}
-                </div>
+          {/* Title */}
+          <h4 className="font-bold text-foreground text-base leading-tight mb-2">{item.title}</h4>
+
+          {/* Travel from→to */}
+          {item.fromLocation && item.toLocation && (
+            <div className="flex items-center text-sm text-muted-foreground mb-2 gap-1 bg-muted/40 px-3 py-1.5 rounded-xl">
+              <span className="truncate font-medium">{item.fromLocation}</span>
+              <span className="font-bold text-foreground/40 shrink-0">→</span>
+              <span className="truncate font-medium">{item.toLocation}</span>
+            </div>
+          )}
+
+          {/* Location */}
+          {item.location && !item.fromLocation && (
+            <div className="flex items-center text-sm text-muted-foreground mb-2">
+              <MapPin className="w-3.5 h-3.5 mr-1.5 shrink-0" />
+              <span className="truncate">{item.location}</span>
+            </div>
+          )}
+
+          {/* Duration */}
+          {duration && (
+            <div className="flex items-center gap-1 text-xs text-muted-foreground mb-2">
+              <Clock className="w-3.5 h-3.5" />
+              <span className="font-medium">{duration}</span>
+            </div>
+          )}
+
+          {/* Cost */}
+          {item.cost != null && item.cost > 0 && (
+            <div className="inline-flex items-center gap-1 text-xs font-bold text-primary bg-primary/10 px-2.5 py-1 rounded-full mb-2">
+              <span>₹{Math.round(item.cost).toLocaleString('en-IN')}</span>
+              {destCurrency !== 'INR' && (
+                <span className="text-primary/60 font-normal">
+                  · {formatCurrency(convertFromINR(item.cost, destCurrency), destCurrency)}
+                </span>
               )}
             </div>
+          )}
 
-            {/* Travel from→to */}
-            {item.fromLocation && item.toLocation && (
-              <div className="flex items-center text-sm text-muted-foreground mt-1 gap-1">
-                <span className="truncate">{item.fromLocation}</span>
-                <span className="font-bold">→</span>
-                <span className="truncate">{item.toLocation}</span>
+          {/* Notes */}
+          {item.notes && (
+            <p className="text-sm text-foreground/70 bg-muted/40 px-3 py-2 rounded-xl border border-border/40 mb-2">
+              {item.notes}
+            </p>
+          )}
+
+          {/* Checklist */}
+          {item.checklist && item.checklist.length > 0 && (
+            <div className="mb-2 bg-muted/30 rounded-xl p-3 border border-border/40">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Checklist</span>
+                <span className="text-xs text-muted-foreground">{doneChecklist}/{totalChecklist}</span>
               </div>
-            )}
-
-            {/* Location */}
-            {item.location && !item.fromLocation && (
-              <div className="flex items-center text-sm text-muted-foreground mt-1">
-                <MapPin className="w-3.5 h-3.5 mr-1 shrink-0" />
-                <span className="truncate">{item.location}</span>
+              <div className="h-1.5 bg-muted rounded-full overflow-hidden mb-2">
+                <div
+                  className="h-full bg-primary rounded-full transition-all"
+                  style={{ width: totalChecklist ? `${(doneChecklist / totalChecklist) * 100}%` : '0%' }}
+                />
               </div>
-            )}
+              {item.checklist.map(ci => (
+                <button key={ci.id} onClick={() => toggleChecklistItem(ci.id)} className="flex items-center gap-2 w-full text-left py-1">
+                  {ci.done
+                    ? <Check className="w-4 h-4 text-primary shrink-0" />
+                    : <Square className="w-4 h-4 text-muted-foreground shrink-0" />}
+                  <span className={cn("text-sm", ci.done ? "line-through text-muted-foreground" : "text-foreground")}>{ci.text}</span>
+                </button>
+              ))}
+            </div>
+          )}
 
-            {/* Notes */}
-            {item.notes && (
-              <p className="mt-2 text-sm text-foreground/70 bg-muted/40 px-3 py-2 rounded-xl border border-border/40">
-                {item.notes}
-              </p>
-            )}
+          {/* Attached docs */}
+          {attachedDocs.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-2">
+              {attachedDocs.map(doc => (
+                <button
+                  key={doc.id}
+                  onClick={() => openDoc(doc)}
+                  className="flex items-center gap-1.5 bg-primary/10 text-primary text-xs font-medium px-2.5 py-1 rounded-full"
+                >
+                  <Paperclip className="w-3 h-3" />
+                  <span className="truncate max-w-[100px]">{doc.name}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
 
-            {/* Checklist */}
-            {item.checklist && item.checklist.length > 0 && (
-              <div className="mt-3 space-y-1.5">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Checklist</span>
-                  <span className="text-xs text-muted-foreground">{doneChecklist}/{totalChecklist}</span>
-                </div>
-                <div className="h-1.5 bg-muted rounded-full overflow-hidden mb-2">
-                  <div
-                    className="h-full bg-primary rounded-full transition-all"
-                    style={{ width: totalChecklist ? `${(doneChecklist / totalChecklist) * 100}%` : '0%' }}
-                  />
-                </div>
-                {item.checklist.map(ci => (
-                  <button key={ci.id} onClick={() => toggleChecklistItem(ci.id)} className="flex items-center gap-2 w-full text-left py-1">
-                    {ci.done ? <Check className="w-4 h-4 text-primary shrink-0" /> : <Square className="w-4 h-4 text-muted-foreground shrink-0" />}
-                    <span className={cn("text-sm", ci.done ? "line-through text-muted-foreground" : "text-foreground")}>{ci.text}</span>
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {/* Attached docs */}
-            {attachedDocs.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-3">
-                {attachedDocs.map(doc => (
-                  <button
-                    key={doc.id}
-                    onClick={() => openDoc(doc)}
-                    className="flex items-center gap-1.5 bg-primary/10 text-primary text-xs font-medium px-2.5 py-1 rounded-full"
-                  >
-                    <Paperclip className="w-3 h-3" />
-                    <span className="truncate max-w-[100px]">{doc.name}</span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Actions column */}
-          <div className="flex flex-col items-center justify-between border-l border-border pl-2 -mr-1 shrink-0">
-            <button {...attributes} {...listeners} className="p-2 text-muted-foreground hover:text-foreground touch-none cursor-grab active:cursor-grabbing">
-              <GripVertical className="w-5 h-5" />
-            </button>
-            <button onClick={onEdit} className="p-2 text-muted-foreground hover:text-primary transition-colors">
-              <FileText className="w-4 h-4" />
-            </button>
-            <button onClick={handleDelete} className="p-2 text-muted-foreground hover:text-red-500 transition-colors">
-              <Trash2 className="w-4 h-4" />
-            </button>
-          </div>
+        {/* Action row at bottom */}
+        <div className="flex items-center justify-end gap-1 border-t border-border/40 px-3 py-2">
+          <button
+            onClick={onEdit}
+            className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-primary transition-colors px-3 py-1.5 rounded-lg hover:bg-primary/5"
+          >
+            <Pencil className="w-3.5 h-3.5" />
+            Edit
+          </button>
+          <button
+            onClick={handleDelete}
+            className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-red-500 transition-colors px-3 py-1.5 rounded-lg hover:bg-red-50"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+            Delete
+          </button>
         </div>
       </div>
     </div>
@@ -445,19 +632,18 @@ function AddEditSheet({ isOpen, onClose, trip, defaultDate, documents, allItems,
   const [showDocPicker, setShowDocPicker] = useState(false);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [costInput, setCostInput] = useState<string>(
-    existingItem?.cost ? String(existingItem.cost) : ''
+    existingItem?.cost ? String(Math.round(existingItem.cost)) : ''
   );
-  const [costInDest, setCostInDest] = useState(false); // false = INR, true = dest currency
+  const [costInDest, setCostInDest] = useState(false);
 
   const isEditing = !!existingItem;
 
-  // Converts cost input to INR for storage
   const getCostInINR = (): number => {
     const val = parseFloat(costInput);
     if (!val || isNaN(val)) return 0;
     if (costInDest && destCurrency !== 'INR') {
       const rate = RATES_PER_INR[destCurrency] ?? 1;
-      return val / rate; // dest → INR
+      return val / rate;
     }
     return val;
   };
@@ -472,6 +658,7 @@ function AddEditSheet({ isOpen, onClose, trip, defaultDate, documents, allItems,
     let location = '';
     let fromLocation = '';
     let toLocation = '';
+    let endDate: string | undefined;
 
     if (elementType === 'travel') {
       fromLocation = fd.get('fromLocation') as string;
@@ -482,8 +669,9 @@ function AddEditSheet({ isOpen, onClose, trip, defaultDate, documents, allItems,
     } else if (elementType === 'accommodation') {
       title = fd.get('accommodationName') as string;
       location = fd.get('address') as string;
-      st = fd.get('checkIn') as string || '14:00';
-      et = fd.get('checkOut') as string || '11:00';
+      st = fd.get('checkInTime') as string || '14:00';
+      et = fd.get('checkOutTime') as string || '11:00';
+      endDate = (fd.get('checkOutDate') as string) || date;
     } else if (elementType === 'meal') {
       title = fd.get('restaurantName') as string;
       location = fd.get('mealLocation') as string;
@@ -496,7 +684,6 @@ function AddEditSheet({ isOpen, onClose, trip, defaultDate, documents, allItems,
       et = addMinutesToTime(st, duration);
     }
 
-    // Handle file upload → also create Document
     let finalDocIds = [...selectedDocIds];
     if (uploadFile) {
       const catMap: Record<ElementType, string> = {
@@ -518,7 +705,6 @@ function AddEditSheet({ isOpen, onClose, trip, defaultDate, documents, allItems,
       finalDocIds = [...finalDocIds, newDoc.id];
     }
 
-    // Handle cost → sync to Expenses
     const costINR = getCostInINR();
     let expenseId = existingItem?.expenseId;
 
@@ -531,12 +717,11 @@ function AddEditSheet({ isOpen, onClose, trip, defaultDate, documents, allItems,
         amount: costINR,
         category: expCat,
         date: new Date(date).toISOString(),
-        createdAt: existingItem?.cost ? (Date.now()) : Date.now(),
+        createdAt: Date.now(),
       };
       await saveExpense(expEntry);
       expenseId = expEntry.id;
     } else if (expenseId && costINR === 0) {
-      // Cost cleared → remove linked expense
       deleteExpense({ id: expenseId, tripId: trip.id });
       expenseId = undefined;
     }
@@ -553,6 +738,7 @@ function AddEditSheet({ isOpen, onClose, trip, defaultDate, documents, allItems,
       date,
       startTime: st,
       endTime: et,
+      endDate,
       notes: fd.get('notes') as string || '',
       category: elementTypeToCategory(elementType, travelType),
       order: 0,
@@ -599,11 +785,13 @@ function AddEditSheet({ isOpen, onClose, trip, defaultDate, documents, allItems,
           </div>
         )}
 
-        {/* Date */}
-        <div>
-          <Label htmlFor="date">Date</Label>
-          <Input id="date" name="date" type="date" defaultValue={existingItem?.date || defaultDate} required />
-        </div>
+        {/* Date (not shown for accommodation — it uses check-in date field) */}
+        {elementType !== 'accommodation' && (
+          <div>
+            <Label htmlFor="date">Date</Label>
+            <Input id="date" name="date" type="date" defaultValue={existingItem?.date || defaultDate} required />
+          </div>
+        )}
 
         {/* TRAVEL fields */}
         {elementType === 'travel' && (
@@ -655,17 +843,29 @@ function AddEditSheet({ isOpen, onClose, trip, defaultDate, documents, allItems,
               <Input id="accommodationName" name="accommodationName" placeholder="Hotel Le Meurice" defaultValue={existingItem?.title} required />
             </div>
             <div>
-              <Label htmlFor="address">Address</Label>
+              <Label htmlFor="address">Address / Location</Label>
               <Input id="address" name="address" placeholder="228 Rue de Rivoli, Paris" defaultValue={existingItem?.location} />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label htmlFor="checkIn">Check-in</Label>
-                <Input id="checkIn" name="checkIn" type="time" defaultValue={existingItem?.startTime || '14:00'} />
+                <Label htmlFor="checkInDate">Check-in Date</Label>
+                <Input id="checkInDate" name="date" type="date"
+                  defaultValue={existingItem?.date || defaultDate} required />
               </div>
               <div>
-                <Label htmlFor="checkOut">Check-out</Label>
-                <Input id="checkOut" name="checkOut" type="time" defaultValue={existingItem?.endTime || '11:00'} />
+                <Label htmlFor="checkInTime">Check-in Time</Label>
+                <Input id="checkInTime" name="checkInTime" type="time" defaultValue={existingItem?.startTime || '14:00'} />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label htmlFor="checkOutDate">Check-out Date</Label>
+                <Input id="checkOutDate" name="checkOutDate" type="date"
+                  defaultValue={existingItem?.endDate || defaultDate} required />
+              </div>
+              <div>
+                <Label htmlFor="checkOutTime">Check-out Time</Label>
+                <Input id="checkOutTime" name="checkOutTime" type="time" defaultValue={existingItem?.endTime || '11:00'} />
               </div>
             </div>
           </>
@@ -727,7 +927,7 @@ function AddEditSheet({ isOpen, onClose, trip, defaultDate, documents, allItems,
           </>
         )}
 
-        {/* ── COST FIELD (all types) ── */}
+        {/* ── COST FIELD ── */}
         <div>
           <div className="flex items-center justify-between mb-1.5">
             <Label className="mb-0">Cost (optional)</Label>
@@ -735,15 +935,12 @@ function AddEditSheet({ isOpen, onClose, trip, defaultDate, documents, allItems,
               <button
                 type="button"
                 onClick={() => {
-                  // Convert the displayed value when toggling
                   const val = parseFloat(costInput);
                   if (val && !isNaN(val)) {
                     const rate = RATES_PER_INR[destCurrency] ?? 1;
                     if (costInDest) {
-                      // dest → INR
                       setCostInput(String(Math.round(val / rate)));
                     } else {
-                      // INR → dest
                       setCostInput(String(Math.round(val * rate)));
                     }
                   }
@@ -770,17 +967,12 @@ function AddEditSheet({ isOpen, onClose, trip, defaultDate, documents, allItems,
               className="pl-10 text-lg font-bold h-14"
             />
           </div>
-          {costInput && parseFloat(costInput) > 0 && showCurrencyToggle && (
+          {costInput && parseFloat(costInput) > 0 && (
             <p className="text-xs text-muted-foreground mt-1 ml-1">
-              ≈ {costInDest
-                ? formatCurrency(getCostInINR(), 'INR')
-                : formatCurrency(convertFromINR(parseFloat(costInput), destCurrency), destCurrency)
-              } · auto-logged to{' '}
-              <span className="font-semibold capitalize">{ELEMENT_TO_EXPENSE_CAT[elementType]}</span> budget
-            </p>
-          )}
-          {costInput && parseFloat(costInput) > 0 && !showCurrencyToggle && (
-            <p className="text-xs text-muted-foreground mt-1 ml-1">
+              {showCurrencyToggle && (costInDest
+                ? `≈ ${formatCurrency(getCostInINR(), 'INR')} · `
+                : `≈ ${formatCurrency(convertFromINR(parseFloat(costInput), destCurrency), destCurrency)} · `
+              )}
               Auto-logged to <span className="font-semibold capitalize">{ELEMENT_TO_EXPENSE_CAT[elementType]}</span> budget
             </p>
           )}

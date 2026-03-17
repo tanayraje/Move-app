@@ -29,7 +29,8 @@ export default function OverviewTab({ trip }: { trip: Trip }) {
   const tripStatus = () => {
     if (isAfter(now, tripEnd)) return 'Past Trip';
     if (isBefore(now, tripStart)) return daysUntil === 0 ? 'Starts Today!' : `${daysUntil} day${daysUntil === 1 ? '' : 's'} to go`;
-    return 'Currently Travelling';
+    const dayNum = differenceInDays(now, tripStart) + 1;
+    return `Day ${dayNum}`;
   };
 
   return (

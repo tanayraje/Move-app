@@ -102,7 +102,7 @@ function PlaceCard({ place, trip, onToggle }: { place: Place; trip: Trip; onTogg
       checklist: place.checklist,
     };
     saveItinerary(itineraryItem);
-    alert(`"${place.name}" added to the timeline on ${format(new Date(place.date), 'MMM d')}!`);
+    savePlace({ ...place, linkedToTimeline: true });
   };
 
   return (
@@ -179,15 +179,22 @@ function PlaceCard({ place, trip, onToggle }: { place: Place; trip: Trip; onTogg
             </div>
           )}
 
-          {/* Link to timeline */}
+          {/* Link to timeline — shows icon-only once linked */}
           {place.date && (
-            <button
-              onClick={linkToTimeline}
-              className="flex items-center gap-1.5 mt-3 text-xs font-semibold text-primary bg-primary/10 px-3 py-1.5 rounded-full"
-            >
-              <Link2 className="w-3.5 h-3.5" />
-              Add to Timeline
-            </button>
+            place.linkedToTimeline ? (
+              <div className="flex items-center gap-1.5 mt-3 text-xs font-semibold text-primary/60">
+                <Link2 className="w-3.5 h-3.5" />
+                <span>Linked to timeline</span>
+              </div>
+            ) : (
+              <button
+                onClick={linkToTimeline}
+                className="flex items-center gap-1.5 mt-3 text-xs font-semibold text-primary bg-primary/10 px-3 py-1.5 rounded-full"
+              >
+                <Link2 className="w-3.5 h-3.5" />
+                Add to Timeline
+              </button>
+            )
           )}
         </div>
 

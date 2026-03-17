@@ -6,6 +6,7 @@ export interface Trip {
   startDate: string;
   endDate: string;
   budget?: TripBudget;
+  dayCities?: Record<string, string>; // date → city name
   createdAt: number;
 }
 
@@ -87,5 +88,6 @@ export interface Place {
   visited: boolean;
   date?: string; // optional YYYY-MM-DD — links to itinerary
   checklist?: ChecklistItem[];
+  linkedToTimeline?: boolean;
   createdAt: number;
 }

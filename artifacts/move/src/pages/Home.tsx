@@ -57,31 +57,30 @@ function TripCard({ trip }: { trip: any }) {
   const days = differenceInDays(new Date(trip.endDate), new Date(trip.startDate)) + 1;
   const daysUntil = differenceInDays(new Date(trip.startDate), new Date());
   const isPast = daysUntil < 0 && differenceInDays(new Date(trip.endDate), new Date()) < 0;
+  const isActive = !isPast && daysUntil <= 0;
+
+  const statusBadge = isPast ? (
+    <span className="inline-flex bg-muted text-muted-foreground px-2.5 py-0.5 rounded-full text-xs font-semibold w-fit">Past</span>
+  ) : isActive ? (
+    <span className="inline-flex bg-primary/10 text-primary px-2.5 py-0.5 rounded-full text-xs font-semibold w-fit">In Progress</span>
+  ) : (
+    <span className="inline-flex bg-orange-500/10 text-orange-600 px-2.5 py-0.5 rounded-full text-xs font-semibold w-fit">In {daysUntil}d</span>
+  );
 
   return (
     <div className="relative group">
       <Link href={`/trip/${trip.id}/overview`} className="block bg-card rounded-[2rem] p-5 shadow-lg shadow-black/5 border border-border/50 hover:shadow-xl hover:border-primary/20 transition-all duration-300 active:scale-[0.98]">
-        <div className="flex justify-between items-start mb-8">
-          <div>
-            <h3 className="text-xl font-bold text-foreground">{trip.name}</h3>
-            <div className="flex items-center text-muted-foreground mt-1 text-sm">
-              <MapPin className="w-3.5 h-3.5 mr-1" />
-              {trip.destination}
-              {trip.destinationCurrency && trip.destinationCurrency !== 'INR' && (
-                <span className="ml-2 bg-muted text-muted-foreground px-2 py-0.5 rounded-full text-xs font-medium">{trip.destinationCurrency}</span>
-              )}
-            </div>
+        {/* Name + destination, delete sits top-right absolutely */}
+        <div className="pr-10">
+          <h3 className="text-xl font-bold text-foreground">{trip.name}</h3>
+          <div className="flex items-center text-muted-foreground mt-0.5 text-sm">
+            <MapPin className="w-3.5 h-3.5 mr-1 shrink-0" />
+            <span className="truncate">{trip.destination}</span>
           </div>
-          {isPast ? (
-            <span className="bg-muted text-muted-foreground px-3 py-1 rounded-full text-xs font-semibold">Past</span>
-          ) : daysUntil <= 0 ? (
-            <span className="bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-semibold">In Progress</span>
-          ) : (
-            <span className="bg-orange-500/10 text-orange-600 px-3 py-1 rounded-full text-xs font-semibold">In {daysUntil}d</span>
-          )}
+          <div className="mt-2">{statusBadge}</div>
         </div>
 
-        <div className="flex items-center justify-between mt-auto">
+        <div className="flex items-center justify-between mt-5">
           <div className="flex items-center text-sm font-medium text-foreground/80 bg-muted/50 px-3 py-1.5 rounded-lg">
             <Calendar className="w-4 h-4 mr-2 opacity-70" />
             {format(new Date(trip.startDate), 'MMM d')} – {format(new Date(trip.endDate), 'MMM d, yyyy')}
