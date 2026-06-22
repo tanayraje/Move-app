@@ -37,6 +37,7 @@ export default function ExpensesTab({ trip }: { trip: Trip }) {
   const [isBudgetOpen, setIsBudgetOpen] = useState(false);
   const [showInDest, setShowInDest] = useState(false);
   const [showBalance, setShowBalance] = useState(false);
+  const [showSettlement, setShowSettlement] = useState(false);
   const [editExpense, setEditExpense] = useState<Expense | null>(null);
 
   const members = trip.members || [{ id: 'self', name: 'Me', color: '#2563eb' }];
@@ -114,6 +115,49 @@ export default function ExpensesTab({ trip }: { trip: Trip }) {
 
   return { paid, owed, net };
 }, [expenses, members, isSolo]);
+  const settlements = useMemo(() => {
+  if (!balance) return [];
+
+  const creditors = members
+    .filter(m => (balance.net[m.id] || 0) > 0)
+    .map(m => ({
+      name: m.name,
+      amount: balance.net[m.id]
+    }));
+
+  const debtors = members
+    .filter(m => (balance.net[m.id] || 0) < 0)
+    .map(m => ({
+      name: m.name,
+      amount: Math.abs(balance.net[m.id])
+    }));
+
+  const result = [];
+
+  let c = 0;
+  let d = 0;
+
+  while (c < creditors.length && d < debtors.length) {
+    const value = Math.min(
+      creditors[c].amount,
+      debtors[d].amount
+    );
+
+    result.push({
+      from: debtors[d].name,
+      to: creditors[c].name,
+      amount: value
+    });
+
+    creditors[c].amount -= value;
+    debtors[d].amount -= value;
+
+    if (creditors[c].amount < 0.01) c++;
+    if (debtors[d].amount < 0.01) d++;
+  }
+
+  return result;
+}, [balance, members]);
 
   // Grouped by date — handle old ISO, new YYYY-MM-DD, and invalid dates
   const grouped = [...expenses]
@@ -302,6 +346,14 @@ export default function ExpensesTab({ trip }: { trip: Trip }) {
   <p className="text-xs text-muted-foreground mt-3">
     Positive = should receive · Negative = owes
   </p>
+             <Button
+  size="sm"
+  variant="outline"
+  className="mt-3 w-full"
+  onClick={() => setShowSettlement(true)}
+>
+  View Settlements
+</Button>
 </div>
           )}
         </div>
@@ -381,17 +433,59 @@ export default function ExpensesTab({ trip }: { trip: Trip }) {
         destCurrency={destCurrency}
       />
       {editExpense && (
-        <AddExpenseSheet
-          isOpen={!!editExpense}
-          onClose={() => setEditExpense(null)}
-          trip={trip}
-          activeCurrency={activeCurrency}
-          showInDest={showInDest}
-          destCurrency={destCurrency}
-          existingExpense={editExpense}
-        />
-      )}
-      <BudgetSheet isOpen={isBudgetOpen} onClose={() => setIsBudgetOpen(false)} current={budget} onSave={saveBudget} activeCurrency={activeCurrency} />
+  <AddExpenseSheet
+    isOpen={!!editExpense}
+    onClose={() => setEditExpense(null)}
+    trip={trip}
+    activeCurrency={activeCurrency}
+    showInDest={showInDest}
+    destCurrency={destCurrency}
+    existingExpense={editExpense}
+  />
+)}
+
+<BottomSheet
+  isOpen={showSettlement}
+  onClose={() => setShowSettlement(false)}
+  title="Settle Up"
+>
+  <div className="flex flex-col gap-3">
+    {settlements.length === 0 ? (
+      <p className="text-sm text-muted-foreground">
+        Everyone is settled.
+      </p>
+    ) : (
+      settlements.map((s, i) => (
+        <div
+          key={i}
+          className="bg-card border border-border rounded-xl p-3"
+        >
+          <p className="font-medium">
+            {s.from} pays {s.to}
+          </p>
+
+          <p className="text-primary font-bold mt-1">
+            {formatCurrency(
+              showInDest
+                ? convertFromINR(s.amount, destCurrency)
+                : s.amount,
+              activeCurrency
+            )}
+          </p>
+        </div>
+      ))
+    )}
+  </div>
+</BottomSheet>
+
+<BudgetSheet
+  isOpen={isBudgetOpen}
+  onClose={() => setIsBudgetOpen(false)}
+  current={budget}
+  onSave={saveBudget}
+  activeCurrency={activeCurrency}
+/>
+
     </div>
   );
 }
@@ -635,7 +729,7 @@ function AddExpenseSheet({
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div>
           <Label htmlFor="amount">Amount ({activeCurrency})</Label>
-          <Input id="amount" name="amount" type="number" step="0.01" placeholder="0.00" required
+          <Input id="amount" name="amount" type="number" step="0.01" min="0" placeholder="0.00" required
             value={amountInput} onChange={e => setAmountInput(e.target.value)}
             className="text-3xl font-display font-bold h-16" />
         </div>
