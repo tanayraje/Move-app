@@ -1,9 +1,10 @@
 import React from "react";
-import { differenceInDays, format, isBefore, isAfter } from "date-fns";
+import { differenceInDays, format, isBefore, isAfter, addDays } from "date-fns";
 import { useItinerary, useExpenses, useDocuments, usePlaces } from "@/hooks/use-store";
 import { Trip } from "@/lib/types";
-import { Calendar, FileText, Receipt, MapPin, Plane, Clock } from "lucide-react";
+import { Calendar, FileText, Receipt, MapPin, Plane, Clock, Heart } from "lucide-react";
 import { formatCurrency } from "@/lib/countries";
+import { safeFormatDate, safeParseDate } from "@/lib/utils";
 
 export default function OverviewTab({ trip }: { trip: Trip }) {
   const { data: itinerary = [] } = useItinerary(trip.id);
@@ -11,31 +12,47 @@ export default function OverviewTab({ trip }: { trip: Trip }) {
   const { data: documents = [] } = useDocuments(trip.id);
   const { data: places = [] } = usePlaces(trip.id);
 
-  const now = new Date();
-  const tripStart = new Date(trip.startDate);
-  const tripEnd = new Date(trip.endDate);
-  const daysUntil = differenceInDays(tripStart, now);
+  const status = trip.status || (trip.archived ? 'archived' : 'active');
+  const isWishlist = status === 'wishlist';
+
   const totalSpent = expenses.reduce((s, e) => s + e.amount, 0);
   const budgetTotal = trip.budget?.total ?? 0;
   const visitedPlaces = places.filter(p => p.visited).length;
 
-  // Next upcoming itinerary item
-  const nowStr = `${format(now, 'yyyy-MM-dd')}T${format(now, 'HH:mm')}`;
-  const upcomingItems = [...itinerary]
-    .filter(i => `${i.date}T${i.startTime}` >= nowStr)
-    .sort((a, b) => `${a.date}T${a.startTime}`.localeCompare(`${b.date}T${b.startTime}`));
-  const nextItem = upcomingItems[0] ?? null;
+  // For active trips, show next item; for wishlist, show day count
+  let nextItem: typeof itinerary[0] | null = null;
+  let tripStatusLabel = '';
 
-  const tripStatus = () => {
-    if (isAfter(now, tripEnd)) return 'Past Trip';
-    if (isBefore(now, tripStart)) return daysUntil === 0 ? 'Starts Today!' : `${daysUntil} day${daysUntil === 1 ? '' : 's'} to go`;
-    const dayNum = differenceInDays(now, tripStart) + 1;
-    return `Day ${dayNum}`;
-  };
+  if (isWishlist) {
+    const dayCount = new Set(itinerary.map(i => i.date).filter(Boolean)).size;
+    tripStatusLabel = `${dayCount} day${dayCount !== 1 ? 's' : ''} planned`;
+  } else {
+    const now = new Date();
+    const tripStart = safeParseDate(trip.startDate);
+    const tripEnd = safeParseDate(trip.endDate);
+    if (!tripStart || !tripEnd) {
+      tripStatusLabel = 'Trip';
+    } else {
+      const daysUntil = differenceInDays(tripStart, now);
+
+    if (isAfter(now, tripEnd)) tripStatusLabel = 'Past Trip';
+    else if (isBefore(now, tripStart)) tripStatusLabel = daysUntil === 0 ? 'Starts Today!' : `${daysUntil} day${daysUntil === 1 ? '' : 's'} to go`;
+    else {
+      const dayNum = differenceInDays(now, tripStart) + 1;
+      tripStatusLabel = `Day ${dayNum}`;
+    }
+    }
+
+    // Next upcoming item
+    const nowStr = `${format(now, 'yyyy-MM-dd')}T${format(now, 'HH:mm')}`;
+    const upcomingItems = [...itinerary]
+      .filter(i => i.date && `${i.date}T${i.startTime}` >= nowStr)
+      .sort((a, b) => `${a.date}T${a.startTime}`.localeCompare(`${b.date}T${b.startTime}`));
+    nextItem = upcomingItems[0] ?? null;
+  }
 
   return (
     <div className="p-5 flex flex-col gap-4 pb-16">
-
       {/* Hero card */}
       <div className="bg-primary text-primary-foreground rounded-[2rem] p-6 shadow-xl shadow-primary/20 relative overflow-hidden">
         <div className="absolute -right-6 -bottom-6 opacity-10">
@@ -43,16 +60,24 @@ export default function OverviewTab({ trip }: { trip: Trip }) {
         </div>
         <div className="relative z-10">
           <p className="text-primary-foreground/70 font-medium text-sm mb-0.5">{trip.destination}</p>
-          <h2 className="text-3xl font-display font-extrabold mb-3">{tripStatus()}</h2>
+          <h2 className="text-3xl font-display font-extrabold mb-3">{tripStatusLabel}</h2>
           <div className="flex items-center gap-2 text-sm font-medium bg-white/20 backdrop-blur-md px-3 py-1.5 rounded-xl w-fit">
-            <Calendar className="w-4 h-4" />
-            {format(tripStart, 'MMM d')} – {format(tripEnd, 'MMM d, yyyy')}
+            {isWishlist ? (
+              <>
+                <Heart className="w-4 h-4 text-pink-300" /> Saved to Wishlist
+              </>
+            ) : (
+              <>
+                <Calendar className="w-4 h-4" />
+                {safeFormatDate(trip.startDate, d => format(d, 'MMM d'), '')} – {safeFormatDate(trip.endDate, d => format(d, 'MMM d, yyyy'), '')}
+              </>
+            )}
           </div>
         </div>
       </div>
 
       {/* Next item */}
-      {nextItem && (
+      {nextItem && !isWishlist && (
         <div className="bg-card border border-border rounded-2xl p-4">
           <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">Next Up</p>
           <div className="flex items-start gap-3">
@@ -62,7 +87,7 @@ export default function OverviewTab({ trip }: { trip: Trip }) {
             <div>
               <p className="font-bold text-foreground">{nextItem.title}</p>
               <p className="text-sm text-muted-foreground mt-0.5">
-                {format(new Date(nextItem.date), 'MMM d')} · {nextItem.startTime}–{nextItem.endTime}
+                {safeFormatDate(nextItem.date, d => format(d, 'MMM d'), nextItem.date)} · {nextItem.startTime}–{nextItem.endTime}
               </p>
               {nextItem.location && (
                 <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
@@ -95,10 +120,8 @@ export default function OverviewTab({ trip }: { trip: Trip }) {
             </span>
           </div>
           <div className="h-2 bg-muted rounded-full overflow-hidden">
-            <div
-              className={`h-full rounded-full transition-all ${totalSpent > budgetTotal ? 'bg-red-500' : 'bg-primary'}`}
-              style={{ width: `${Math.min((totalSpent / budgetTotal) * 100, 100)}%` }}
-            />
+            <div className={`h-full rounded-full transition-all ${totalSpent > budgetTotal ? 'bg-red-500' : 'bg-primary'}`}
+              style={{ width: `${Math.min((totalSpent / budgetTotal) * 100, 100)}%` }} />
           </div>
         </div>
       )}

@@ -20,7 +20,7 @@ import {
   Trip, ItineraryItem, ElementType, TravelType, ItineraryCategory,
   TripDocument, ChecklistItem, ExpenseCategory
 } from "@/lib/types";
-import { generateId, cn } from "@/lib/utils";
+import { generateId, cn, safeFormatDate, safeParseDate, isDayLabel, getTripStatus } from "@/lib/utils";
 import { Button, Input, Label, Select, BottomSheet, FAB } from "@/components/ui";
 import { formatCurrency, convertFromINR, RATES_PER_INR } from "@/lib/countries";
 
@@ -111,7 +111,10 @@ function sortItems(items: ItineraryItem[]): ItineraryItem[] {
 }
 
 function stayNights(checkIn: string, checkOut: string): number {
-  return Math.max(differenceInDays(new Date(checkOut), new Date(checkIn)), 1);
+  const d1 = safeParseDate(checkIn);
+  const d2 = safeParseDate(checkOut);
+  if (!d1 || !d2) return 1;
+  return Math.max(differenceInDays(d2, d1), 1);
 }
 
 // ─── Main Tab ─────────────────────────────────────────────────────────────────
@@ -121,17 +124,30 @@ export default function ItineraryTab({ trip }: { trip: Trip }) {
   const { mutate: updateTrip } = useUpdateTrip();
   const { data: documents = [] } = useDocuments(trip.id);
 
-  const [selectedDate, setSelectedDate] = useState<string>(trip.startDate);
+  const status = trip.status || (trip.archived ? 'archived' : 'active');
+  const isWishlist = status === 'wishlist';
+
+  const [selectedDate, setSelectedDate] = useState<string>(isWishlist ? 'Day 1' : trip.startDate);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editItem, setEditItem] = useState<ItineraryItem | null>(null);
   const [editingCity, setEditingCity] = useState(false);
   const [cityDraft, setCityDraft] = useState('');
   const cityInputRef = useRef<HTMLInputElement>(null);
 
-  const daysCount = differenceInDays(new Date(trip.endDate), new Date(trip.startDate)) + 1;
-  const days = Array.from({ length: daysCount }).map((_, i) =>
-    format(addDays(new Date(trip.startDate), i), 'yyyy-MM-dd')
-  );
+  const wishlistDays = useMemo(() => {
+    const uniqueDays = new Set(allItems.map(i => i.date).filter(Boolean));
+    let count = Math.max(uniqueDays.size, 1);
+    return Array.from({ length: count }).map((_, i) => `Day ${i + 1}`);
+  }, [allItems]);
+
+  const startDateParsed = safeParseDate(trip.startDate);
+  const endDateParsed = safeParseDate(trip.endDate);
+  const daysCount = isWishlist ? wishlistDays.length
+    : startDateParsed && endDateParsed ? differenceInDays(endDateParsed, startDateParsed) + 1 : 0;
+  const days = isWishlist ? wishlistDays
+    : startDateParsed ? Array.from({ length: daysCount }).map((_, i) =>
+      format(addDays(startDateParsed, i), 'yyyy-MM-dd')
+    ) : [];
 
   const sortedItems = useMemo(() => sortItems(allItems), [allItems]);
   const filteredItems = useMemo(() =>
@@ -223,8 +239,12 @@ export default function ItineraryTab({ trip }: { trip: Trip }) {
                     isSelected ? "text-primary-foreground/80" : "text-primary"
                   )}>{city}</span>
                 )}
-                <span className="text-xs uppercase opacity-80">{format(new Date(day), 'EEE')}</span>
-                <span className="text-lg font-bold mt-0.5">{format(new Date(day), 'd')}</span>
+                <span className="text-xs uppercase opacity-80">
+                  {isDayLabel(day) ? day : safeFormatDate(day, d => format(d, 'EEE'), '')}
+                </span>
+                <span className="text-lg font-bold mt-0.5">
+                  {isDayLabel(day) ? day.replace('Day ', 'D') : safeFormatDate(day, d => format(d, 'd'), '')}
+                </span>
                 {hasAccom && (
                   <span className={cn(
                     "text-[9px] font-bold mt-0.5 leading-none",
@@ -246,7 +266,7 @@ export default function ItineraryTab({ trip }: { trip: Trip }) {
         <div className="flex items-center justify-between mb-4">
           <div className="flex flex-col">
             <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-              {format(new Date(selectedDate), 'EEEE, MMMM d')}
+              {isDayLabel(selectedDate) ? selectedDate : safeFormatDate(selectedDate, d => format(d, 'EEEE, MMMM d'), selectedDate)}
             </span>
             {editingCity ? (
               <div className="flex items-center gap-2 mt-1">
@@ -333,7 +353,7 @@ export default function ItineraryTab({ trip }: { trip: Trip }) {
         )}
       </div>
 
-      <FAB icon={Plus} onClick={() => setIsAddOpen(true)} />
+      {getTripStatus(trip) !== 'archived' && <FAB icon={Plus} onClick={() => setIsAddOpen(true)} />}
 
       <AddEditSheet
         isOpen={isAddOpen}
@@ -387,10 +407,10 @@ function AccommodationBanner({ item, trip, onEdit }: { item: ItineraryItem; trip
           <p className="text-[10px] font-bold text-violet-500 uppercase tracking-wider leading-none mb-0.5">Staying At</p>
           <h4 className="font-bold text-foreground text-base leading-tight truncate">{item.title}</h4>
           <p className="text-xs text-muted-foreground mt-0.5">
-            {format(new Date(item.date), 'MMM d')}
+            {safeFormatDate(item.date, d => format(d, 'MMM d'), item.date)}
             {item.startTime && ` ${item.startTime}`}
             {' – '}
-            {item.endDate ? format(new Date(item.endDate), 'MMM d') : '—'}
+            {item.endDate ? safeFormatDate(item.endDate, d => format(d, 'MMM d'), item.endDate) : '—'}
             {item.endTime && ` ${item.endTime}`}
             {' · '}{nights} night{nights !== 1 ? 's' : ''}
           </p>
@@ -770,7 +790,7 @@ function AddEditSheet({ isOpen, onClose, trip, defaultDate, documents, allItems,
         title,
         amount: costINR,
         category: expCat,
-        date: new Date(date).toISOString(),
+        date: safeFormatDate(date, d => d.toISOString(), date),
         createdAt: Date.now(),
       };
       await saveExpense(expEntry);

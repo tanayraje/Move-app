@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Plus, MapPin, CheckCircle2, Circle, Trash2, Calendar, Link2 } from "lucide-react";
 import { usePlaces, useSavePlace, useDeletePlace, useSaveItineraryItem } from "@/hooks/use-store";
 import { Trip, Place, ItineraryItem, ChecklistItem } from "@/lib/types";
-import { generateId, cn } from "@/lib/utils";
+import { generateId, cn, safeFormatDate, getTripStatus } from "@/lib/utils";
 import { Button, Input, Label, BottomSheet, FAB } from "@/components/ui";
 import { format } from "date-fns";
 
@@ -50,7 +50,7 @@ export default function PlacesTab({ trip }: { trip: Trip }) {
         )}
       </div>
 
-      <FAB icon={Plus} onClick={() => setIsAddOpen(true)} />
+      {getTripStatus(trip) !== 'archived' && <FAB icon={Plus} onClick={() => setIsAddOpen(true)} />}
       <AddPlaceSheet isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} tripId={trip.id} />
     </div>
   );
@@ -130,7 +130,7 @@ function PlaceCard({ place, trip, onToggle }: { place: Place; trip: Trip; onTogg
           {place.date && (
             <div className="flex items-center text-xs text-primary/80 mt-1 font-medium gap-1">
               <Calendar className="w-3.5 h-3.5" />
-              {format(new Date(place.date), 'MMM d, yyyy')}
+              {safeFormatDate(place.date, d => format(d, 'MMM d, yyyy'), place.date || '')}
             </div>
           )}
           {place.notes && (

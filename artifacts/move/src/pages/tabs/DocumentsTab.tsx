@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Plus, FileText, Image as ImageIcon, Trash2, Download, Plane, Hotel } from "lucide-react";
 import { useDocuments, useAddDocument, useDeleteDocument } from "@/hooks/use-store";
 import { Trip, TripDocument, DocumentCategory } from "@/lib/types";
-import { generateId, cn } from "@/lib/utils";
+import { generateId, cn, getTripStatus } from "@/lib/utils";
 import { Button, Input, Label, Select, BottomSheet, FAB } from "@/components/ui";
 
 const DOC_ICONS: Record<DocumentCategory, any> = {
@@ -50,7 +50,7 @@ export default function DocumentsTab({ trip }: { trip: Trip }) {
         </div>
       )}
 
-      <FAB icon={Plus} onClick={() => setIsAddOpen(true)} />
+      {getTripStatus(trip) !== 'archived' && <FAB icon={Plus} onClick={() => setIsAddOpen(true)} />}
       <AddDocSheet isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} tripId={trip.id} />
     </div>
   );

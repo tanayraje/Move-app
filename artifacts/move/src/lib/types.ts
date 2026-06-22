@@ -4,6 +4,8 @@ export interface TripMember {
   color?: string; // hex color for avatar
 }
 
+export type TripStatus = 'active' | 'archived' | 'wishlist';
+
 export interface Trip {
   id: string;
   name: string;
@@ -15,7 +17,8 @@ export interface Trip {
   dayCities?: Record<string, string>; // date → city name
   members?: TripMember[];
   inviteCode?: string;
-  archived?: boolean;
+  status?: TripStatus; // replaces `archived` boolean
+  archived?: boolean; // legacy — kept for backward compat
   createdAt: number;
 }
 

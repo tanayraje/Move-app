@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import { useExpenses, useSaveExpense, useDeleteExpense, useUpdateTrip } from "@/hooks/use-store";
 import { Trip, Expense, ExpenseCategory, TripBudget, TripMember } from "@/lib/types";
-import { generateId, cn } from "@/lib/utils";
+import { generateId, cn, safeFormatDate, getTripStatus } from "@/lib/utils";
 import { Button, Input, Label, Select, BottomSheet, FAB } from "@/components/ui";
 import { formatCurrency, convertFromINR } from "@/lib/countries";
 
@@ -104,11 +104,16 @@ export default function ExpensesTab({ trip }: { trip: Trip }) {
     return { paid, owed, net };
   }, [expenses, members, isSolo]);
 
-  // Grouped by date
+  // Grouped by date — handle old ISO, new YYYY-MM-DD, and invalid dates
   const grouped = [...expenses]
+    .filter(e => e.date && typeof e.date === 'string')
     .sort((a, b) => a.date.localeCompare(b.date))
     .reduce((acc, exp) => {
-      const d = format(parseISO(exp.date + 'T00:00:00'), 'MMM d, yyyy');
+      const raw = exp.date;
+      // Extract YYYY-MM-DD from ISO or plain string
+      const datePart = /^\d{4}-\d{2}-\d{2}/.test(raw) ? raw.slice(0, 10) : '';
+      if (!datePart) return acc;
+      const d = safeFormatDate(datePart, x => format(x, 'MMM d, yyyy'), datePart);
       if (!acc[d]) acc[d] = [];
       acc[d].push(exp);
       return acc;
@@ -320,7 +325,7 @@ export default function ExpensesTab({ trip }: { trip: Trip }) {
         )}
       </div>
 
-      <FAB icon={Plus} onClick={() => setIsAddOpen(true)} />
+      {getTripStatus(trip) !== 'archived' && <FAB icon={Plus} onClick={() => setIsAddOpen(true)} />}
       <AddExpenseSheet
         isOpen={isAddOpen}
         onClose={() => setIsAddOpen(false)}
