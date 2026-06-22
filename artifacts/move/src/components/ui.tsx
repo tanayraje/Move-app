@@ -87,7 +87,7 @@ className="fixed inset-0 z-50 bg-foreground/20 backdrop-blur-sm"
 />
 
 ```
-      <motion.div
+      <div
         initial={{ y: 0 }}
         animate={{ y: 0 }}
         exit={{ y: 0 }}
@@ -96,12 +96,12 @@ className="fixed inset-0 z-50 bg-foreground/20 backdrop-blur-sm"
           duration: 0.3,
           ease: "easeInOut",
         }}
-        className="fixed inset-x-0 bottom-0 z-50 mx-auto flex w-full max-w-md flex-col rounded-t-[32px] bg-card shadow-2xl"
+        className="fixed inset-0 z-50 flex items-center justify-center p-4"
         style={{
           maxHeight: "calc(100vh - 32px)",
         }}
       >
-        <div className="flex-1 overflow-y-auto px-6 pb-8 pt-4 no-scrollbar">
+        <div className="w-full max-w-md rounded-3xl bg-card shadow-2xl overflow-y-auto px-6 pb-8 pt-4">
           <div className="mx-auto mt-2 mb-6 h-1.5 w-12 rounded-full bg-muted-foreground/20" />
 
           <div className="sticky top-0 z-10 mb-6 flex items-center justify-between bg-card py-2">
@@ -121,7 +121,7 @@ className="fixed inset-0 z-50 bg-foreground/20 backdrop-blur-sm"
 
           {children}
         </div>
-      </motion.div>
+      </div>
     </>
   )}
 </AnimatePresence>
