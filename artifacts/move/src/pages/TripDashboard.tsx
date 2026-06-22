@@ -53,18 +53,7 @@ export default function TripDashboard({ params }: { params: { id: string, tab?: 
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <MembersButton trip={trip} />
-          {trip.inviteCode && !isWishlist && (
-            <button
-              onClick={() => {
-                navigator.clipboard?.writeText(trip.inviteCode!);
-                alert('Copied!');
-              }}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-muted text-xs font-bold text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors"
-              title="Copy invite code"
-            >
-              <Copy className="w-3.5 h-3.5" />
-            </button>
-          )}
+        
         </div>
       </header>
 
