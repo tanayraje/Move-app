@@ -3,7 +3,7 @@ import { Link } from "wouter";
 import { format, differenceInDays, addMonths, addDays } from "date-fns";
 import {
   Plus, MapPin, Calendar, Plane, Trash2, Search, ChevronDown, X,
-  Archive, Heart, Clock, MoreVertical, ArrowRight, LogOut
+  Archive, Heart, Clock, MoreVertical, Users, LogOut
 } from "lucide-react";
 import { useTrips, useCreateTrip, useDeleteTrip, useUpdateTrip } from "@/hooks/use-store";
 import { useSaveItineraryItem } from "@/hooks/use-store";
@@ -57,7 +57,7 @@ export default function Home() {
               className="p-2.5 bg-muted rounded-full hover:bg-primary/10 hover:text-primary transition-colors"
               title="Join a trip by code"
             >
-              <ArrowRight className="w-5 h-5" />
+              <Users className="w-5 h-5" />
             </button>
             <div className="relative">
               <button
@@ -314,7 +314,7 @@ function TripMenu({ trip, status }: { trip: Trip; status: TripStatus }) {
           <div className="absolute right-4 top-20 bg-card border border-border rounded-2xl shadow-2xl p-2 min-w-[160px]" onClick={e => e.stopPropagation()}>
             {status === 'wishlist' && (
               <button onClick={() => setIsConvertOpen(true)} className="w-full text-left px-3 py-2.5 text-sm font-medium hover:bg-muted rounded-xl flex items-center gap-2">
-                <ArrowRight className="w-4 h-4" /> Convert to Trip
+                <Users className="w-4 h-4" /> Convert to Trip
               </button>
             )}
             <button onClick={handleArchive} className="w-full text-left px-3 py-2.5 text-sm font-medium hover:bg-muted rounded-xl flex items-center gap-2">
