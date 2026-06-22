@@ -69,15 +69,15 @@ export function BottomSheet({ isOpen, onClose, title, children }: { isOpen: bool
     <AnimatePresence>
       {isOpen && (
         <>
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             onClick={onClose}
             className="fixed inset-0 z-50 bg-foreground/20 backdrop-blur-sm"
           />
-          <motion.div 
-            initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
-            transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="fixed inset-x-0 bottom-0 z-50 mt-24 flex h-auto max-h-[90vh] flex-col rounded-t-[32px] bg-card shadow-2xl pb-[env(safe-area-inset-bottom)]"
+          <motion.div
+            initial={{ y: "100vh" }} animate={{ y: 0 }} exit={{ y: "100vh" }}
+            transition={{ type: "tween", duration: 0.3, ease: "easeInOut" }}
+            className="fixed left-0 right-0 bottom-0 z-50 flex max-h-[90vh] flex-col rounded-t-[32px] bg-card shadow-2xl"
           >
             <div className="flex-1 overflow-y-auto px-6 pb-8 pt-4 no-scrollbar">
               <div className="mx-auto mt-2 mb-6 h-1.5 w-12 rounded-full bg-muted-foreground/20" />

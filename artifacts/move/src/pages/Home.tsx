@@ -107,41 +107,37 @@ export default function Home() {
           </div>
         ) : (
           <>
-            {/* Dropdown tabs */}
-            {hasMultiple && (
-              <div className="flex bg-muted p-1 rounded-xl mb-2">
-                {activeTrips.length > 0 && (
-                  <button
-                    onClick={() => setTab('active')}
-                    className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all ${
-                      tab === 'active' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground'
-                    }`}
-                  >
-                    Active ({activeTrips.length})
-                  </button>
-                )}
-                {wishlistTrips.length > 0 && (
-                  <button
-                    onClick={() => setTab('wishlist')}
-                    className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all flex items-center justify-center gap-1.5 ${
-                      tab === 'wishlist' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground'
-                    }`}
-                  >
-                    <Heart className="w-3.5 h-3.5" /> Wishlist ({wishlistTrips.length})
-                  </button>
-                )}
-                {archivedTrips.length > 0 && (
-                  <button
-                    onClick={() => setTab('archived')}
-                    className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all flex items-center justify-center gap-1.5 ${
-                      tab === 'archived' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground'
-                    }`}
-                  >
-                    <Archive className="w-3.5 h-3.5" /> Archived ({archivedTrips.length})
-                  </button>
-                )}
-              </div>
-            )}
+            {/* Dropdown tabs — Active always shown, others when they have items */}
+            <div className="flex bg-muted p-1 rounded-xl mb-2">
+              <button
+                onClick={() => setTab('active')}
+                className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all ${
+                  tab === 'active' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground'
+                }`}
+              >
+                Active ({activeTrips.length})
+              </button>
+              {wishlistTrips.length > 0 && (
+                <button
+                  onClick={() => setTab('wishlist')}
+                  className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+                    tab === 'wishlist' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground'
+                  }`}
+                >
+                  <Heart className="w-3.5 h-3.5" /> Wishlist ({wishlistTrips.length})
+                </button>
+              )}
+              {archivedTrips.length > 0 && (
+                <button
+                  onClick={() => setTab('archived')}
+                  className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+                    tab === 'archived' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground'
+                  }`}
+                >
+                  <Archive className="w-3.5 h-3.5" /> Archived ({archivedTrips.length})
+                </button>
+              )}
+            </div>
 
             {tripsToShow.length === 0 ? (
               <div className="text-center text-muted-foreground mt-16">
