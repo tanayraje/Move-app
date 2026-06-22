@@ -65,69 +65,67 @@ export function Label({ className, children, ...props }: React.LabelHTMLAttribut
 }
 
 export function BottomSheet({
-isOpen,
-onClose,
-title,
-children,
+  isOpen,
+  onClose,
+  title,
+  children,
 }: {
-isOpen: boolean;
-onClose: () => void;
-title: string;
-children: React.ReactNode;
+  isOpen: boolean;
+  onClose: () => void;
+  title: string;
+  children: React.ReactNode;
 }) {
-return ( <AnimatePresence>
-{isOpen && (
-<>
-<motion.div
-initial={{ opacity: 0 }}
-animate={{ opacity: 1 }}
-exit={{ opacity: 0 }}
-onClick={onClose}
-className="fixed inset-0 z-[9998] bg-foreground/20 backdrop-blur-sm"
-/>
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="fixed inset-0 z-50 bg-foreground/20 backdrop-blur-sm"
+          />
 
-```
-      <motion.div
-        initial={{ y: 0 }}
-        animate={{ y: 0 }}
-        exit={{ y: 0 }}
-        transition={{
-          type: "tween",
-          duration: 0.3,
-          ease: "easeInOut",
-        }}
-        className="fixed inset-x-0 bottom-0 z-[9999] mx-auto flex w-full max-w-md flex-col rounded-t-[32px] bg-card shadow-2xl"
-        style={{
-          maxHeight: "calc(100vh - 32px)",
-        }}
-      >
-        <div className="flex-1 overflow-y-auto px-6 pb-8 pt-4 no-scrollbar">
-          <div className="mx-auto mt-2 mb-6 h-1.5 w-12 rounded-full bg-muted-foreground/20" />
+          <motion.div
+            initial={{ y: "100%" }}
+            animate={{ y: 0 }}
+            exit={{ y: "100%" }}
+            transition={{
+              type: "tween",
+              duration: 0.3,
+              ease: "easeInOut",
+            }}
+            className="fixed inset-x-0 bottom-0 z-50 mx-auto flex w-full max-w-md flex-col rounded-t-[32px] bg-card shadow-2xl"
+            style={{
+              maxHeight: "85vh",
+            }}
+          >
+            <div className="flex-1 overflow-y-auto px-6 pb-8 pt-4 no-scrollbar">
+              <div className="mx-auto mt-2 mb-6 h-1.5 w-12 rounded-full bg-muted-foreground/20" />
 
-          <div className="sticky top-0 z-10 mb-6 flex items-center justify-between bg-card py-2">
-            <h2 className="text-2xl font-display font-bold text-foreground">
-              {title}
-            </h2>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-display font-bold text-foreground">
+                  {title}
+                </h2>
 
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 -mr-2 rounded-full bg-muted/50"
-              onClick={onClose}
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 -mr-2 rounded-full bg-muted/50"
+                  onClick={onClose}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
 
-          {children}
-        </div>
-      </motion.div>
-    </>
-  )}
-</AnimatePresence>
-
-
-);
+              {children}
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
 }
 
 
