@@ -1,0 +1,191 @@
+## NEW FEATURE 1: ARCHIVE OLD TRIPS
+
+Goal:
+Keep active trips clean while preserving historical trip data.
+
+Requirements:
+
+1. Automatically move trips to "Archived Trips" when:
+
+   * trip end date is more than 6 months in the past.
+
+2. Active trips should display separately from archived trips.
+
+3. Add:
+
+   * Active Trips
+   * Archived Trips
+
+4. Archived trips remain fully viewable:
+
+   * itinerary
+   * expenses
+   * documents
+   * places
+   * participants
+
+5. Archived trips should be read-only by default.
+
+---
+
+## FEATURE 2: EXPORT EXPENSES
+
+Goal:
+Allow users to export trip expenses.
+
+Requirements:
+
+1. Add Export button inside Expense section.
+
+2. Export formats:
+
+   * CSV
+
+3. Export should include:
+
+   * date
+   * expense title
+   * category
+   * amount
+   * payer
+   * participants involved in split if any
+   * split values
+   * notes
+
+---
+
+## FEATURE 3: SHARED TRIPS AND MEMBER MANAGEMENT
+
+Goal:
+Allow multiple people to collaborate on the same trip.
+
+Requirements:
+
+1. Add Members section in trip settings.
+
+2. Every trip should have:
+
+   * unique trip code
+   * shareable invite code
+
+Example:
+MOVE-72Q8
+
+3. Users can:
+
+   * join a trip using a code
+   * invite people using a code
+
+4. Trip members should instantly see updates from all participants.
+
+5. Member list should display:
+
+   * profile icon
+   * name
+
+---
+
+## FEATURE 4: EXPENSE SPLITTING
+
+Goal:
+Allow group expense management.
+
+Requirements:
+
+1. Keep expense splitting inside the existing Expense section.
+
+2. Do NOT create a separate section.
+
+3. Split Expense option should appear ONLY when:
+
+   * trip contains more than one member.
+
+4. If trip has only one member:
+
+   * hide split controls completely.
+
+Split modes:
+
+A. Equal Split
+
+* divide amount equally among selected members
+
+B. Unequal Split
+
+* manually assign amounts per participant
+
+Users must be able to select:
+
+* all members
+* specific members only
+
+---
+
+## FEATURE 5: EXPENSE OWNER TRACKING
+
+Goal:
+Track who paid for each expense.
+
+Requirements:
+
+Each expense should contain:
+
+* payer (self selected by default)
+* amount
+* category
+* date (today's date selcted by dafualt)
+* notes (optional)
+
+Display payer avatar beside expense entry.
+
+## FEATURE 6: EXPENSE DATE FIELD
+
+Goal:
+Improve chronological accuracy.
+
+Requirements:
+
+1. Every expense must include a date, shown when selected an expense card
+
+2. Default value:
+   today's date
+
+3. User can modify date manually.
+
+4. Expense history should sort chronologically.
+
+---
+
+## FEATURE 7: GROUP BALANCE CALCULATIONS
+
+Goal:
+Show who owes whom.
+
+Requirements:
+
+Calculate:
+
+* total paid by each participant
+* total owed by each participant
+* settlement amounts
+
+Display summary inside existing Expense section.
+
+Do not create a separate page.
+
+---
+
+## FEATURE 8: OVERALL + INDIVIDUAL EXPENSE TRACKING
+
+Goal:
+Track both trip expenses and participant spending.
+
+Requirements:
+
+Expense dashboard should show:
+
+Trip Total
+
+Participant Totals
+
+Update automatically as expenses are added.

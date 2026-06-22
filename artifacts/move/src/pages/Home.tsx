@@ -1,15 +1,33 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Link } from "wouter";
-import { format, differenceInDays } from "date-fns";
-import { Plus, MapPin, Calendar, Plane, Trash2, Search, ChevronDown, X } from "lucide-react";
-import { useTrips, useCreateTrip, useDeleteTrip } from "@/hooks/use-store";
+import { format, differenceInDays, addMonths } from "date-fns";
+import { Plus, MapPin, Calendar, Plane, Trash2, Search, ChevronDown, X, Archive, Clock } from "lucide-react";
+import { useTrips, useCreateTrip, useDeleteTrip, useUpdateTrip } from "@/hooks/use-store";
 import { generateId } from "@/lib/utils";
 import { Button, Input, Label, BottomSheet } from "@/components/ui";
 import { COUNTRIES, Country } from "@/lib/countries";
 
 export default function Home() {
-  const { data: trips = [], isLoading } = useTrips();
+  const { data: allTrips = [], isLoading } = useTrips();
+  const { mutate: updateTrip } = useUpdateTrip();
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [tab, setTab] = useState<'active' | 'archived'>('active');
+
+  // Auto-archive trips older than 6 months
+  useEffect(() => {
+    const sixMonthsAgo = addMonths(new Date(), -6);
+    allTrips.forEach(trip => {
+      if (new Date(trip.endDate) < sixMonthsAgo && !trip.archived) {
+        updateTrip({ ...trip, archived: true });
+      }
+    });
+  }, [allTrips]);
+
+  const activeTrips = allTrips.filter(t => !t.archived);
+  const archivedTrips = allTrips.filter(t => t.archived);
+
+  const tripsToShow = tab === 'active' ? activeTrips : archivedTrips;
+  const hasBoth = activeTrips.length > 0 && archivedTrips.length > 0;
 
   return (
     <div className="flex flex-col min-h-[100dvh] pb-8 relative">
@@ -23,7 +41,7 @@ export default function Home() {
           <div className="flex flex-col gap-4">
             {[1, 2, 3].map(i => <div key={i} className="h-32 rounded-3xl bg-muted animate-pulse" />)}
           </div>
-        ) : trips.length === 0 ? (
+        ) : allTrips.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center text-center px-4 mt-16">
             <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center mb-6">
               <Plane className="w-10 h-10 text-primary" />
@@ -35,11 +53,44 @@ export default function Home() {
             </Button>
           </div>
         ) : (
-          trips.map(trip => <TripCard key={trip.id} trip={trip} />)
+          <>
+            {/* Tabs */}
+            {hasBoth && (
+              <div className="flex bg-muted p-1 rounded-xl mb-2">
+                <button
+                  onClick={() => setTab('active')}
+                  className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all ${
+                    tab === 'active' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground'
+                  }`}
+                >
+                  Active ({activeTrips.length})
+                </button>
+                <button
+                  onClick={() => setTab('archived')}
+                  className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+                    tab === 'archived' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground'
+                  }`}
+                >
+                  <Archive className="w-3.5 h-3.5" /> Archived ({archivedTrips.length})
+                </button>
+              </div>
+            )}
+
+            {tripsToShow.length === 0 ? (
+              <div className="text-center text-muted-foreground mt-16">
+                <Archive className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                <p className="font-medium">No {tab} trips.</p>
+              </div>
+            ) : (
+              tripsToShow.map(trip => (
+                <TripCard key={trip.id} trip={trip} />
+              ))
+            )}
+          </>
         )}
       </main>
 
-      {trips.length > 0 && (
+      {allTrips.length > 0 && (
         <div className="fixed bottom-6 left-0 right-0 flex justify-center z-20 max-w-md mx-auto">
           <Button size="lg" className="rounded-full shadow-xl shadow-primary/30 px-8" onClick={() => setIsAddOpen(true)}>
             <Plus className="w-5 h-5 mr-2" /> New Trip
@@ -58,8 +109,11 @@ function TripCard({ trip }: { trip: any }) {
   const daysUntil = differenceInDays(new Date(trip.startDate), new Date());
   const isPast = daysUntil < 0 && differenceInDays(new Date(trip.endDate), new Date()) < 0;
   const isActive = !isPast && daysUntil <= 0;
+  const isArchived = trip.archived;
 
-  const statusBadge = isPast ? (
+  const statusBadge = isArchived ? (
+    <span className="inline-flex bg-muted text-muted-foreground px-2.5 py-0.5 rounded-full text-xs font-semibold w-fit">Archived</span>
+  ) : isPast ? (
     <span className="inline-flex bg-muted text-muted-foreground px-2.5 py-0.5 rounded-full text-xs font-semibold w-fit">Past</span>
   ) : isActive ? (
     <span className="inline-flex bg-primary/10 text-primary px-2.5 py-0.5 rounded-full text-xs font-semibold w-fit">In Progress</span>
@@ -70,14 +124,20 @@ function TripCard({ trip }: { trip: any }) {
   return (
     <div className="relative group">
       <Link href={`/trip/${trip.id}/overview`} className="block bg-card rounded-[2rem] p-5 shadow-lg shadow-black/5 border border-border/50 hover:shadow-xl hover:border-primary/20 transition-all duration-300 active:scale-[0.98]">
-        {/* Name + destination, delete sits top-right absolutely */}
         <div className="pr-10">
           <h3 className="text-xl font-bold text-foreground">{trip.name}</h3>
           <div className="flex items-center text-muted-foreground mt-0.5 text-sm">
             <MapPin className="w-3.5 h-3.5 mr-1 shrink-0" />
             <span className="truncate">{trip.destination}</span>
           </div>
-          <div className="mt-2">{statusBadge}</div>
+          <div className="mt-2 flex items-center gap-2 flex-wrap">
+            {statusBadge}
+            {trip.members && trip.members.length > 1 && (
+              <span className="inline-flex bg-blue-50 text-blue-600 px-2.5 py-0.5 rounded-full text-xs font-semibold w-fit">
+                {trip.members.length} members
+              </span>
+            )}
+          </div>
         </div>
 
         <div className="flex items-center justify-between mt-5">
@@ -172,13 +232,16 @@ function AddTripSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
     e.preventDefault();
     if (!country) { alert('Please select a destination country'); return; }
     const fd = new FormData(e.currentTarget);
+    const id = generateId();
     await createTrip({
-      id: generateId(),
+      id,
       name: fd.get('name') as string,
       destination: country.name,
       destinationCurrency: country.currency,
       startDate: fd.get('startDate') as string,
       endDate: fd.get('endDate') as string,
+      inviteCode: `MOVE-${id.slice(0, 4).toUpperCase()}`,
+      members: [{ id: 'self', name: 'Me', color: '#2563eb' }],
       createdAt: Date.now()
     });
     setCountry(null);

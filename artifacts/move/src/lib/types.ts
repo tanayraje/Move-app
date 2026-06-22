@@ -1,3 +1,9 @@
+export interface TripMember {
+  id: string;
+  name: string;
+  color?: string; // hex color for avatar
+}
+
 export interface Trip {
   id: string;
   name: string;
@@ -7,12 +13,15 @@ export interface Trip {
   endDate: string;
   budget?: TripBudget;
   dayCities?: Record<string, string>; // date → city name
+  members?: TripMember[];
+  inviteCode?: string;
+  archived?: boolean;
   createdAt: number;
 }
 
 export interface TripBudget {
   total: number;
-  travel: number;
+  transport: number;
   food: number;
   accommodation: number;
   activities: number;
@@ -70,13 +79,21 @@ export interface TripDocument {
 
 export type ExpenseCategory = 'food' | 'transport' | 'accommodation' | 'activities' | 'misc';
 
+export interface ExpenseSplit {
+  memberId: string;
+  amount: number; // in INR
+}
+
 export interface Expense {
   id: string;
   tripId: string;
   title: string;
   amount: number; // stored in INR
   category: ExpenseCategory;
-  date: string;
+  date: string; // YYYY-MM-DD
+  payerId?: string; // member ID who paid; defaults to self
+  notes?: string;
+  split?: ExpenseSplit[]; // if present, expense is split
   createdAt: number;
 }
 
