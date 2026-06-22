@@ -98,10 +98,14 @@ export function BottomSheet({
             }}
             className="fixed inset-x-0 bottom-0 z-50 mx-auto flex w-full max-w-md flex-col rounded-t-[32px] bg-card shadow-2xl"
             style={{
-              height: "85vh",
-            }}
+              maxHeight: "85vh",
+              minHeight: 0,
+          }}
           >
-            <div className="flex-1 overflow-y-auto px-6 pb-8 pt-4 no-scrollbar">
+            <div
+  className="overflow-y-auto px-6 pb-24 pt-4 no-scrollbar"
+  style={{ maxHeight: "calc(85vh - 80px)" }}
+>
               <div className="mx-auto mt-2 mb-6 h-1.5 w-12 rounded-full bg-muted-foreground/20" />
 
               <div className="flex items-center justify-between mb-6">
