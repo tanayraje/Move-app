@@ -76,7 +76,7 @@ export default function TripDashboard({ params }: { params: { id: string, tab?: 
       )}
 
       {/* Main Content Area */}
-     <main className="flex-1 relative pt-20 pb-[env(safe-area-inset-bottom,20px)] mb-20 overflow-x-hidden">
+     <main className="relative flex-1 overflow-x-hidden">
         <Switch>
           <Route path="/trip/:id/overview"><OverviewTab trip={trip} /></Route>
           <Route path="/trip/:id/itinerary"><ItineraryTab trip={trip} /></Route>
