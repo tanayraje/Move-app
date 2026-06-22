@@ -158,25 +158,26 @@ function MembersButton({ trip }: { trip: Trip }) {
     setInviteCode('');
   };
 
-  return (
-    <>
-      <button
-        onClick={() => setIsOpen(true)}
-        className={cn(
-          "flex items-center gap-1.5 shrink-0 px-2.5 py-1.5 rounded-full text-xs font-bold transition-colors",
-          isSolo ? "bg-muted text-muted-foreground" : "bg-blue-50 text-blue-600"
-        )}
-      >
-        <Users className="w-3.5 h-3.5" />
-        {members.length}
-      </button>
+ return (
+  <>
+    <button
+      onClick={() => setIsOpen(true)}
+      className={cn(
+        "flex items-center gap-1.5 shrink-0 px-2.5 py-1.5 rounded-full text-xs font-bold transition-colors",
+        isSolo ? "bg-muted text-muted-foreground" : "bg-blue-50 text-blue-600"
+      )}
+    >
+      <Users className="w-3.5 h-3.5" />
+      {members.length}
+    </button>
 
-      <BottomSheet isOpen={isOpen} onClose={() => setIsOpen(false)} title="TEST">
-  <div className="p-4">
-    Test
-  </div>
-</BottomSheet>
-
+    <BottomSheet isOpen={isOpen} onClose={() => setIsOpen(false)} title="TEST">
+      <div className="p-4">
+        Test
+      </div>
+    </BottomSheet>
+  </>
+);
           {/* Invite Code */}
           {trip.inviteCode && (
             <div className="bg-muted/50 rounded-xl p-3 border border-border/50">
