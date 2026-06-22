@@ -71,51 +71,49 @@ export default function ExpensesTab({ trip }: { trip: Trip }) {
   }, [expenses, members]);
 
   // Participants (who owes whom)
-  const balance = useMemo(() => {
-    if (isSolo || expenses.length === 0) return null;
-    const paid: Record<string, number> = {};
-    const owed: Record<string, number> = {};
-    members.forEach(m => { paid[m.id] = 0; owed[m.id] = 0; });
-    expenses.forEach(e => {
-  const payerId = e.payerId || 'self';
-  const amount = e.amount;
-  const split = e.split;
+ const balance = useMemo(() => {
+  if (isSolo || expenses.length === 0) return null;
 
-  // Always track who paid
-  paid[payerId] = (paid[payerId] || 0) + amount;
+  const paid: Record<string, number> = {};
+  const owed: Record<string, number> = {};
 
-  // Only split expenses affect balances
-  if (split && split.length > 0) {
-    split.forEach(s => {
-      const mid = s.memberId;
+  members.forEach(m => {
+    paid[m.id] = 0;
+    owed[m.id] = 0;
+  });
 
-      if (owed[mid] !== undefined) {
-        owed[mid] = (owed[mid] || 0) + s.amount;
-      }
-    });
-  }
-});
-  paid[payerId] = (paid[payerId] || 0) + amount;
-} else {
-  paid[payerId] = (paid[payerId] || 0) + amount;
-}
+  expenses.forEach(e => {
+    const payerId = e.payerId || 'self';
+
+    // Total paid by each member
+    paid[payerId] = (paid[payerId] || 0) + e.amount;
+
+    // Only split expenses affect balances
+    if (e.split && e.split.length > 0) {
+      e.split.forEach(s => {
+        owed[s.memberId] =
+          (owed[s.memberId] || 0) + s.amount;
       });
-    // Net: positive = should receive, negative = owes
-    const net: Record<string, number> = {};
-members.forEach(m => {
-  const splitPaid = expenses
-    .filter(
-      e =>
-        e.payerId === m.id &&
-        e.split &&
-        e.split.length > 0
-    )
-    .reduce((sum, e) => sum + e.amount, 0);
+    }
+  });
 
-  net[m.id] = splitPaid - (owed[m.id] || 0);
-});
-    return { paid, owed, net };
-  }, [expenses, members, isSolo]);
+  const net: Record<string, number> = {};
+
+  members.forEach(m => {
+    const splitPaid = expenses
+      .filter(
+        e =>
+          e.payerId === m.id &&
+          e.split &&
+          e.split.length > 0
+      )
+      .reduce((sum, e) => sum + e.amount, 0);
+
+    net[m.id] = splitPaid - (owed[m.id] || 0);
+  });
+
+  return { paid, owed, net };
+}, [expenses, members, isSolo]);
 
   // Grouped by date — handle old ISO, new YYYY-MM-DD, and invalid dates
   const grouped = [...expenses]
