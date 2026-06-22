@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { format, parseISO } from "date-fns";
 import {
   Plus, Coffee, Car, Home, Camera, ShoppingBag, CreditCard,
@@ -70,7 +70,7 @@ export default function ExpensesTab({ trip }: { trip: Trip }) {
     return map;
   }, [expenses, members]);
 
-  // Group balance (who owes whom)
+  // Participants (who owes whom)
   const balance = useMemo(() => {
     if (isSolo || expenses.length === 0) return null;
     const paid: Record<string, number> = {};
@@ -194,7 +194,7 @@ export default function ExpensesTab({ trip }: { trip: Trip }) {
         </Button>
       </div>
 
-      {/* Group Balance (shown when multi-member) */}
+      {/* Participants (shown when multi-member) */}
       {!isSolo && balance && (
         <div className="bg-card border border-border rounded-2xl overflow-hidden mb-5">
           <button
@@ -203,40 +203,95 @@ export default function ExpensesTab({ trip }: { trip: Trip }) {
           >
             <div className="flex items-center gap-2">
               <Users className="w-4 h-4 text-primary" />
-              <p className="font-bold text-sm text-foreground">Group Balance</p>
+              <p className="font-bold text-sm text-foreground">Participants</p>
             </div>
             <ChevronDown className={cn("w-4 h-4 text-muted-foreground transition-transform", showBalance && "rotate-180")} />
           </button>
           {showBalance && (
-            <div className="px-4 pb-4 border-t border-border/50">
-              {members.map(m => {
-                const net = balance.net[m.id] || 0;
-                const name = m.name;
-                return (
-                  <div key={m.id} className="flex items-center justify-between py-2 border-b border-border/30 last:border-0">
-                    <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold"
-                        style={{ backgroundColor: m.color || '#2563eb' }}>
-                        {name.charAt(0)}
-                      </div>
-                      <span className="text-sm font-medium text-foreground">{name}</span>
-                    </div>
-                    <span className={cn(
-                      "text-sm font-bold",
-                      net > 0 ? "text-green-600" : net < 0 ? "text-red-500" : "text-muted-foreground"
-                    )}>
-                      {net > 0 ? `+₹${Math.round(net).toLocaleString('en-IN')}` : net < 0 ? `−₹${Math.round(Math.abs(net)).toLocaleString('en-IN')}` : '₹0'}
-                    </span>
+           <div className="px-4 pb-4 border-t border-border/50">
+  <div className="overflow-x-auto mt-3">
+    <table className="w-full text-sm">
+      <thead>
+        <tr className="border-b border-border/50">
+          <th className="text-left py-2 font-semibold text-muted-foreground">
+            Participant
+          </th>
+          <th className="text-right py-2 font-semibold text-muted-foreground">
+            Paid
+          </th>
+          <th className="text-right py-2 font-semibold text-muted-foreground">
+            Balance
+          </th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {members.map(m => {
+          const net = balance.net[m.id] || 0;
+          const paid = memberTotals[m.id] || 0;
+
+          return (
+            <tr key={m.id} className="border-b border-border/30 last:border-0">
+              <td className="py-3">
+                <div className="flex items-center gap-2">
+                  <div
+                    className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold"
+                    style={{ backgroundColor: m.color || '#2563eb' }}
+                  >
+                    {m.name.charAt(0)}
                   </div>
-                );
-              })}
-              <p className="text-xs text-muted-foreground mt-2">
-                Positive = should receive · Negative = owes
-              </p>
-            </div>
-          )}
-        </div>
-      )}
+                  <span className="font-medium text-foreground">
+                    {m.name}
+                  </span>
+                </div>
+              </td>
+
+              <td className="py-3 text-right font-medium text-foreground">
+                {formatCurrency(
+                  showInDest
+                    ? convertFromINR(paid, destCurrency)
+                    : paid,
+                  activeCurrency
+                )}
+              </td>
+
+              <td
+                className={cn(
+                  "py-3 text-right font-bold",
+                  net > 0
+                    ? "text-green-600"
+                    : net < 0
+                    ? "text-red-500"
+                    : "text-muted-foreground"
+                )}
+              >
+                {net > 0
+                  ? `+${formatCurrency(
+                      showInDest
+                        ? convertFromINR(net, destCurrency)
+                        : net,
+                      activeCurrency
+                    )}`
+                  : net < 0
+                  ? `-${formatCurrency(
+                      showInDest
+                        ? convertFromINR(Math.abs(net), destCurrency)
+                        : Math.abs(net),
+                      activeCurrency
+                    )}`
+                  : formatCurrency(0, activeCurrency)}
+              </td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  </div>
+
+  <p className="text-xs text-muted-foreground mt-3">
+    Positive = should receive · Negative = owes
+  </p>
+</div>
 
       {/* Category breakdown */}
       {budget && (
@@ -271,29 +326,6 @@ export default function ExpensesTab({ trip }: { trip: Trip }) {
               </div>
             );
           })}
-        </div>
-      )}
-
-      {/* Individual Totals */}
-      {!isSolo && (
-        <div className="bg-card border border-border rounded-2xl overflow-hidden mb-5">
-          <div className="px-4 py-3 border-b border-border">
-            <p className="font-bold text-sm text-foreground">Participant Totals</p>
-          </div>
-          {members.map(m => (
-            <div key={m.id} className="flex items-center justify-between px-4 py-2.5 border-b border-border/30 last:border-0">
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold"
-                  style={{ backgroundColor: m.color || '#2563eb' }}>
-                  {m.name.charAt(0)}
-                </div>
-                <span className="text-sm text-foreground">{m.name}</span>
-              </div>
-              <span className="text-sm font-bold text-foreground">
-                {formatCurrency(showInDest ? convertFromINR(memberTotals[m.id] || 0, destCurrency) : (memberTotals[m.id] || 0), activeCurrency)}
-              </span>
-            </div>
-          ))}
         </div>
       )}
 
@@ -436,6 +468,32 @@ function AddExpenseSheet({
   const [splitAmounts, setSplitAmounts] = useState<Record<string, string>>(
     existingExpense?.split?.reduce((acc, s) => ({ ...acc, [s.memberId]: String(s.amount) }), {}) || {}
   );
+    useEffect(() => {
+  if (existingExpense) {
+    setAmountInput(String(Math.round(existingExpense.amount)));
+    setDateInput(existingExpense.date);
+    setPayerId(existingExpense.payerId || 'self');
+    setNotesInput(existingExpense.notes || '');
+    setSelectedMemberIds(
+      existingExpense.split?.map(s => s.memberId) || members.map(m => m.id)
+    );
+    setSplitAmounts(
+      existingExpense.split?.reduce(
+        (acc, s) => ({ ...acc, [s.memberId]: String(s.amount) }),
+        {}
+      ) || {}
+    );
+  } else {
+    setAmountInput('');
+    setDateInput(format(new Date(), 'yyyy-MM-dd'));
+    setPayerId('self');
+    setNotesInput('');
+    setShowSplit(false);
+    setSplitMode('equal');
+    setSelectedMemberIds(members.map(m => m.id));
+    setSplitAmounts({});
+  }
+}, [existingExpense, isOpen]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -658,3 +716,4 @@ function BudgetSheet({ isOpen, onClose, current, onSave, activeCurrency }: {
     </BottomSheet>
   );
 }
+    
