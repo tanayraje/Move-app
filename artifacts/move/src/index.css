@@ -74,5 +74,5 @@
 
 /* PWA App constraints */
 #root {
-  @apply mx-auto max-w-md bg-background min-h-[100dvh] relative shadow-2xl shadow-black/5 overflow-hidden flex flex-col;
+  @apply mx-auto max-w-md bg-background min-h-[100dvh] relative shadow-2xl shadow-black/5 flex flex-col;
 }
