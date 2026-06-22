@@ -292,6 +292,9 @@ export default function ExpensesTab({ trip }: { trip: Trip }) {
     Positive = should receive · Negative = owes
   </p>
 </div>
+          )}
+        </div>
+      )}
 
       {/* Category breakdown */}
       {budget && (
