@@ -196,7 +196,7 @@ function MembersButton({ trip }: { trip: Trip }) {
           )}
 
           {/* Member List */}
-          <div className="space-y-2 max-h-48 overflow-y-auto">
+          <div className="space-y-2">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Members</p>
             {members.map((member: any) => (
               <div key={member.id} className="flex items-center gap-3 bg-card border border-border rounded-xl px-3 py-2.5">
