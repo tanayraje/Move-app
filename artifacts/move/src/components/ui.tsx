@@ -74,13 +74,12 @@ export function BottomSheet({ isOpen, onClose, title, children }: { isOpen: bool
             onClick={onClose}
             className="fixed inset-0 z-50 bg-foreground/20 backdrop-blur-sm"
           />
-          <motion.div
-            initial={{ y: 600 }}
-            animate={{ y: 0 }}
-            exit={{ y: 600 }}
-            transition={{ type: "tween", duration: 0.3, ease: "easeInOut" }}
-           className="fixed left-0 right-0 bottom-0 z-50 flex max-h-[85vh] min-h-0 flex-col rounded-t-[32px] bg-card shadow-2xl mx-auto max-w-md"
-          >
+         <div
+  className="fixed inset-x-0 bottom-0 z-50 mx-auto flex max-w-md flex-col rounded-t-[32px] bg-card shadow-2xl"
+  style={{
+    maxHeight: "85vh",
+  }}
+>
             <div className="flex-1 overflow-y-auto px-6 pb-8 pt-4 no-scrollbar min-h-0">
               <div className="mx-auto mt-2 mb-6 h-1.5 w-12 rounded-full bg-muted-foreground/20" />
               <div className="flex items-center justify-between mb-6">
