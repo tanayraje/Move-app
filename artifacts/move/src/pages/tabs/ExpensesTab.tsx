@@ -88,11 +88,8 @@ export default function ExpensesTab({ trip }: { trip: Trip }) {
         });
         paid[payerId] = (paid[payerId] || 0) + amount;
       } else {
-        // Equal split among all members by default
-        const perPerson = amount / members.length;
-        members.forEach(m => {
-          owed[m.id] = (owed[m.id] || 0) + perPerson;
-        });
+  paid[payerId] = (paid[payerId] || 0) + amount;
+}
         paid[payerId] = (paid[payerId] || 0) + amount;
       }
     });
@@ -660,6 +657,7 @@ function AddExpenseSheet({
                               step="0.01"
                               placeholder="Amount"
                               value={splitAmounts[m.id] || ''}
+                              onClick={e => e.stopPropagation()}
                               onChange={e => {
                                 e.stopPropagation();
                                 setSplitAmounts(prev => ({ ...prev, [m.id]: e.target.value }));
