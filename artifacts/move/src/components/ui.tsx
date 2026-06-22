@@ -88,9 +88,9 @@ className="fixed inset-0 z-50 bg-foreground/20 backdrop-blur-sm"
 
 ```
       <motion.div
-        initial={{ y: 600 }}
+        initial={{ y: false }}
         animate={{ y: 0 }}
-        exit={{ y: 600 }}
+        exit={{ y: false }}
         transition={{
           type: "tween",
           duration: 0.3,
