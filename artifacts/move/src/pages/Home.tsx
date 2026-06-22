@@ -3,7 +3,7 @@ import { Link } from "wouter";
 import { format, differenceInDays, addMonths, addDays } from "date-fns";
 import {
   Plus, MapPin, Calendar, Plane, Trash2, Search, ChevronDown, X,
-  Archive, Heart, Clock, MoreVertical, ArrowRight
+  Archive, Heart, Clock, MoreVertical, ArrowRight, LogOut
 } from "lucide-react";
 import { useTrips, useCreateTrip, useDeleteTrip, useUpdateTrip } from "@/hooks/use-store";
 import { useSaveItineraryItem } from "@/hooks/use-store";
@@ -11,13 +11,16 @@ import { generateId, safeFormatDate, safeParseDate, getTripStatus } from "@/lib/
 import { Button, Input, Label, BottomSheet } from "@/components/ui";
 import { COUNTRIES, Country } from "@/lib/countries";
 import type { Trip, TripStatus } from "@/lib/types";
+import { useAuth } from "@workspace/replit-auth-web";
 
 export default function Home() {
   const { data: allTrips = [], isLoading } = useTrips();
   const { mutate: updateTrip } = useUpdateTrip();
+  const { user, logout } = useAuth();
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
   const [isJoinOpen, setIsJoinOpen] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
   const [tab, setTab] = useState<TripStatus>('active');
 
   // Auto-archive trips older than 6 months
@@ -48,13 +51,36 @@ export default function Home() {
             <h1 className="text-4xl font-display font-extrabold text-foreground tracking-tight">Move.</h1>
             <p className="text-muted-foreground mt-1 text-lg">Where to next?</p>
           </div>
-          <button
-            onClick={() => setIsJoinOpen(true)}
-            className="p-2.5 bg-muted rounded-full hover:bg-primary/10 hover:text-primary transition-colors"
-            title="Join a trip by code"
-          >
-            <ArrowRight className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsJoinOpen(true)}
+              className="p-2.5 bg-muted rounded-full hover:bg-primary/10 hover:text-primary transition-colors"
+              title="Join a trip by code"
+            >
+              <ArrowRight className="w-5 h-5" />
+            </button>
+            <div className="relative">
+              <button
+                onClick={() => setShowUserMenu(!showUserMenu)}
+                className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold hover:opacity-90 transition-opacity"
+              >
+                {user?.firstName?.[0] || user?.email?.[0] || '?'}
+              </button>
+              {showUserMenu && (
+                <div className="absolute right-0 top-12 bg-card border border-border rounded-2xl shadow-2xl p-2 min-w-[160px] z-50">
+                  <div className="px-3 py-2 text-sm font-medium text-foreground border-b border-border mb-1">
+                    {user?.firstName || user?.email || 'User'}
+                  </div>
+                  <button
+                    onClick={() => { setShowUserMenu(false); logout(); }}
+                    className="w-full text-left px-3 py-2.5 text-sm font-medium text-red-500 hover:bg-red-50 rounded-xl flex items-center gap-2"
+                  >
+                    <LogOut className="w-4 h-4" /> Log out
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </header>
 
