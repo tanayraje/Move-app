@@ -91,6 +91,7 @@ export default function ExpensesTab({ trip }: { trip: Trip }) {
 } else {
   paid[payerId] = (paid[payerId] || 0) + amount;
 }
+      });
     // Net: positive = should receive, negative = owes
     const net: Record<string, number> = {};
     members.forEach(m => {
