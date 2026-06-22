@@ -3,7 +3,7 @@ import { format, parseISO } from "date-fns";
 import {
   Plus, Coffee, Car, Home, Camera, ShoppingBag, CreditCard,
   Trash2, Target, ArrowLeftRight, Download, Users, User, Split,
-  ChevronDown, ChevronUp, Check, Handshake
+  ChevronDown, ChevronUp, Check, Handshake, pencilline
 } from "lucide-react";
 import { useExpenses, useSaveExpense, useDeleteExpense, useUpdateTrip } from "@/hooks/use-store";
 import { Trip, Expense, ExpenseCategory, TripBudget, TripMember } from "@/lib/types";
@@ -602,9 +602,12 @@ function ExpenseRow({
       <div className="flex items-center gap-3 shrink-0">
         <span className="font-display font-bold text-foreground">{formatCurrency(displayAmount, activeCurrency)}</span>
         <div className="flex items-center gap-1">
-          <button onClick={onEdit} className="text-muted-foreground hover:text-primary transition-colors p-1">
-            <Users className="w-3.5 h-3.5" />
-          </button>
+         <button
+  onClick={onEdit}
+  className="text-muted-foreground hover:text-primary transition-colors p-1"
+>
+  <Pencil className="w-3.5 h-3.5" />
+</button>
           <button onClick={() => { if (confirm('Delete?')) deleteExp({ id: expense.id, tripId: expense.tripId }); }} className="text-muted-foreground hover:text-red-500 transition-colors p-1">
             <Trash2 className="w-4 h-4" />
           </button>
