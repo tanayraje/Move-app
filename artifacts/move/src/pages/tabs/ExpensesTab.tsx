@@ -802,20 +802,21 @@ if (expenseCurrency !== 'INR') {
           <Label htmlFor="amount">
   Amount ({expenseCurrency})
 </Label>
-          <div>
-  <Label htmlFor="currency">Currency</Label>
-
-  <Select
-    id="currency"
-    value={expenseCurrency}
-    onChange={e => setExpenseCurrency(e.target.value)}
+          {destCurrency !== 'INR' && (
+  <button
+    type="button"
+    onClick={() =>
+      setExpenseCurrency(prev =>
+        prev === 'INR' ? destCurrency : 'INR'
+      )
+    }
+    className="flex items-center gap-1.5 bg-muted px-2.5 py-1 rounded-full text-xs font-bold mb-3"
   >
-    <option value="INR">Indian Rupee (INR)</option>
-    <option value={destCurrency}>
-      {destCurrency}
-    </option>
-  </Select>
-</div>
+    <ArrowLeftRight className="w-3 h-3" />
+    {expenseCurrency}
+  </button>
+)}
+          
           <Input id="amount" name="amount" type="number" step="0.01" min="0" placeholder="0.00" required
             value={amountInput} onChange={e => setAmountInput(e.target.value)}
             className="text-3xl font-display font-bold h-16" />
