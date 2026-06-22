@@ -508,7 +508,74 @@ function AddExpenseSheet({
     setSplitAmounts({});
   }
 }, [existingExpense, isOpen]);
+  useEffect(() => {
+  if (
+    splitMode !== 'unequal' ||
+    selectedMemberIds.length === 0
+  ) return;
 
+  const total = parseFloat(amountInput) || 0;
+  const perPerson = total / selectedMemberIds.length;
+
+  const next: Record<string, string> = {};
+
+  selectedMemberIds.forEach((id, index) => {
+    if (index === selectedMemberIds.length - 1) {
+      const used = perPerson * (selectedMemberIds.length - 1);
+      next[id] = String(
+        Math.round((total - used) * 100) / 100
+      );
+    } else {
+      next[id] = String(
+        Math.round(perPerson * 100) / 100
+      );
+    }
+  });
+
+  setSplitAmounts(next);
+}, [splitMode, amountInput, selectedMemberIds]);
+
+ const updateSplitAmount = (
+  memberId: string,
+  value: string
+) => {
+  const total = parseFloat(amountInput) || 0;
+
+  const next = {
+    ...splitAmounts,
+    [memberId]: value,
+  };
+
+  if (selectedMemberIds.length < 2) {
+    setSplitAmounts(next);
+    return;
+  }
+
+  const lastMember =
+    selectedMemberIds[selectedMemberIds.length - 1];
+
+  if (memberId === lastMember) {
+    setSplitAmounts(next);
+    return;
+  }
+
+  let used = 0;
+
+  selectedMemberIds.forEach(id => {
+    if (id !== lastMember) {
+      used += parseFloat(next[id] || '0');
+    }
+  });
+
+  next[lastMember] = String(
+    Math.max(
+      0,
+      Math.round((total - used) * 100) / 100
+    )
+  );
+
+  setSplitAmounts(next);
+};
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
@@ -673,9 +740,9 @@ function AddExpenseSheet({
                               value={splitAmounts[m.id] || ''}
                               onClick={e => e.stopPropagation()}
                               onChange={e => {
-                                e.stopPropagation();
-                                setSplitAmounts(prev => ({ ...prev, [m.id]: e.target.value }));
-                              }}
+                              e.stopPropagation();
+                              updateSplitAmount(m.id, e.target.value);
+                                }}
                               className="w-20 h-8 text-xs ml-auto"
                             />
                           )}
