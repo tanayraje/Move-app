@@ -33,11 +33,13 @@ const COLORS = ['#2563eb', '#dc2626', '#16a34a', '#d97706', '#9333ea', '#db2777'
 export default function ExpensesTab({ trip }: { trip: Trip }) {
   const { data: expenses = [] } = useExpenses(trip.id);
   const { mutate: updateTrip } = useUpdateTrip();
+  const { mutateAsync: saveExp } = useSaveExpense();
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isBudgetOpen, setIsBudgetOpen] = useState(false);
   const [showInDest, setShowInDest] = useState(false);
   const [showBalance, setShowBalance] = useState(false);
   const [showSettlement, setShowSettlement] = useState(false);
+  const [selectedSettlements, setSelectedSettlements] = useState<number[]>([]);
   const [editExpense, setEditExpense] = useState<Expense | null>(null);
 
   const members = trip.members || [{ id: 'self', name: 'Me', color: '#2563eb' }];
@@ -175,6 +177,39 @@ export default function ExpensesTab({ trip }: { trip: Trip }) {
     }, {} as Record<string, Expense[]>);
 
   const saveBudget = (b: TripBudget) => updateTrip({ ...trip, budget: b });
+  const handleSettleSelected = async () => {
+  const selected = settlements.filter((_, i) =>
+    selectedSettlements.includes(i)
+  );
+
+  for (const s of selected) {
+    const payer = members.find(m => m.name === s.from);
+    const receiver = members.find(m => m.name === s.to);
+
+    if (!payer || !receiver) continue;
+
+    await saveExp({
+      id: generateId(),
+      tripId: trip.id,
+      title: `Settlement: ${s.from} → ${s.to}`,
+      amount: s.amount,
+      category: 'misc',
+      date: format(new Date(), 'yyyy-MM-dd'),
+      payerId: payer.id,
+      notes: 'Settlement',
+      split: [
+        {
+          memberId: receiver.id,
+          amount: s.amount
+        }
+      ],
+      createdAt: Date.now(),
+    });
+  }
+
+  setSelectedSettlements([]);
+  setShowSettlement(false);
+};
 
   const exportCSV = () => {
     const rows = [
@@ -456,25 +491,49 @@ export default function ExpensesTab({ trip }: { trip: Trip }) {
       </p>
     ) : (
       settlements.map((s, i) => (
-        <div
+        <label
           key={i}
-          className="bg-card border border-border rounded-xl p-3"
+          className="flex gap-3 bg-card border border-border rounded-xl p-3 cursor-pointer"
         >
-          <p className="font-medium">
-            {s.from} pays {s.to}
-          </p>
+          <input
+            type="checkbox"
+            checked={selectedSettlements.includes(i)}
+            onChange={(e) => {
+              if (e.target.checked) {
+                setSelectedSettlements(prev => [...prev, i]);
+              } else {
+                setSelectedSettlements(prev =>
+                  prev.filter(x => x !== i)
+                );
+              }
+            }}
+          />
 
-          <p className="text-primary font-bold mt-1">
-            {formatCurrency(
-              showInDest
-                ? convertFromINR(s.amount, destCurrency)
-                : s.amount,
-              activeCurrency
-            )}
-          </p>
-        </div>
+          <div className="flex-1">
+            <p className="font-medium">
+              {s.from} pays {s.to}
+            </p>
+
+            <p className="text-primary font-bold mt-1">
+              {formatCurrency(
+                showInDest
+                  ? convertFromINR(s.amount, destCurrency)
+                  : s.amount,
+                activeCurrency
+              )}
+            </p>
+          </div>
+        </label>
       ))
     )}
+
+    <Button
+      className="w-full mt-2"
+      disabled={selectedSettlements.length === 0}
+      onClick={handleSettleSelected}
+    >
+      Settle Selected
+    </Button>
   </div>
 </BottomSheet>
 
