@@ -82,15 +82,25 @@ async function upsertUser(claims: Record<string, unknown>) {
   return user;
 }
 
-router.get("/auth/user", (req: Request, res: Response) => {
-  res.json(
-    GetCurrentAuthUserResponse.parse({
-      user: req.isAuthenticated() ? req.user : null,
-    }),
-  );
+router.get("/auth/user", (req, res) => {
+res.json(
+GetCurrentAuthUserResponse.parse({
+user: {
+id: "guest-user",
+email: "[guest@move.app](mailto:guest@move.app)",
+firstName: "Guest",
+lastName: "User",
+profileImageUrl: null,
+},
+}),
+);
 });
 
-router.get("/login", async (req: Request, res: Response) => {
+
+router.get("/login", async (req, res) => {
+res.redirect("/");
+});
+, async (req: Request, res: Response) => {
   const config = await getOidcConfig();
   const callbackUrl = `${getOrigin(req)}/api/callback`;
 
@@ -187,7 +197,10 @@ router.get("/callback", async (req: Request, res: Response) => {
   res.redirect(returnTo);
 });
 
-router.get("/logout", async (req: Request, res: Response) => {
+router.get("/logout", async (req, res) => {
+res.redirect("/");
+});
+, async (req: Request, res: Response) => {
   const config = await getOidcConfig();
   const origin = getOrigin(req);
 
