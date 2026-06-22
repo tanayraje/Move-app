@@ -3,7 +3,7 @@ import { format, parseISO } from "date-fns";
 import {
   Plus, Coffee, Car, Home, Camera, ShoppingBag, CreditCard,
   Trash2, Target, ArrowLeftRight, Download, Users, User, Split,
-  ChevronDown, ChevronUp, Check, Handshake, pencilline
+  ChevronDown, ChevronUp, Check, Handshake, pencil
 } from "lucide-react";
 import { useExpenses, useSaveExpense, useDeleteExpense, useUpdateTrip } from "@/hooks/use-store";
 import { Trip, Expense, ExpenseCategory, TripBudget, TripMember } from "@/lib/types";
