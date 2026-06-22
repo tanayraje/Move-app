@@ -174,7 +174,6 @@ function MembersButton({ trip }: { trip: Trip }) {
       <BottomSheet isOpen={isOpen} onClose={() => setIsOpen(false)} title="Trip Members">
   <div
   <div className="flex flex-col gap-4 pr-1">
->
           {/* Invite Code */}
           {trip.inviteCode && (
             <div className="bg-muted/50 rounded-xl p-3 border border-border/50">
