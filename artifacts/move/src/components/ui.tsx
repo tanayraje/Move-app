@@ -96,7 +96,7 @@ export function BottomSheet({
               duration: 0.3,
               ease: "easeInOut",
             }}
-            className="fixed inset-x-0 bottom-0 z-50 mx-auto flex w-full max-w-md flex-col rounded-t-[32px] bg-card shadow-2xl"
+            className="fixed inset-x-0 bottom-0 z-200 mx-auto flex w-full max-w-md flex-col rounded-t-[32px] bg-card shadow-2xl"
             style={{
               maxHeight: "85vh",
             }}
