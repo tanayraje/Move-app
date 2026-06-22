@@ -83,7 +83,7 @@ initial={{ opacity: 0 }}
 animate={{ opacity: 1 }}
 exit={{ opacity: 0 }}
 onClick={onClose}
-className="fixed inset-0 z-50 bg-foreground/20 backdrop-blur-sm"
+className="fixed inset-0 z-[9998] bg-foreground/20 backdrop-blur-sm"
 />
 
 ```
@@ -96,7 +96,7 @@ className="fixed inset-0 z-50 bg-foreground/20 backdrop-blur-sm"
           duration: 0.3,
           ease: "easeInOut",
         }}
-        className="fixed inset-x-0 bottom-0 z-50 mx-auto flex w-full max-w-md flex-col rounded-t-[32px] bg-card shadow-2xl"
+        className="fixed inset-x-0 bottom-0 z-[9999] mx-auto flex w-full max-w-md flex-col rounded-t-[32px] bg-card shadow-2xl"
         style={{
           maxHeight: "calc(100vh - 32px)",
         }}
