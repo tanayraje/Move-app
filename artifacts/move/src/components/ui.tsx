@@ -98,7 +98,7 @@ export function BottomSheet({
             }}
             className="fixed inset-x-0 bottom-0 z-50 mx-auto flex w-full max-w-md flex-col rounded-t-[32px] bg-card shadow-2xl"
             style={{
-              maxHeight: "50vh",
+              maxHeight: "85vh",
             }}
           >
             <div className="flex-1 overflow-y-auto px-6 pb-8 pt-4 no-scrollbar">
