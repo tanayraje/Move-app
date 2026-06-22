@@ -630,6 +630,9 @@ function AddExpenseSheet({
   const [amountInput, setAmountInput] = useState(
     existingExpense ? String(Math.round(existingExpense.amount)) : ''
   );
+  const [expenseCurrency, setExpenseCurrency] = useState(
+  destCurrency || 'INR'
+);
   const [dateInput, setDateInput] = useState(
     existingExpense ? existingExpense.date : format(new Date(), 'yyyy-MM-dd')
   );
@@ -740,8 +743,9 @@ function AddExpenseSheet({
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
-    let amount = parseFloat(amountInput);
-    if (showInDest && destCurrency !== 'INR') {
+   let amount = parseFloat(amountInput);
+
+if (expenseCurrency !== 'INR') {
       const { RATES_PER_INR } = await import('@/lib/countries');
       const rate = RATES_PER_INR[destCurrency] || 1;
       amount = amount / rate;
@@ -795,7 +799,23 @@ function AddExpenseSheet({
     <BottomSheet isOpen={isOpen} onClose={onClose} title={isEditing ? "Edit Expense" : "Add Expense"}>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div>
-          <Label htmlFor="amount">Amount ({activeCurrency})</Label>
+          <Label htmlFor="amount">
+  Amount ({expenseCurrency})
+</Label>
+          <div>
+  <Label htmlFor="currency">Currency</Label>
+
+  <Select
+    id="currency"
+    value={expenseCurrency}
+    onChange={e => setExpenseCurrency(e.target.value)}
+  >
+    <option value="INR">Indian Rupee (INR)</option>
+    <option value={destCurrency}>
+      {destCurrency}
+    </option>
+  </Select>
+</div>
           <Input id="amount" name="amount" type="number" step="0.01" min="0" placeholder="0.00" required
             value={amountInput} onChange={e => setAmountInput(e.target.value)}
             className="text-3xl font-display font-bold h-16" />
