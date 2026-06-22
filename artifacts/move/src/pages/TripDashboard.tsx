@@ -176,7 +176,7 @@ function MembersButton({ trip }: { trip: Trip }) {
     Test
   </div>
 </BottomSheet>
->
+
           {/* Invite Code */}
           {trip.inviteCode && (
             <div className="bg-muted/50 rounded-xl p-3 border border-border/50">
