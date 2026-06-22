@@ -40,7 +40,7 @@ export default function TripDashboard({ params }: { params: { id: string, tab?: 
   return (
     <div className="flex flex-col min-h-[100dvh] bg-background">
       {/* Sticky Header */}
-      <header className="sticky top-0 z-30 bg-background/80 backdrop-blur-xl border-b border-border/50 px-4 py-4 flex items-center gap-3">
+      <header className="sticky top-0 z-30 bg-background/80 border-b border-border/50 px-4 py-4 flex items-center gap-3">
         <Link href="/" className="p-2 -ml-2 rounded-full hover:bg-muted text-foreground">
           <ChevronLeft className="w-6 h-6" />
         </Link>
