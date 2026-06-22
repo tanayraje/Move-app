@@ -172,7 +172,10 @@ function MembersButton({ trip }: { trip: Trip }) {
       </button>
 
       <BottomSheet isOpen={isOpen} onClose={() => setIsOpen(false)} title="Trip Members">
-  <div className="flex flex-col gap-4 max-h-[70vh] overflow-y-auto pr-1">
+  <div
+  className="flex flex-col gap-4 overflow-y-auto pr-1"
+  style={{ maxHeight: "60vh" }}
+>
           {/* Invite Code */}
           {trip.inviteCode && (
             <div className="bg-muted/50 rounded-xl p-3 border border-border/50">
@@ -196,7 +199,7 @@ function MembersButton({ trip }: { trip: Trip }) {
           )}
 
           {/* Member List */}
-          <div className="space-y-2">
+          <div className="space-y-2 max-h-48 overflow-y-auto">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Members</p>
             {members.map((member: any) => (
               <div key={member.id} className="flex items-center gap-3 bg-card border border-border rounded-xl px-3 py-2.5">
