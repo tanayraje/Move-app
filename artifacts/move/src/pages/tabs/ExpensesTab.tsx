@@ -17,6 +17,7 @@ const EXPENSE_ICONS: Record<ExpenseCategory, React.ElementType> = {
   accommodation: Home,
   activities: Camera,
   misc: ShoppingBag,
+  settlement: Handshake,
 };
 
 const EXPENSE_LABELS: Record<ExpenseCategory, string> = {
@@ -25,6 +26,7 @@ const EXPENSE_LABELS: Record<ExpenseCategory, string> = {
   accommodation: 'Accommodation',
   activities: 'Activities',
   misc: 'Misc',
+  settlement: 'Settlement',
 };
 
 const BUDGET_KEYS: ExpenseCategory[] = ['transport', 'food', 'accommodation', 'activities', 'misc'];
@@ -48,7 +50,9 @@ export default function ExpensesTab({ trip }: { trip: Trip }) {
   const showToggle = destCurrency !== 'INR';
   const activeCurrency = showInDest ? destCurrency : 'INR';
 
-  const total = expenses.reduce((sum, e) => sum + e.amount, 0);
+  const total = expenses
+  .filter(e => e.category !== 'settlement')
+  .reduce((sum, e) => sum + e.amount, 0);
   const displayTotal = showInDest ? convertFromINR(total, destCurrency) : total;
 
   const budget = trip.budget;
@@ -57,7 +61,11 @@ export default function ExpensesTab({ trip }: { trip: Trip }) {
 
   // By category
   const byCategory = BUDGET_KEYS.reduce((acc, cat) => {
-    acc[cat] = expenses.filter(e => e.category === cat).reduce((s, e) => s + e.amount, 0);
+    acc[cat] = expenses.filter(
+  e =>
+    e.category === cat &&
+    e.category !== 'settlement'
+).reduce((s, e) => s + e.amount, 0);
     return acc;
   }, {} as Record<ExpenseCategory, number>);
 
@@ -193,7 +201,7 @@ export default function ExpensesTab({ trip }: { trip: Trip }) {
       tripId: trip.id,
       title: `Settlement: ${s.from} → ${s.to}`,
       amount: s.amount,
-      category: 'misc',
+      category: 'settlement',
       date: format(new Date(), 'yyyy-MM-dd'),
       payerId: payer.id,
       notes: 'Settlement',
