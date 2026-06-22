@@ -77,16 +77,24 @@ export default function ExpensesTab({ trip }: { trip: Trip }) {
     const owed: Record<string, number> = {};
     members.forEach(m => { paid[m.id] = 0; owed[m.id] = 0; });
     expenses.forEach(e => {
-      const payerId = e.payerId || 'self';
-      const amount = e.amount;
-      const split = e.split;
-     if (split && split.length > 0) {
-  split.forEach(s => {
-    const mid = s.memberId;
-    if (paid[mid] !== undefined) paid[mid] = (paid[mid] || 0);
-    if (owed[mid] !== undefined) owed[mid] = (owed[mid] || 0) + s.amount;
-  });
+  const payerId = e.payerId || 'self';
+  const amount = e.amount;
+  const split = e.split;
 
+  // Always track who paid
+  paid[payerId] = (paid[payerId] || 0) + amount;
+
+  // Only split expenses affect balances
+  if (split && split.length > 0) {
+    split.forEach(s => {
+      const mid = s.memberId;
+
+      if (owed[mid] !== undefined) {
+        owed[mid] = (owed[mid] || 0) + s.amount;
+      }
+    });
+  }
+});
   paid[payerId] = (paid[payerId] || 0) + amount;
 } else {
   paid[payerId] = (paid[payerId] || 0) + amount;
@@ -94,9 +102,18 @@ export default function ExpensesTab({ trip }: { trip: Trip }) {
       });
     // Net: positive = should receive, negative = owes
     const net: Record<string, number> = {};
-    members.forEach(m => {
-      net[m.id] = (paid[m.id] || 0) - (owed[m.id] || 0);
-    });
+members.forEach(m => {
+  const splitPaid = expenses
+    .filter(
+      e =>
+        e.payerId === m.id &&
+        e.split &&
+        e.split.length > 0
+    )
+    .reduce((sum, e) => sum + e.amount, 0);
+
+  net[m.id] = splitPaid - (owed[m.id] || 0);
+});
     return { paid, owed, net };
   }, [expenses, members, isSolo]);
 
