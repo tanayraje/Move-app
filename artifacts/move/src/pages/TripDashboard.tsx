@@ -243,7 +243,7 @@ const members = trip.members || [];
             </div>
           </div>
 
-          
+          </div>
       </BottomSheet>
     </>
   );
