@@ -3,7 +3,7 @@ import { Switch, Route, Router as WouterRouter } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { useAuth } from "@workspace/replit-auth-web";
+import { useSupabaseAuth } from "@/contexts/AuthContext";
 import { LogIn } from "lucide-react";
 import { AuthProvider } from "@/contexts/AuthContext";
 import NotFound from "@/pages/not-found";
@@ -63,9 +63,13 @@ function App() {
 }
 
 function AuthGate({ children }: { children: React.ReactNode }) {
-  const { user, isLoading, isAuthenticated, login } = useAuth();
+  const {
+    user,
+    loading,
+    signInWithGoogle,
+  } = useSupabaseAuth();
 
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="min-h-[100dvh] flex items-center justify-center bg-background">
         <div className="text-center">
@@ -76,22 +80,25 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (!isAuthenticated) {
+  if (!user) {
     return (
       <div className="min-h-[100dvh] flex flex-col items-center justify-center bg-background px-6">
         <div className="text-center max-w-sm">
-          <h1 className="text-5xl font-display font-extrabold text-foreground tracking-tight mb-3">Move.</h1>
-          <p className="text-muted-foreground text-lg mb-10">Plan trips together. Track expenses. Never miss a detail.</p>
-          <button
-            onClick={login}
-            className="w-full bg-primary text-primary-foreground rounded-2xl px-6 py-4 text-lg font-semibold shadow-xl shadow-primary/20 hover:shadow-2xl hover:shadow-primary/30 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
-          >
-            <LogIn className="w-5 h-5" />
-            Log in
-          </button>
-          <p className="text-sm text-muted-foreground mt-6">
-            Your data is stored on this device. Sync coming soon.
+          <h1 className="text-5xl font-display font-extrabold text-foreground tracking-tight mb-3">
+            Move.
+          </h1>
+
+          <p className="text-muted-foreground text-lg mb-10">
+            Plan trips together. Track expenses. Never miss a detail.
           </p>
+
+          <button
+            onClick={signInWithGoogle}
+            className="w-full bg-primary text-primary-foreground rounded-2xl px-6 py-4 text-lg font-semibold shadow-xl"
+          >
+            <LogIn className="w-5 h-5 inline mr-2" />
+            Continue with Google
+          </button>
         </div>
       </div>
     );
