@@ -139,7 +139,15 @@ if (!user) {
 
       if (error) throw error;
 
-      return trip;
+await supabase
+  .from('trip_members')
+  .insert({
+    trip_id: trip.id,
+    user_id: user.id,
+    role: 'owner',
+  });
+
+return trip;
     },
 
     onSuccess: () => {
