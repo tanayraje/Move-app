@@ -52,14 +52,7 @@ export default function Home() {
 
   return (
   <div className="flex flex-col min-h-[100dvh] pb-8 relative">
-
-    <button
-      onClick={signInWithGoogle}
-      className="fixed top-4 right-4 z-[9999] bg-black text-white px-4 py-2 rounded"
-    >
-      Test Google Login
-    </button>
-
+    
       <header className="px-6 pt-12 pb-6 sticky top-0 bg-background/80 backdrop-blur-xl z-10">
         <div className="flex items-center justify-between">
           <div>
