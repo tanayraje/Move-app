@@ -39,10 +39,19 @@ export function useTrips() {
 
   if (!user) return [];
 
-  const { data, error } = await supabase
-    .from('trips')
-    .select('*')
-    .eq('owner_id', user.id);
+  const { data: memberships } = await supabase
+  .from('trip_members')
+  .select('trip_id')
+  .eq('user_id', user.id);
+
+const memberTripIds = memberships?.map(m => m.trip_id) || [];
+
+const { data, error } = await supabase
+  .from('trips')
+  .select('*')
+  .or(
+    `owner_id.eq.${user.id},id.in.(${memberTripIds.length ? memberTripIds.join(',') : '00000000-0000-0000-0000-000000000000'})`
+  );
 
       console.log('TRIPS DATA', data);
       console.log('TRIPS ERROR', error);
