@@ -13,6 +13,7 @@ import { COUNTRIES, Country } from "@/lib/countries";
 import type { Trip, TripStatus } from "@/lib/types";
 import { useSupabaseAuth } from "@/contexts/AuthContext";
 import { joinTripByCode } from "@/hooks/use-store";
+import { useQueryClient } from '@tanstack/react-query';
 
 
 export default function Home() {
@@ -28,6 +29,7 @@ export default function Home() {
   const [convertTrip, setConvertTrip] = useState<Trip | null>(null);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [tab, setTab] = useState<TripStatus>('active');
+  const queryClient = useQueryClient();
   
 
   
@@ -415,6 +417,7 @@ function JoinTripSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
     }
 
     await joinTripByCode(trimmed);
+    queryClient.invalidateQueries({ queryKey: ['trips'] });
 
     alert("Trip joined successfully!");
 

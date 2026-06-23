@@ -15,6 +15,8 @@ import ExpensesTab from "./tabs/ExpensesTab";
 import PlacesTab from "./tabs/PlacesTab";
 import OverviewTab from "./tabs/OverviewTab";
 import { BottomSheet, Button, Input, Label } from "@/components/ui";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
 
 export default function TripDashboard({ params }: { params: { id: string, tab?: string } }) {
   const tripId = params.id;
@@ -113,8 +115,21 @@ function MembersButton({ trip }: { trip: Trip }) {
   const [inviteCode, setInviteCode] = useState('');
   const { mutate: updateTrip } = useUpdateTrip();
 
-  const members = trip.members || [];
-  const isSolo = members.length <= 1;
+  const { data: memberRows = [] } = useQuery({
+  queryKey: ['trip-members', trip.id],
+  queryFn: async () => {
+    const { data } = await supabase
+      .from('trip_members')
+      .select('*')
+      .eq('trip_id', trip.id);
+
+    return data || [];
+  },
+});
+
+const memberCount = memberRows.length + 1;
+const isSolo = memberCount <= 1;
+const members = trip.members || [];
 
   const addMember = () => {
     if (!name.trim()) return;
@@ -157,7 +172,7 @@ function MembersButton({ trip }: { trip: Trip }) {
         )}
       >
         <Users className="w-3.5 h-3.5" />
-        {members.length}
+        {memberCount}
       </button>
 
       <BottomSheet isOpen={isOpen} onClose={() => setIsOpen(false)} title="Trip Members">
@@ -228,11 +243,7 @@ function MembersButton({ trip }: { trip: Trip }) {
             </div>
           </div>
 
-          {/* Shared note */}
-          <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-700">
-            <strong>Note:</strong> All data is stored on this device only. For true sharing across devices, each person needs to log in to the same account or use the same device.
-          </div>
-        </div>
+          
       </BottomSheet>
     </>
   );
