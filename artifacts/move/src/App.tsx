@@ -33,18 +33,20 @@ function Router() {
 }
 
 function App() {
- useEffect(() => {
-  if (import.meta.env.DEV && 'serviceWorker' in navigator) {
-    navigator.serviceWorker.getRegistrations().then(registrations => {
-      registrations.forEach(registration => registration.unregister());
-    });
-    return;
-  }
+  useEffect(() => {
+    if (import.meta.env.DEV && 'serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(registrations => {
+        registrations.forEach(registration => registration.unregister());
+      });
+      return;
+    }
 
-  /*if (import.meta.env.PROD) {
-    navigator.serviceWorker.register('/sw.js').catch(console.error);*/
-  }
-}, []);
+    /*
+    if (import.meta.env.PROD) {
+      navigator.serviceWorker.register('/sw.js').catch(console.error);
+    }
+    */
+  }, []);
 
   return (
   <QueryClientProvider client={queryClient}>
