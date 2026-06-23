@@ -16,33 +16,16 @@ const setLS = <T>(key: string, value: T): void => {
 };
 
 export async function joinTripByCode(inviteCode: string) {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data, error } = await supabase.rpc(
+    "join_trip_by_code",
+    {
+      code: inviteCode.trim().toUpperCase(),
+    }
+  );
 
-  if (!user) throw new Error("Not authenticated");
+  if (error) throw error;
 
-  const { data: trip, error: tripError } = await supabase
-    .from("trips")
-    .select("*")
-    .eq("invite_code", inviteCode)
-    .single();
-
-  if (tripError || !trip) {
-    throw new Error("Trip not found");
-  }
-
-  const { error: memberError } = await supabase
-    .from("trip_members")
-    .upsert({
-      trip_id: trip.id,
-      user_id: user.id,
-      role: "member",
-    });
-
-  if (memberError) throw memberError;
-
-  return trip;
+  return data;
 }
 
 // --- TRIPS ---

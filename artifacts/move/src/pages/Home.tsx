@@ -421,8 +421,9 @@ function JoinTripSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
     onClose();
     setCode('');
   } catch (err: any) {
-    alert(err.message || "Unable to join trip");
-  }
+  console.error("JOIN ERROR", err);
+  alert(JSON.stringify(err, null, 2));
+}
 };
 
   return (
