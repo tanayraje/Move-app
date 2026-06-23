@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@workspace/replit-auth-web";
 import { LogIn } from "lucide-react";
+import { AuthProvider } from "@/contexts/AuthContext";
 import NotFound from "@/pages/not-found";
 
 import Home from "@/pages/Home";
@@ -13,10 +14,11 @@ import TripDashboard from "@/pages/TripDashboard";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: Infinity,
-      refetchOnWindowFocus: false,
-    }
-  }
+      staleTime: 0,
+      refetchOnWindowFocus: true,
+      refetchOnReconnect: true,
+    },
+  },
 });
 
 function Router() {
@@ -31,18 +33,22 @@ function Router() {
 }
 
 function App() {
-  useEffect(() => {
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').catch(err => {
-          console.error('ServiceWorker registration failed: ', err);
-        });
-      });
-    }
-  }, []);
+ useEffect(() => {
+  if (import.meta.env.DEV && 'serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then(registrations => {
+      registrations.forEach(registration => registration.unregister());
+    });
+    return;
+  }
+
+  if (import.meta.env.PROD) {
+    navigator.serviceWorker.register('/sw.js').catch(console.error);
+  }
+}, []);
 
   return (
-    <QueryClientProvider client={queryClient}>
+  <QueryClientProvider client={queryClient}>
+    <AuthProvider>
       <TooltipProvider>
         <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
           <AuthGate>
@@ -51,8 +57,9 @@ function App() {
         </WouterRouter>
         <Toaster />
       </TooltipProvider>
-    </QueryClientProvider>
-  );
+    </AuthProvider>
+  </QueryClientProvider>
+);
 }
 
 function AuthGate({ children }: { children: React.ReactNode }) {

@@ -12,6 +12,8 @@ import { Button, Input, Label, BottomSheet } from "@/components/ui";
 import { COUNTRIES, Country } from "@/lib/countries";
 import type { Trip, TripStatus } from "@/lib/types";
 import { useAuth } from "@workspace/replit-auth-web";
+import { useSupabaseAuth } from "@/contexts/AuthContext";
+
 
 export default function Home() {
   const { data: allTrips = [], isLoading } = useTrips();
@@ -20,9 +22,12 @@ export default function Home() {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
   const [isJoinOpen, setIsJoinOpen] = useState(false);
+  const [convertTrip, setConvertTrip] = useState<Trip | null>(null);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [tab, setTab] = useState<TripStatus>('active');
+  const { signInWithGoogle } = useSupabaseAuth();
 
+  
   // Auto-archive trips older than 6 months
   useEffect(() => {
     const sixMonthsAgo = addMonths(new Date(), -6);
@@ -44,7 +49,15 @@ export default function Home() {
   const hasMultiple = [activeTrips.length, archivedTrips.length, wishlistTrips.length].filter(n => n > 0).length > 1;
 
   return (
-    <div className="flex flex-col min-h-[100dvh] pb-8 relative">
+  <div className="flex flex-col min-h-[100dvh] pb-8 relative">
+
+    <button
+      onClick={signInWithGoogle}
+      className="fixed top-4 right-4 z-[9999] bg-black text-white px-4 py-2 rounded"
+    >
+      Test Google Login
+    </button>
+
       <header className="px-6 pt-12 pb-6 sticky top-0 bg-background/80 backdrop-blur-xl z-10">
         <div className="flex items-center justify-between">
           <div>
@@ -107,50 +120,64 @@ export default function Home() {
           </div>
         ) : (
           <>
-            {/* Dropdown tabs — Active always shown, others when they have items */}
-            <div className="flex bg-muted p-1 rounded-xl mb-2">
-              <button
-                onClick={() => setTab('active')}
-                className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all ${
-                  tab === 'active' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground'
-                }`}
-              >
-                Active ({activeTrips.length})
-              </button>
-              {wishlistTrips.length > 0 && (
-                <button
-                  onClick={() => setTab('wishlist')}
-                  className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all flex items-center justify-center gap-1.5 ${
-                    tab === 'wishlist' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground'
-                  }`}
-                >
-                  <Heart className="w-3.5 h-3.5" /> Wishlist ({wishlistTrips.length})
-                </button>
-              )}
-              {archivedTrips.length > 0 && (
-                <button
-                  onClick={() => setTab('archived')}
-                  className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all flex items-center justify-center gap-1.5 ${
-                    tab === 'archived' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground'
-                  }`}
-                >
-                  <Archive className="w-3.5 h-3.5" /> Archived ({archivedTrips.length})
-                </button>
-              )}
-            </div>
+{/* Always show Active, Wishlist and Archived tabs even when count is 0 */}
+<div className="flex bg-muted p-1 rounded-xl mb-2">
+  <button
+    onClick={() => setTab('active')}
+    className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all ${
+      tab === 'active'
+        ? 'bg-background text-foreground shadow-sm'
+        : 'text-muted-foreground'
+    }`}
+  >
+    Active ({activeTrips.length})
+  </button>
 
-            {tripsToShow.length === 0 ? (
-              <div className="text-center text-muted-foreground mt-16">
-                {tab === 'active' ? <Plane className="w-10 h-10 mx-auto mb-3 opacity-30" /> :
-                  tab === 'wishlist' ? <Heart className="w-10 h-10 mx-auto mb-3 opacity-30" /> :
-                    <Archive className="w-10 h-10 mx-auto mb-3 opacity-30" />}
-                <p className="font-medium">No {tab} trips.</p>
-              </div>
-            ) : (
-              tripsToShow.map(trip => (
-                <TripCard key={trip.id} trip={trip} />
-              ))
-            )}
+  <button
+    onClick={() => setTab('wishlist')}
+    className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+      tab === 'wishlist'
+        ? 'bg-background text-foreground shadow-sm'
+        : 'text-muted-foreground'
+    }`}
+  >
+    <Heart className="w-3.5 h-3.5" />
+    Wishlist ({wishlistTrips.length})
+  </button>
+
+  <button
+    onClick={() => setTab('archived')}
+    className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+      tab === 'archived'
+        ? 'bg-background text-foreground shadow-sm'
+        : 'text-muted-foreground'
+    }`}
+  >
+    <Archive className="w-3.5 h-3.5" />
+    Archived ({archivedTrips.length})
+  </button>
+</div>
+{/* Trip list */}
+{tripsToShow.length === 0 ? (
+  <div className="text-center text-muted-foreground mt-16">
+    {tab === 'active' ? (
+      <Plane className="w-10 h-10 mx-auto mb-3 opacity-30" />
+    ) : tab === 'wishlist' ? (
+      <Heart className="w-10 h-10 mx-auto mb-3 opacity-30" />
+    ) : (
+      <Archive className="w-10 h-10 mx-auto mb-3 opacity-30" />
+    )}
+    <p className="font-medium">No {tab} trips.</p>
+  </div>
+) : (
+  tripsToShow.map(trip => (
+  <TripCard
+    key={trip.id}
+    trip={trip}
+    onConvert={setConvertTrip}
+  />
+))
+)}
           </>
         )}
       </main>
@@ -169,11 +196,22 @@ export default function Home() {
       <AddTripSheet isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} />
       <AddWishlistSheet isOpen={isWishlistOpen} onClose={() => setIsWishlistOpen(false)} />
       <JoinTripSheet isOpen={isJoinOpen} onClose={() => setIsJoinOpen(false)} />
+        <ConvertTripSheet
+  trip={convertTrip}
+  isOpen={!!convertTrip}
+  onClose={() => setConvertTrip(null)}
+/>
     </div>
   );
 }
 
-function TripCard({ trip }: { trip: Trip }) {
+function TripCard({
+  trip,
+  onConvert,
+}: {
+  trip: Trip;
+  onConvert: (trip: Trip) => void;
+}) {
   const { mutate: deleteTrip } = useDeleteTrip();
   const { mutate: updateTrip } = useUpdateTrip();
   const status = getTripStatus(trip);
@@ -247,7 +285,11 @@ function TripCard({ trip }: { trip: Trip }) {
 
       {/* Actions */}
       <div className="absolute top-4 right-4 flex gap-1 z-10">
-        <TripMenu trip={trip} status={status} />
+        <TripMenu
+  trip={trip}
+  status={status}
+  onConvert={onConvert}
+/>
         <button
           onClick={(e) => { e.preventDefault(); if (confirm('Delete trip?')) deleteTrip(trip.id); }}
           className="p-2 text-muted-foreground hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
@@ -259,48 +301,55 @@ function TripCard({ trip }: { trip: Trip }) {
   );
 }
 
-function TripMenu({ trip, status }: { trip: Trip; status: TripStatus }) {
+function TripMenu({
+  trip,
+  status,
+  onConvert,
+}: {
+  trip: Trip;
+  status: TripStatus;
+  onConvert: (trip: Trip) => void;
+}) {
   const { mutate: updateTrip } = useUpdateTrip();
   const { mutate: saveItem } = useSaveItineraryItem();
   const [isOpen, setIsOpen] = useState(false);
-  const [isConvertOpen, setIsConvertOpen] = useState(false);
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+
 
   const handleArchive = () => {
-    updateTrip({ ...trip, status: status === 'archived' ? 'active' : 'archived' });
-    setIsOpen(false);
-  };
+  if (status === 'archived') {
+    if (!trip.startDate || !trip.endDate) {
+      onConvert(trip);
+      setIsOpen(false);
+      return;
+    }
 
-  const handleConvert = () => {
-    if (!startDate || !endDate) { alert('Select both dates'); return; }
-    const startDt = safeParseDate(startDate);
-    const endDt = safeParseDate(endDate);
-    if (!startDt || !endDt) { alert('Invalid dates'); return; }
-    const days = differenceInDays(endDt, startDt) + 1;
-    if (days < 1) { alert('End date must be after start date'); return; }
-
-    // Update trip with dates
-    updateTrip({ ...trip, status: 'active', startDate, endDate });
-
-    // Convert Day N items to real dates
-    const items = JSON.parse(localStorage.getItem(`move_itinerary_${trip.id}`) || '[]');
-    const updatedItems = items.map((item: any) => {
-      const dayMatch = item.date?.match(/^Day\s+(\d+)$/i);
-      if (dayMatch) {
-        const dayNum = parseInt(dayMatch[1], 10);
-        const realDate = format(addDays(startDt, dayNum - 1), 'yyyy-MM-dd');
-        return { ...item, date: realDate };
-      }
-      return item;
+    updateTrip({
+      ...trip,
+      status: 'active',
     });
-    localStorage.setItem(`move_itinerary_${trip.id}`, JSON.stringify(updatedItems));
+  } else {
+    updateTrip({
+      ...trip,
+      status: 'archived',
+    });
+  }
 
-    setIsConvertOpen(false);
-    setIsOpen(false);
-  };
+  setIsOpen(false);
+};
 
-  return (
+  /* Move trip to Wishlist */
+const handleWishlist = () => {
+  updateTrip({
+    ...trip,
+    status: 'wishlist',
+    startDate: '',
+    endDate: '',
+  });
+
+  setIsOpen(false);
+};
+
+   return (
     <>
       <button
         onClick={(e) => { e.preventDefault(); setIsOpen(true); }}
@@ -310,39 +359,53 @@ function TripMenu({ trip, status }: { trip: Trip; status: TripStatus }) {
       </button>
 
       {isOpen && (
-        <div className="fixed inset-0 z-[60]" onClick={() => setIsOpen(false)}>
-          <div className="absolute right-4 top-20 bg-card border border-border rounded-2xl shadow-2xl p-2 min-w-[160px]" onClick={e => e.stopPropagation()}>
-            {status === 'wishlist' && (
-              <button onClick={() => setIsConvertOpen(true)} className="w-full text-left px-3 py-2.5 text-sm font-medium hover:bg-muted rounded-xl flex items-center gap-2">
-                <Users className="w-4 h-4" /> Convert to Trip
-              </button>
-            )}
-            <button onClick={handleArchive} className="w-full text-left px-3 py-2.5 text-sm font-medium hover:bg-muted rounded-xl flex items-center gap-2">
-              <Archive className="w-4 h-4" /> {status === 'archived' ? 'Unarchive' : 'Archive'}
-            </button>
-          </div>
-        </div>
+  <div className="fixed inset-0 z-[60]" onClick={() => setIsOpen(false)}>
+    <div
+      className="absolute right-4 top-20 bg-card border border-border rounded-2xl shadow-2xl p-2 min-w-[160px]"
+      onClick={e => e.stopPropagation()}
+    >
+
+     {/* Convert wishlist to active trip */}
+{status === 'wishlist' && (
+  <button
+    onClick={() => {
+  setIsOpen(false);
+  onConvert(trip);
+}}
+    className="w-full text-left px-3 py-2.5 text-sm font-medium hover:bg-muted rounded-xl flex items-center gap-2"
+  >
+    <Users className="w-4 h-4" />
+    Convert to Trip
+  </button>
+)}
+
+      {/* Move active trip to wishlist */}
+      {status !== 'wishlist' && status !== 'archived' && (
+        <button
+          onClick={handleWishlist}
+          className="w-full text-left px-3 py-2.5 text-sm font-medium hover:bg-muted rounded-xl flex items-center gap-2"
+        >
+          <Heart className="w-4 h-4" />
+          Move to Wishlist
+        </button>
       )}
 
-      {/* Convert sheet */}
-      {isConvertOpen && (
-        <div className="fixed inset-0 z-[70] bg-foreground/20 backdrop-blur-sm flex items-end" onClick={() => setIsConvertOpen(false)}>
-          <div className="w-full bg-card rounded-t-[32px] shadow-2xl px-6 pb-8 pt-4" onClick={e => e.stopPropagation()}>
-            <div className="mx-auto mt-2 mb-6 h-1.5 w-12 rounded-full bg-muted-foreground/20" />
-            <h2 className="text-2xl font-display font-bold mb-4">Convert to Trip</h2>
-            <p className="text-sm text-muted-foreground mb-4">Set dates to convert your wishlist items.</p>
-            <div className="grid grid-cols-2 gap-3 mb-4">
-              <div><Label>Start Date</Label><Input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} /></div>
-              <div><Label>End Date</Label><Input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} /></div>
-            </div>
-            <Button size="lg" className="w-full" onClick={handleConvert}>Convert</Button>
-          </div>
-        </div>
-      )}
+      {/* Archive / Unarchive trip */}
+      <button
+        onClick={handleArchive}
+        className="w-full text-left px-3 py-2.5 text-sm font-medium hover:bg-muted rounded-xl flex items-center gap-2"
+      >
+        <Archive className="w-4 h-4" />
+        {status === 'archived' ? 'Unarchive' : 'Archive'}
+      </button>
+
+    </div>
+  </div>
+)}
     </>
   );
 }
-
+     
 function JoinTripSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const [code, setCode] = useState('');
   const { data: trips = [] } = useTrips();
@@ -435,6 +498,7 @@ function AddTripSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
     if (!country) { alert('Please select a destination country'); return; }
     const fd = new FormData(e.currentTarget);
     const id = generateId();
@@ -515,6 +579,127 @@ function AddWishlistSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
           <Heart className="w-5 h-5 mr-2" /> Save to Wishlist
         </Button>
       </form>
+    </BottomSheet>
+  );
+}
+
+function ConvertTripSheet({
+  trip,
+  isOpen,
+  onClose,
+}: {
+  trip: Trip | null;
+  isOpen: boolean;
+  onClose: () => void;
+}) {
+  const { mutate: updateTrip } = useUpdateTrip();
+
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const handleConvert = () => {
+  if (!trip) return;
+
+  if (!startDate || !endDate) {
+    alert('Select both dates');
+    return;
+  }
+
+      const startDt = safeParseDate(startDate);
+    const endDt = safeParseDate(endDate);
+
+    if (!startDt || !endDt) {
+      alert('Invalid dates');
+      return;
+    }
+
+    const days = differenceInDays(endDt, startDt) + 1;
+
+    if (days < 1) {
+      alert('End date must be after start date');
+      return;
+    }
+
+    updateTrip({
+      ...trip,
+      status: 'active',
+      startDate,
+      endDate,
+    });
+
+    const items = JSON.parse(
+      localStorage.getItem(`move_itinerary_${trip.id}`) || '[]'
+    );
+
+    const updatedItems = items.map((item: any) => {
+      const dayMatch = item.date?.match(/^Day\s+(\d+)$/i);
+
+      if (dayMatch) {
+        const dayNum = parseInt(dayMatch[1], 10);
+
+        const realDate = format(
+          addDays(startDt, dayNum - 1),
+          'yyyy-MM-dd'
+        );
+
+        return {
+          ...item,
+          date: realDate,
+        };
+      }
+
+      return item;
+    });
+
+    localStorage.setItem(
+      `move_itinerary_${trip.id}`,
+      JSON.stringify(updatedItems)
+    );
+
+    setStartDate('');
+    setEndDate('');
+
+    onClose();
+  };
+
+  return (
+    <BottomSheet
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Convert to Trip"
+    >
+      <p className="text-sm text-muted-foreground mb-4">
+        Set dates to convert your wishlist items.
+      </p>
+
+      <div className="grid grid-cols-2 gap-3 mb-4">
+        <div>
+          <Label>Start Date</Label>
+
+          <Input
+            type="date"
+            value={startDate}
+            onChange={e => setStartDate(e.target.value)}
+          />
+        </div>
+
+        <div>
+          <Label>End Date</Label>
+
+          <Input
+            type="date"
+            value={endDate}
+            onChange={e => setEndDate(e.target.value)}
+          />
+        </div>
+      </div>
+
+      <Button
+        size="lg"
+        className="w-full"
+        onClick={handleConvert}
+      >
+        Convert
+      </Button>
     </BottomSheet>
   );
 }

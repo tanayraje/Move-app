@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Trip, ItineraryItem, TripDocument, Expense, Place, TripBudget } from '@/lib/types';
-import { getDocumentsByTrip, saveDocument, deleteDocumentDB } from '@/lib/db';
+import { supabase } from '@/lib/supabase';
 
 const getLS = <T>(key: string, fallback: T): T => {
   try {
@@ -19,7 +19,30 @@ const setLS = <T>(key: string, value: T): void => {
 export function useTrips() {
   return useQuery({
     queryKey: ['trips'],
-    queryFn: async () => getLS<Trip[]>('move_trips', []),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('trips')
+        .select('*');
+
+      console.log('TRIPS DATA', data);
+      console.log('TRIPS ERROR', error);
+
+      if (error) throw error;
+
+      return (data || []).map((trip: any) => ({
+        id: trip.id,
+        name: trip.name,
+        destination: trip.destination,
+        destinationCurrency: trip.destination_currency,
+        startDate: trip.start_date || '',
+        endDate: trip.end_date || '',
+        inviteCode: trip.invite_code,
+        members: trip.members || [],
+        status: trip.status || 'active',
+        dayCities: trip.day_cities || {},
+        createdAt: trip.created_at_ms,
+      }));
+    },
   });
 }
 
@@ -27,8 +50,30 @@ export function useTrip(id: string) {
   return useQuery({
     queryKey: ['trips', id],
     queryFn: async () => {
-      const trips = getLS<Trip[]>('move_trips', []);
-      return trips.find(t => t.id === id) || null;
+      const { data, error } = await supabase
+        .from('trips')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (error) {
+        console.error('USETRIP ERROR', error);
+        return null;
+      }
+
+      return {
+        id: data.id,
+        name: data.name,
+        destination: data.destination,
+        destinationCurrency: data.destination_currency,
+        startDate: data.start_date || '',
+        endDate: data.end_date || '',
+        inviteCode: data.invite_code,
+        members: data.members || [],
+        status: data.status || 'active',
+        dayCities: data.day_cities || {},
+        createdAt: data.created_at_ms,
+      };
     },
     enabled: !!id,
   });
@@ -36,114 +81,331 @@ export function useTrip(id: string) {
 
 export function useCreateTrip() {
   const qc = useQueryClient();
+
   return useMutation({
     mutationFn: async (trip: Trip) => {
-      const trips = getLS<Trip[]>('move_trips', []);
-      setLS('move_trips', [trip, ...trips]);
+      const { error } = await supabase
+        .from('trips')
+        .insert({
+          id: trip.id,
+          name: trip.name,
+          destination: trip.destination,
+          destination_currency: trip.destinationCurrency,
+          start_date: trip.startDate,
+          end_date: trip.endDate,
+          invite_code: trip.inviteCode,
+          members: trip.members || [],
+          status: trip.status || 'active',
+          day_cities: trip.dayCities || {},
+          created_at_ms: trip.createdAt,
+        });
+
+      if (error) throw error;
+
       return trip;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['trips'] })
+
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['trips'] });
+    },
   });
 }
 
 export function useUpdateTrip() {
   const qc = useQueryClient();
+
   return useMutation({
     mutationFn: async (trip: Trip) => {
-      const trips = getLS<Trip[]>('move_trips', []);
-      setLS('move_trips', trips.map(t => t.id === trip.id ? trip : t));
+      const { error } = await supabase
+        .from('trips')
+        .update({
+          name: trip.name,
+          destination: trip.destination,
+          destination_currency: trip.destinationCurrency,
+          start_date: trip.startDate,
+          end_date: trip.endDate,
+          invite_code: trip.inviteCode,
+          members: trip.members || [],
+          status: trip.status || 'active',
+          day_cities: trip.dayCities || {},
+        })
+        .eq('id', trip.id);
+
+      if (error) throw error;
+
       return trip;
     },
+
     onSuccess: (trip) => {
       qc.invalidateQueries({ queryKey: ['trips'] });
       qc.invalidateQueries({ queryKey: ['trips', trip.id] });
-    }
+    },
   });
 }
 
 export function useDeleteTrip() {
   const qc = useQueryClient();
+
   return useMutation({
     mutationFn: async (id: string) => {
-      const trips = getLS<Trip[]>('move_trips', []);
-      setLS('move_trips', trips.filter(t => t.id !== id));
-      localStorage.removeItem(`move_itinerary_${id}`);
-      localStorage.removeItem(`move_expenses_${id}`);
-      localStorage.removeItem(`move_places_${id}`);
+      const { error } = await supabase
+        .from('trips')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['trips'] })
+
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['trips'] });
+    },
   });
 }
-
 // --- ITINERARY ---
 export function useItinerary(tripId: string) {
   return useQuery({
     queryKey: ['itinerary', tripId],
-    queryFn: async () => getLS<ItineraryItem[]>(`move_itinerary_${tripId}`, []),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('itinerary_items')
+        .select('*')
+        .eq('trip_id', tripId)
+        .order('date', { ascending: true })
+        .order('order_index', { ascending: true });
+
+      if (error) throw error;
+
+      return (data || []).map((item: any) => ({
+        id: item.id,
+        tripId: item.trip_id,
+        elementType: item.element_type,
+        title: item.title,
+        location: item.location || '',
+        fromLocation: item.from_location || '',
+        toLocation: item.to_location || '',
+        travelType: item.travel_type || undefined,
+        date: item.date,
+        startTime: item.start_time || '',
+        endTime: item.end_time || '',
+        endDate: item.end_date || undefined,
+        notes: item.notes || '',
+        category: item.category,
+        order: item.order_index || 0,
+        attachedDocIds: item.attached_doc_ids || [],
+        checklist: item.checklist || [],
+        fromPlaceId: item.from_place_id || undefined,
+        cost: item.cost || undefined,
+        expenseId: item.expense_id || undefined,
+        mealSubType: item.meal_sub_type || undefined,
+      }));
+    },
     enabled: !!tripId,
   });
 }
 
 export function useSaveItineraryItem() {
   const qc = useQueryClient();
+
   return useMutation({
     mutationFn: async (item: ItineraryItem) => {
-      const key = `move_itinerary_${item.tripId}`;
-      const items = getLS<ItineraryItem[]>(key, []);
-      const existing = items.findIndex(i => i.id === item.id);
-      if (existing >= 0) items[existing] = item;
-      else items.push(item);
-      setLS(key, items);
+      const { error } = await supabase
+        .from('itinerary_items')
+        .upsert({
+          id: item.id,
+          trip_id: item.tripId,
+          element_type: item.elementType,
+          title: item.title,
+          location: item.location,
+          from_location: item.fromLocation,
+          to_location: item.toLocation,
+          travel_type: item.travelType,
+          date: item.date,
+          start_time: item.startTime,
+          end_time: item.endTime,
+          end_date: item.endDate,
+          notes: item.notes,
+          category: item.category,
+          order_index: item.order,
+          attached_doc_ids: item.attachedDocIds || [],
+          checklist: item.checklist || [],
+          from_place_id: item.fromPlaceId,
+          cost: item.cost,
+          expense_id: item.expenseId,
+          meal_sub_type: item.mealSubType,
+        });
+
+      if (error) throw error;
+
       return item;
     },
-    onSuccess: (_, item) => qc.invalidateQueries({ queryKey: ['itinerary', item.tripId] })
+
+    onSuccess: (_, item) => {
+      qc.invalidateQueries({
+        queryKey: ['itinerary', item.tripId]
+      });
+    }
   });
 }
 
 export function useDeleteItineraryItem() {
   const qc = useQueryClient();
+
   return useMutation({
-    mutationFn: async ({ tripId, id }: { tripId: string, id: string }) => {
-      const key = `move_itinerary_${tripId}`;
-      const items = getLS<ItineraryItem[]>(key, []);
-      setLS(key, items.filter(i => i.id !== id));
+    mutationFn: async ({ tripId, id }: { tripId: string; id: string }) => {
+      const { error } = await supabase
+        .from('itinerary_items')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
     },
-    onSuccess: (_, vars) => qc.invalidateQueries({ queryKey: ['itinerary', vars.tripId] })
+
+    onSuccess: (_, vars) => {
+      qc.invalidateQueries({
+        queryKey: ['itinerary', vars.tripId]
+      });
+    }
   });
 }
 
 export function useReorderItinerary() {
   const qc = useQueryClient();
+
   return useMutation({
-    mutationFn: async ({ tripId, items }: { tripId: string, items: ItineraryItem[] }) => {
-      setLS(`move_itinerary_${tripId}`, items);
+    mutationFn: async ({
+      tripId,
+      items,
+    }: {
+      tripId: string;
+      items: ItineraryItem[];
+    }) => {
+      const updates = items.map((item, index) => ({
+        id: item.id,
+        order_index: index,
+      }));
+
+      for (const update of updates) {
+        await supabase
+          .from('itinerary_items')
+          .update({
+            order_index: update.order_index,
+          })
+          .eq('id', update.id);
+      }
     },
-    onSuccess: (_, vars) => qc.invalidateQueries({ queryKey: ['itinerary', vars.tripId] })
+
+    onSuccess: (_, vars) => {
+      qc.invalidateQueries({
+        queryKey: ['itinerary', vars.tripId]
+      });
+    }
   });
 }
 
 // --- DOCUMENTS (IndexedDB) ---
+// --- DOCUMENTS ---
 export function useDocuments(tripId: string) {
   return useQuery({
     queryKey: ['documents', tripId],
-    queryFn: async () => getDocumentsByTrip(tripId),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('documents')
+        .select('*')
+        .eq('trip_id', tripId);
+
+      if (error) throw error;
+
+      return data || [];
+    },
     enabled: !!tripId,
   });
 }
 
 export function useAddDocument() {
   const qc = useQueryClient();
+
   return useMutation({
-    mutationFn: async (doc: TripDocument) => await saveDocument(doc),
-    onSuccess: (_, doc) => qc.invalidateQueries({ queryKey: ['documents', doc.tripId] })
+    mutationFn: async (doc: any) => {
+      const filePath = `${doc.tripId}/${doc.id}_${doc.fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('trip-documents')
+        .upload(filePath, doc.blob);
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from('trip-documents')
+        .getPublicUrl(filePath);
+
+      const { error: dbError } = await supabase
+        .from('documents')
+        .insert({
+          id: doc.id,
+          trip_id: doc.tripId,
+          name: doc.name,
+          category: doc.category,
+          notes: doc.notes,
+          file_name: doc.fileName,
+          file_type: doc.fileType,
+          file_size: doc.fileSize,
+          file_url: urlData.publicUrl,
+          created_at_ms: doc.createdAt,
+        });
+
+      if (dbError) throw dbError;
+
+      return doc;
+    },
+
+    onSuccess: (_, doc) => {
+      qc.invalidateQueries({
+        queryKey: ['documents', doc.tripId]
+      });
+    }
   });
 }
 
 export function useDeleteDocument() {
   const qc = useQueryClient();
+
   return useMutation({
-    mutationFn: async ({ id, tripId }: { id: string, tripId: string }) => await deleteDocumentDB(id),
-    onSuccess: (_, vars) => qc.invalidateQueries({ queryKey: ['documents', vars.tripId] })
+    mutationFn: async ({
+      id,
+      tripId,
+    }: {
+      id: string;
+      tripId: string;
+    }) => {
+      const { data: doc } = await supabase
+        .from('documents')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (doc?.file_url) {
+        const path = decodeURIComponent(
+          doc.file_url.split('/trip-documents/')[1]
+        );
+
+        await supabase.storage
+          .from('trip-documents')
+          .remove([path]);
+      }
+
+      const { error } = await supabase
+        .from('documents')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+    },
+
+    onSuccess: (_, vars) => {
+      qc.invalidateQueries({
+        queryKey: ['documents', vars.tripId]
+      });
+    }
   });
 }
 
@@ -151,36 +413,89 @@ export function useDeleteDocument() {
 export function useExpenses(tripId: string) {
   return useQuery({
     queryKey: ['expenses', tripId],
-    queryFn: async () => getLS<Expense[]>(`move_expenses_${tripId}`, []),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('expenses')
+        .select('*')
+        .eq('trip_id', tripId)
+        .order('date', { ascending: true });
+
+      if (error) throw error;
+
+      return (data || []).map((item: any) => ({
+        id: item.id,
+        tripId: item.trip_id,
+        title: item.title,
+        amount: item.amount,
+        category: item.category,
+        date: item.date,
+        payerId: item.payer_id || undefined,
+        notes: item.notes || '',
+        split: item.split || [],
+        createdAt: item.created_at_ms,
+      }));
+    },
     enabled: !!tripId,
   });
 }
 
 export function useSaveExpense() {
   const qc = useQueryClient();
+
   return useMutation({
     mutationFn: async (item: Expense) => {
-      const key = `move_expenses_${item.tripId}`;
-      const items = getLS<Expense[]>(key, []);
-      const existing = items.findIndex(i => i.id === item.id);
-      if (existing >= 0) items[existing] = item;
-      else items.push(item);
-      setLS(key, items);
+      const { error } = await supabase
+        .from('expenses')
+        .upsert({
+          id: item.id,
+          trip_id: item.tripId,
+          title: item.title,
+          amount: item.amount,
+          category: item.category,
+          date: item.date,
+          payer_id: item.payerId,
+          notes: item.notes,
+          split: item.split || [],
+          created_at_ms: item.createdAt,
+        });
+
+      if (error) throw error;
+
       return item;
     },
-    onSuccess: (_, item) => qc.invalidateQueries({ queryKey: ['expenses', item.tripId] })
+
+    onSuccess: (_, item) => {
+      qc.invalidateQueries({
+        queryKey: ['expenses', item.tripId]
+      });
+    }
   });
 }
 
 export function useDeleteExpense() {
   const qc = useQueryClient();
+
   return useMutation({
-    mutationFn: async ({ tripId, id }: { tripId: string, id: string }) => {
-      const key = `move_expenses_${tripId}`;
-      const items = getLS<Expense[]>(key, []);
-      setLS(key, items.filter(i => i.id !== id));
+    mutationFn: async ({
+      tripId,
+      id,
+    }: {
+      tripId: string;
+      id: string;
+    }) => {
+      const { error } = await supabase
+        .from('expenses')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
     },
-    onSuccess: (_, vars) => qc.invalidateQueries({ queryKey: ['expenses', vars.tripId] })
+
+    onSuccess: (_, vars) => {
+      qc.invalidateQueries({
+        queryKey: ['expenses', vars.tripId]
+      });
+    }
   });
 }
 
@@ -188,35 +503,87 @@ export function useDeleteExpense() {
 export function usePlaces(tripId: string) {
   return useQuery({
     queryKey: ['places', tripId],
-    queryFn: async () => getLS<Place[]>(`move_places_${tripId}`, []),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('places')
+        .select('*')
+        .eq('trip_id', tripId);
+
+      if (error) throw error;
+
+      return (data || []).map((item: any) => ({
+        id: item.id,
+        tripId: item.trip_id,
+        name: item.name,
+        location: item.location || '',
+        notes: item.notes || '',
+        visited: item.visited,
+        date: item.date || undefined,
+        checklist: item.checklist || [],
+        linkedToTimeline: item.linked_to_timeline || false,
+        createdAt: item.created_at_ms,
+      }));
+    },
     enabled: !!tripId,
   });
 }
 
 export function useSavePlace() {
   const qc = useQueryClient();
+
   return useMutation({
     mutationFn: async (item: Place) => {
-      const key = `move_places_${item.tripId}`;
-      const items = getLS<Place[]>(key, []);
-      const existing = items.findIndex(i => i.id === item.id);
-      if (existing >= 0) items[existing] = item;
-      else items.push(item);
-      setLS(key, items);
+      const { error } = await supabase
+        .from('places')
+        .upsert({
+          id: item.id,
+          trip_id: item.tripId,
+          name: item.name,
+          location: item.location,
+          notes: item.notes,
+          visited: item.visited,
+          date: item.date,
+          checklist: item.checklist || [],
+          linked_to_timeline: item.linkedToTimeline || false,
+          created_at_ms: item.createdAt,
+        });
+
+      if (error) throw error;
+
       return item;
     },
-    onSuccess: (_, item) => qc.invalidateQueries({ queryKey: ['places', item.tripId] })
+
+    onSuccess: (_, item) => {
+      qc.invalidateQueries({
+        queryKey: ['places', item.tripId]
+      });
+    }
   });
 }
 
 export function useDeletePlace() {
   const qc = useQueryClient();
+
   return useMutation({
-    mutationFn: async ({ tripId, id }: { tripId: string, id: string }) => {
-      const key = `move_places_${tripId}`;
-      const items = getLS<Place[]>(key, []);
-      setLS(key, items.filter(i => i.id !== id));
+    mutationFn: async ({
+      tripId,
+      id,
+    }: {
+      tripId: string;
+      id: string;
+    }) => {
+      const { error } = await supabase
+        .from('places')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
     },
-    onSuccess: (_, vars) => qc.invalidateQueries({ queryKey: ['places', vars.tripId] })
+
+    onSuccess: (_, vars) => {
+      qc.invalidateQueries({
+        queryKey: ['places', vars.tripId]
+      });
+    }
   });
 }

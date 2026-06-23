@@ -19,8 +19,7 @@ export default function DocumentsTab({ trip }: { trip: Trip }) {
   const [isAddOpen, setIsAddOpen] = useState(false);
 
   const openDoc = (doc: TripDocument) => {
-    const url = URL.createObjectURL(doc.blob);
-    window.open(url, '_blank');
+    window.open(doc.file_url, '_blank');
   };
 
   return (

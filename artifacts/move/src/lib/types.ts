@@ -76,7 +76,8 @@ export interface TripDocument {
   fileName: string;
   fileType: string;
   fileSize: number;
-  blob: Blob;
+  blob?: Blob;
+  file_url?: string;
   createdAt: number;
 }
 
