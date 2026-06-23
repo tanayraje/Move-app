@@ -11,21 +11,23 @@ import { generateId, safeFormatDate, safeParseDate, getTripStatus } from "@/lib/
 import { Button, Input, Label, BottomSheet } from "@/components/ui";
 import { COUNTRIES, Country } from "@/lib/countries";
 import type { Trip, TripStatus } from "@/lib/types";
-import { useAuth } from "@workspace/replit-auth-web";
 import { useSupabaseAuth } from "@/contexts/AuthContext";
 
 
 export default function Home() {
   const { data: allTrips = [], isLoading } = useTrips();
   const { mutate: updateTrip } = useUpdateTrip();
-  const { user, logout } = useAuth();
+  const {
+  user,
+  signOut: logout,
+} = useSupabaseAuth();
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
   const [isJoinOpen, setIsJoinOpen] = useState(false);
   const [convertTrip, setConvertTrip] = useState<Trip | null>(null);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [tab, setTab] = useState<TripStatus>('active');
-  const { signInWithGoogle } = useSupabaseAuth();
+  
 
   
   // Auto-archive trips older than 6 months
