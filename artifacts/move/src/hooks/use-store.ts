@@ -139,13 +139,18 @@ if (!user) {
 
       if (error) throw error;
 
-await supabase
+const { error: memberError } = await supabase
   .from('trip_members')
   .insert({
     trip_id: trip.id,
     user_id: user.id,
     role: 'owner',
   });
+
+if (memberError) {
+  console.error('OWNER MEMBER ERROR', memberError);
+  throw memberError;
+}
 
 return trip;
     },
