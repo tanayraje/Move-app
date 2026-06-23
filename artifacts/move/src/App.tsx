@@ -34,10 +34,10 @@ function Router() {
 
 function App() {
  useEffect(() => {
-  if (import.meta.env.DEV && 'serviceWorker' in navigator) {
+  /*if (import.meta.env.DEV && 'serviceWorker' in navigator) {
     navigator.serviceWorker.getRegistrations().then(registrations => {
       registrations.forEach(registration => registration.unregister());
-    });
+    });*/
     return;
   }
 
