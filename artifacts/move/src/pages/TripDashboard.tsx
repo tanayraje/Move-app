@@ -112,22 +112,21 @@ export default function TripDashboard({ params }: { params: { id: string, tab?: 
 function MembersButton({ trip }: { trip: Trip }) {
   const [isOpen, setIsOpen] = useState(false);
   const [name, setName] = useState('');
-  const [inviteCode, setInviteCode] = useState('');
-  const { mutate: updateTrip } = useUpdateTrip();
+   const { mutate: updateTrip } = useUpdateTrip();
 
   const { data: memberRows = [] } = useQuery({
   queryKey: ['trip-members', trip.id],
   queryFn: async () => {
-    const { data } = await supabase
-      .from('trip_members')
-      .select('*')
-      .eq('trip_id', trip.id);
+    const { data } = await supabase.rpc(
+  'get_trip_members',
+  { p_trip_id: trip.id }
+);
 
     return data || [];
   },
 });
 
-const memberCount = memberRows.length + 1;
+const memberCount = memberRows.length;
 const isSolo = memberCount <= 1;
 const members = trip.members || [];
 
@@ -150,18 +149,7 @@ const members = trip.members || [];
     });
   };
 
-  const joinByCode = () => {
-    const trimmed = inviteCode.trim().toUpperCase();
-    if (trimmed !== trip.inviteCode) { alert('Invalid code for this trip.'); return; }
-    const hasSelf = members.some((m: any) => m.id === 'self');
-    if (hasSelf) { alert('You are already in this trip.'); return; }
-    updateTrip({
-      ...trip,
-      members: [...members, { id: 'self', name: 'Me', color: '#2563eb' }]
-    });
-    setInviteCode('');
-  };
-
+  
   return (
     <>
       <button
@@ -200,8 +188,12 @@ const members = trip.members || [];
           )}
 
           {/* Member List */}
-          <div className="space-y-2">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Members</p>
+<div className="space-y-2">
+  <p>Rows: {memberRows.length}</p>
+
+  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+    Members
+  </p>
             {members.map((member: any) => (
               <div key={member.id} className="flex items-center gap-3 bg-card border border-border rounded-xl px-3 py-2.5">
                 <div
@@ -233,16 +225,7 @@ const members = trip.members || [];
             </div>
           </div>
 
-          {/* Join by code */}
-          <div className="pt-2 border-t border-border">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Join by Code</p>
-            <div className="flex gap-2">
-              <Input value={inviteCode} onChange={e => setInviteCode(e.target.value.toUpperCase())}
-                placeholder="Enter code" className="uppercase tracking-wider" />
-              <Button variant="outline" onClick={joinByCode} className="shrink-0 px-4">Join</Button>
-            </div>
-          </div>
-
+          
           </div>
       </BottomSheet>
     </>
