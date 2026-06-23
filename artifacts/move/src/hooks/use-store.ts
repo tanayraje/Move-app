@@ -15,14 +15,51 @@ const setLS = <T>(key: string, value: T): void => {
   localStorage.setItem(key, JSON.stringify(value));
 };
 
+export async function joinTripByCode(inviteCode: string) {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) throw new Error("Not authenticated");
+
+  const { data: trip, error: tripError } = await supabase
+    .from("trips")
+    .select("*")
+    .eq("invite_code", inviteCode)
+    .single();
+
+  if (tripError || !trip) {
+    throw new Error("Trip not found");
+  }
+
+  const { error: memberError } = await supabase
+    .from("trip_members")
+    .upsert({
+      trip_id: trip.id,
+      user_id: user.id,
+      role: "member",
+    });
+
+  if (memberError) throw memberError;
+
+  return trip;
+}
+
 // --- TRIPS ---
 export function useTrips() {
   return useQuery({
     queryKey: ['trips'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('trips')
-        .select('*');
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return [];
+
+  const { data, error } = await supabase
+    .from('trips')
+    .select('*')
+    .eq('owner_id', user.id);
 
       console.log('TRIPS DATA', data);
       console.log('TRIPS ERROR', error);
@@ -84,9 +121,17 @@ export function useCreateTrip() {
 
   return useMutation({
     mutationFn: async (trip: Trip) => {
+      const {
+  data: { user },
+} = await supabase.auth.getUser();
+
+if (!user) {
+  throw new Error("User not authenticated");
+}
       const { error } = await supabase
         .from('trips')
         .insert({
+          owner_id: user.id,
           id: trip.id,
           name: trip.name,
           destination: trip.destination,

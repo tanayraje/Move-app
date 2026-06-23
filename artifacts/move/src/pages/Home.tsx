@@ -12,6 +12,7 @@ import { Button, Input, Label, BottomSheet } from "@/components/ui";
 import { COUNTRIES, Country } from "@/lib/countries";
 import type { Trip, TripStatus } from "@/lib/types";
 import { useSupabaseAuth } from "@/contexts/AuthContext";
+import { joinTripByCode } from "@/hooks/use-store";
 
 
 export default function Home() {
@@ -72,12 +73,12 @@ export default function Home() {
                 onClick={() => setShowUserMenu(!showUserMenu)}
                 className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold hover:opacity-90 transition-opacity"
               >
-                {user?.firstName?.[0] || user?.email?.[0] || '?'}
+                {user?.email?.[0] || user?.email?.[0] || '?'}
               </button>
               {showUserMenu && (
                 <div className="absolute right-0 top-12 bg-card border border-border rounded-2xl shadow-2xl p-2 min-w-[160px] z-50">
                   <div className="px-3 py-2 text-sm font-medium text-foreground border-b border-border mb-1">
-                    {user?.firstName || user?.email || 'User'}
+                    {user?.email || 'User'}
                   </div>
                   <button
                     onClick={() => { setShowUserMenu(false); logout(); }}
@@ -403,23 +404,26 @@ const handleWishlist = () => {
      
 function JoinTripSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const [code, setCode] = useState('');
-  const { data: trips = [] } = useTrips();
-  const { mutate: updateTrip } = useUpdateTrip();
-
-  const handleJoin = () => {
+  
+  const handleJoin = async () => {
+  try {
     const trimmed = code.trim().toUpperCase();
-    const trip = trips.find(t => t.inviteCode === trimmed);
-    if (!trip) { alert('Trip not found. Check the invite code.'); return; }
-    const members = trip.members || [];
-    const hasSelf = members.some(m => m.id === 'self');
-    if (hasSelf) { alert('You are already a member of this trip.'); return; }
-    updateTrip({
-      ...trip,
-      members: [...members, { id: 'self', name: 'Me', color: '#2563eb' }]
-    });
+
+    if (!trimmed) {
+      alert("Enter an invite code");
+      return;
+    }
+
+    await joinTripByCode(trimmed);
+
+    alert("Trip joined successfully!");
+
     onClose();
     setCode('');
-  };
+  } catch (err: any) {
+    alert(err.message || "Unable to join trip");
+  }
+};
 
   return (
     <BottomSheet isOpen={isOpen} onClose={onClose} title="Join a Trip">

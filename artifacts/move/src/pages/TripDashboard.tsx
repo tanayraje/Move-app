@@ -25,7 +25,7 @@ export default function TripDashboard({ params }: { params: { id: string, tab?: 
   if (isLoading) return <div className="p-8 text-center">Loading trip...</div>;
   if (!trip) return <div className="p-8 text-center text-muted-foreground">Trip not found. <Link href="/" className="text-primary ml-2">Go back</Link></div>;
 
-  const status = (trip.status || (trip.archived ? 'archived' : 'active')) as TripStatus;
+  const status = (trip.status || 'active') as TripStatus;
   const isWishlist = status === 'wishlist';
   const isArchived = status === 'archived';
 
