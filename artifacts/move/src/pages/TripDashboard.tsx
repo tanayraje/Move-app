@@ -202,7 +202,41 @@ const addMember = () => {
                   Copy
                 </button>
               </div>
-              <p className="text-xs text-muted-foreground mt-2">Share this code to invite others.</p>
+              <div className="mt-2 flex items-center justify-between gap-3">
+  <p className="text-xs text-muted-foreground">
+    Share this code to invite others.
+  </p>
+
+  <button
+    onClick={async () => {
+      const inviteText = `Join my trip on Move ✈️
+Let's Plan it Better!
+
+Trip: ${trip.name}
+
+Code: ${trip.inviteCode}
+
+Open Move:
+https://move-app-theta.vercel.app
+
+Or join directly:
+https://move-app-theta.vercel.app/join/${trip.inviteCode}`;
+
+      if (navigator.share) {
+        await navigator.share({
+          title: `Join ${trip.name}`,
+          text: inviteText,
+        });
+      } else {
+        await navigator.clipboard.writeText(inviteText);
+        alert('Invite copied to clipboard!');
+      }
+    }}
+    className="text-xs font-bold bg-primary text-primary-foreground px-3 py-2 rounded-lg shrink-0"
+  >
+    Share Invite
+  </button>
+</div>
             </div>
           )}
 
