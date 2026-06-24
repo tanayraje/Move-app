@@ -72,10 +72,7 @@ export default function ExpensesTab({ trip }: { trip: Trip }) {
     )
     .map((m: any, index: number) => ({
       id: m.user_id,
-      name:
-        m.status === "removed"
-          ? `${m.name || m.username} (Removed)`
-          : (m.name || m.username),
+      name: m.name || m.username,
       username: m.username,
       status: m.status,
       color:
@@ -90,7 +87,7 @@ const activeMembers = members.filter(
   (m: any) => m.status !== "removed"
 );
 
-const isSolo = members.length <= 1;
+const isSolo = activeMembers.length <= 1;
   const destCurrency = trip.destinationCurrency || 'INR';
   const showToggle = destCurrency !== 'INR';
   const activeCurrency = showInDest ? destCurrency : 'INR';
@@ -128,7 +125,7 @@ const isSolo = members.length <= 1;
 
   // Participants (who owes whom)
  const balance = useMemo(() => {
-  if (isSolo || expenses.length === 0) return null;
+  if (members.length <= 1 || expenses.length === 0) return null;
 
   const paid: Record<string, number> = {};
   const owed: Record<string, number> = {};
@@ -338,7 +335,7 @@ const isSolo = members.length <= 1;
       </div>
 
       {/* Participants (shown when multi-member) */}
-      {!isSolo && balance && (
+      {members.length > 1 && balance && (
         <div className="bg-card border border-border rounded-2xl overflow-hidden mb-5">
           <button
             onClick={() => setShowBalance(v => !v)}
@@ -498,7 +495,7 @@ const isSolo = members.length <= 1;
                   <ExpenseRow
                     key={exp.id}
                     expense={exp}
-                    members={activeMembers}
+                    members={members}
                     activeCurrency={activeCurrency}
                     destCurrency={destCurrency}
                     showInDest={showInDest}
@@ -644,7 +641,16 @@ function ExpenseRow({
                 style={{ backgroundColor: payer.color || '#2563eb' }}>
                 {payer.name.charAt(0)}
               </div>
-              <span className="text-xs text-muted-foreground">{payer.name}</span>
+              <span
+  className="text-xs"
+  style={{
+    color: payer.status === "removed"
+      ? "#9ca3af"
+      : undefined,
+  }}
+>
+  {payer.name}
+</span>
             </div>
             {isSplit && (
               <span className="text-[10px] font-bold bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded-full">
@@ -693,7 +699,7 @@ function AddExpenseSheet({
   existingExpense?: Expense;
 }) {
   const { mutateAsync: saveExp, isPending } = useSaveExpense();
-  const isSolo = members.length <= 1;
+  const isSolo = activeMembers.length <= 1;
   const isEditing = !!existingExpense;
 
   const [amountInput, setAmountInput] = useState(
@@ -723,7 +729,7 @@ function AddExpenseSheet({
 
   setSelectedMemberIds(
     existingExpense.split?.map(s => s.memberId) ||
-      members.map(m => m.user_id)
+      members.map(m => m.id)
   );
 
   setSplitAmounts(
