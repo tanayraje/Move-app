@@ -10,6 +10,7 @@ import NotFound from "@/pages/not-found";
 
 import Home from "@/pages/Home";
 import TripDashboard from "@/pages/TripDashboard";
+import Profile from "@/pages/Profile";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -25,6 +26,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
+      <Route path="/profile" component={Profile} />
       <Route path="/trip/:id" component={TripDashboard} />
       <Route path="/trip/:id/:tab" component={TripDashboard} />
       <Route component={NotFound} />
