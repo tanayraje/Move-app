@@ -1,14 +1,18 @@
-import { useRoute } from "wouter";
+import { useRoute, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { format, differenceInDays } from "date-fns";
 import { safeParseDate } from "@/lib/utils";
 import { Button } from "@/components/ui";
+import { useQueryClient } from "@tanstack/react-query";
+import { joinTripByCode } from "@/hooks/use-store";
 
 export default function JoinInvite() {
   const [, params] = useRoute("/join/:inviteCode");
 
   const inviteCode = params?.inviteCode || "";
+const [, setLocation] = useLocation();
+const queryClient = useQueryClient();
 
   const { data: trip, isLoading } = useQuery({
     queryKey: ["invite-trip", inviteCode],
@@ -51,6 +55,21 @@ export default function JoinInvite() {
   const startDate = safeParseDate(trip.start_date);
   const endDate = safeParseDate(trip.end_date);
 
+const handleJoin = async () => {
+  try {
+    const tripId = await joinTripByCode(inviteCode);
+
+    await queryClient.invalidateQueries({
+      queryKey: ["trips"],
+    });
+
+    setLocation(`/trip/${tripId}`);
+  } catch (err) {
+    console.error(err);
+    alert("Failed to join trip");
+  }
+};
+
   const duration =
     startDate && endDate
       ? differenceInDays(endDate, startDate) + 1
@@ -63,7 +82,7 @@ export default function JoinInvite() {
           Join Trip
         </h1>
 
-        <p className="text-center text-muted-foreground mb-6">
+        <p className="text-center text-muted-foreground mb-6 max-w-[260px] mx-auto">
   You've been invited to join a trip by{" "}
   <span className="font-semibold text-foreground">
     {trip.owner_name}
@@ -106,11 +125,12 @@ export default function JoinInvite() {
         </div>
 
         <Button
-          size="lg"
-          className="w-full mt-4"
-        >
-          Join Trip
-        </Button>
+  size="lg"
+  className="w-full mt-4"
+  onClick={handleJoin}
+>
+  Join Trip
+</Button>
 
       </div>
     </div>
