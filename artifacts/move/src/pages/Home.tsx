@@ -211,23 +211,22 @@ const { data: profile } = useProfile(user?.id);
         )}
       </main>
 
-      {allTrips.length > 0 && (
-        <div className="fixed bottom-6 left-0 right-0 flex justify-center z-[999] max-w-md mx-auto gap-3">
-          <Button size="lg" className="rounded-full shadow-xl shadow-primary/30 px-6" onClick={() => setIsAddOpen(true)}>
-            <Plus className="w-5 h-5 mr-2" /> New Trip
-          </Button>
-          <Button
-  size="lg"
-  className="rounded-full px-5 bg-white text-foreground border border-border shadow-xl hover:bg-white"
-  onClick={() => setIsWishlistOpen(true)}
->
-  <Heart className="w-5 h-5 mr-2" />
-  Wishlist
-</Button>
-        </div>
-      )}
+      {!isAddOpen && !isWishlistOpen && !isJoinOpen && (
+  <div className="fixed bottom-6 left-0 right-0 flex justify-center z-20 max-w-md mx-auto gap-3">
+    <Button size="lg" className="rounded-full px-6" onClick={() => setIsAddOpen(true)}>
+      <Plus className="w-5 h-5 mr-2" /> New Trip
+    </Button>
 
-      <AddTripSheet isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} />
+    <Button
+      size="lg"
+      className="rounded-full px-5 bg-white text-foreground border border-border hover:bg-white"
+      onClick={() => setIsWishlistOpen(true)}
+    >
+      <Heart className="w-5 h-5 mr-2" />
+      Wishlist
+    </Button>
+  </div>
+)}
       <AddWishlistSheet isOpen={isWishlistOpen} onClose={() => setIsWishlistOpen(false)} />
       <JoinTripSheet isOpen={isJoinOpen} onClose={() => setIsJoinOpen(false)} />
         <ConvertTripSheet
