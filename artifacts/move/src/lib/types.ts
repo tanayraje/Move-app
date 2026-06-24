@@ -101,7 +101,8 @@ export interface Expense {
   amount: number; // stored in INR
   category: ExpenseCategory;
   date: string; // YYYY-MM-DD
-  payerId?: string; // member ID who paid; defaults to self
+  payerId?: string;
+payerName?: string;
   notes?: string;
   split?: ExpenseSplit[]; // if present, expense is split
   createdAt: number;

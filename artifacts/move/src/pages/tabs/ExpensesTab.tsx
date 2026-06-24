@@ -114,7 +114,7 @@ const isSolo = activeMembers.length <= 1;
   // Per-member totals
   const memberTotals = useMemo(() => {
     const map: Record<string, number> = {};
-    activeMembers.forEach(m => map[m.id] = 0);
+    members.forEach(m => map[m.id] = 0);
     expenses.forEach(e => {
       const payerId = e.payerId || 'self';
       if (map[payerId] !== undefined) map[payerId] += e.amount;
@@ -130,10 +130,10 @@ const isSolo = activeMembers.length <= 1;
   const paid: Record<string, number> = {};
   const owed: Record<string, number> = {};
 
-  activeMembers.forEach(m => {
+  members.forEach(m => {
     paid[m.id] = 0;
     owed[m.id] = 0;
-  });
+});
 
   expenses.forEach(e => {
     const payerId = e.payerId || 'self';
@@ -170,14 +170,14 @@ const isSolo = activeMembers.length <= 1;
   const settlements = useMemo(() => {
   if (!balance) return [];
 
-  const creditors = activeMembers
+  const creditors = members
     .filter(m => (balance.net[m.id] || 0) > 0)
     .map(m => ({
       name: m.name,
       amount: balance.net[m.id]
     }));
 
-  const debtors = activeMembers
+  const debtors = members
     .filter(m => (balance.net[m.id] || 0) < 0)
     .map(m => ({
       name: m.name,
@@ -366,7 +366,7 @@ const isSolo = activeMembers.length <= 1;
       </thead>
 
       <tbody>
-        {activeMembers.map(m => {
+        {members.map(m => {
           const net = balance.net[m.id] || 0;
           const paid = memberTotals[m.id] || 0;
 
@@ -612,10 +612,11 @@ function ExpenseRow({
   const displayAmount = showInDest ? convertFromINR(expense.amount, destCurrency) : expense.amount;
   const payer =
   members.find(m => m.id === expense.payerId) || {
-    name: "Deleted User",
-    username: "",
+    name: expense.payerName || "Unknown User",
     color: "#9ca3af",
-    status: "removed",
+  };
+    name: expense.payerName || "Unknown User",
+    color: "#9ca3af",
   };
   const isSplit =
   !!expense.split &&
@@ -875,6 +876,8 @@ console.log("total", total);
       category,
       date,
       payerId: payerId || 'self',
+      payerName:
+  members.find(m => m.id === payerId)?.name || "",
       notes: notesInput || undefined,
       split: split,
       createdAt: existingExpense?.createdAt || Date.now(),

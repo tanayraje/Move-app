@@ -481,6 +481,7 @@ export function useExpenses(tripId: string) {
         category: item.category,
         date: item.date,
         payerId: item.payer_id || undefined,
+payerName: item.payer_name || "",
         notes: item.notes || '',
         split: item.split || [],
         createdAt: item.created_at_ms,
@@ -505,6 +506,9 @@ export function useSaveExpense() {
           category: item.category,
           date: item.date,
           payer_id: item.payerId,
+payer_name: item.payerName,
+payer_name:
+  members.find(m => m.id === item.payerId)?.name ?? "",
           notes: item.notes,
           split: item.split || [],
           created_at_ms: item.createdAt,
