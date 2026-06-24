@@ -113,6 +113,14 @@ function MembersButton({ trip }: { trip: Trip }) {
   const [isOpen, setIsOpen] = useState(false);
   const [name, setName] = useState('');
   const { mutate: updateTrip } = useUpdateTrip();
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
+React.useEffect(() => {
+  supabase.auth.getUser().then(({ data }) => {
+    console.log("CURRENT USER", data.user?.id);
+    setCurrentUserId(data.user?.id ?? null);
+  });
+}, []);
   const { data: memberRows = [] } = useQuery({
   queryKey: ['trip-members', trip.id],
   queryFn: async () => {
