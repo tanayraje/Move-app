@@ -827,6 +827,11 @@ if (expenseCurrency !== 'INR') {
           return { memberId: mid, amount: isNaN(val) ? 0 : val };
         });
         const total = parts.reduce((s, p) => s + p.amount, 0);
+        console.log("amountInput", amountInput);
+console.log("amount", amount);
+console.log("splitAmounts", splitAmounts);
+console.log("parts", parts);
+console.log("total", total);
         if (Math.abs(total - amount) > 1) { alert(`Split total (₹${total}) must equal expense (₹${amount})`); return; }
         split = parts;
       }
