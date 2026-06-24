@@ -644,10 +644,10 @@ function ExpenseRow({
               <span
   className="text-xs"
   style={{
-    color: payer.status === "removed"
-      ? "#9ca3af"
-      : undefined,
-  }}
+  color: payer.color === "#9ca3af"
+    ? "#9ca3af"
+    : undefined,
+}}
 >
   {payer.name}
 </span>
@@ -699,7 +699,7 @@ function AddExpenseSheet({
   existingExpense?: Expense;
 }) {
   const { mutateAsync: saveExp, isPending } = useSaveExpense();
-  const isSolo = activeMembers.length <= 1;
+  const isSolo = members.length <= 1;
   const isEditing = !!existingExpense;
 
   const [amountInput, setAmountInput] = useState(
@@ -762,7 +762,7 @@ function AddExpenseSheet({
 } else {
   setAmountInput('');
   setDateInput(format(new Date(), 'yyyy-MM-dd'));
-  setPayerId(members[0]?.user_id || '');
+  setPayerId(members[0]?.id || '');
   setNotesInput('');
   setShowSplit(false);
   setSplitMode('equal');
