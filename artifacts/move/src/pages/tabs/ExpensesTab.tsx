@@ -6,6 +6,8 @@ import {
   ChevronDown, ChevronUp, Check, Handshake, Pencil
 } from "lucide-react";
 import { useExpenses, useSaveExpense, useDeleteExpense, useUpdateTrip } from "@/hooks/use-store";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
 import { Trip, Expense, ExpenseCategory, TripBudget, TripMember, ExpenseSplit } from "@/lib/types";
 import { generateId, cn, safeFormatDate, getTripStatus } from "@/lib/utils";
 import { Button, Input, Label, Select, BottomSheet, FAB } from "@/components/ui";
@@ -36,6 +38,19 @@ export default function ExpensesTab({ trip }: { trip: Trip }) {
   const { data: expenses = [] } = useExpenses(trip.id);
   const { mutate: updateTrip } = useUpdateTrip();
   const { mutateAsync: saveExp } = useSaveExpense();
+  const { data: joinedMembers = [] } = useQuery({
+  queryKey: ['trip-members', trip.id],
+  queryFn: async () => {
+    const { data, error } = await supabase.rpc(
+      'get_trip_members',
+      { p_trip_id: trip.id }
+    );
+
+    if (error) throw error;
+
+    return data || [];
+  },
+});
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isBudgetOpen, setIsBudgetOpen] = useState(false);
   const [showInDest, setShowInDest] = useState(false);
@@ -44,8 +59,14 @@ export default function ExpensesTab({ trip }: { trip: Trip }) {
   const [selectedSettlements, setSelectedSettlements] = useState<number[]>([]);
   const [editExpense, setEditExpense] = useState<Expense | null>(null);
 
-  const members = trip.guests || [
-  { id: 'self', name: 'Me', color: '#2563eb' }
+  const members = [
+  ...joinedMembers.map((m: any, index: number) => ({
+    id: m.user_id,
+    name: m.name || m.username,
+    username: m.username,
+    color: COLORS[index % COLORS.length],
+  })),
+  ...(trip.guests || []),
 ];
   const isSolo = members.length <= 1;
   const destCurrency = trip.destinationCurrency || 'INR';
