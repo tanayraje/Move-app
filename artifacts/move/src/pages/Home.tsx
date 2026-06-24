@@ -460,11 +460,12 @@ const handleWishlist = () => {
      
 function JoinTripSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const [code, setCode] = useState('');
+const FULL_PREFIX = 'MOVE-';
   const queryClient = useQueryClient();
   
   const handleJoin = async () => {
   try {
-    const trimmed = code.trim().toUpperCase();
+    const trimmed = `${FULL_PREFIX}${code.trim().toUpperCase()}`;
 
     if (!trimmed) {
       alert("Enter an invite code");
@@ -488,12 +489,25 @@ function JoinTripSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
     <BottomSheet isOpen={isOpen} onClose={onClose} title="Join a Trip">
       <div className="flex flex-col gap-4">
         <p className="text-sm text-muted-foreground">Enter the invite code shared by the trip organizer.</p>
-        <Input
-          value={code}
-          onChange={e => setCode(e.target.value.toUpperCase())}
-          placeholder="MOVE-XXXX"
-          className="text-lg font-bold tracking-wider uppercase"
-        />
+        <div className="relative">
+  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg font-bold tracking-wider text-muted-foreground pointer-events-none">
+    MOVE-
+  </span>
+
+  <Input
+    value={code}
+    onChange={e =>
+      setCode(
+        e.target.value
+          .replace(/MOVE-/gi, '')
+          .toUpperCase()
+      )
+    }
+    placeholder="XXXX"
+    maxLength={4}
+    className="pl-[82px] text-lg font-bold tracking-wider uppercase"
+  />
+</div>
         <Button size="lg" onClick={handleJoin}>Join Trip</Button>
       </div>
     </BottomSheet>
