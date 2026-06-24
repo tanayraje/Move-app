@@ -167,10 +167,6 @@ const removeMember = async (
 );
 
 if (error) {
-  console.log("REMOVE MEMBER ERROR", error);
-  alert(error.message);
-  return;
-}
 
   await queryClient.invalidateQueries({
     queryKey: ["trip-members", trip.id],
