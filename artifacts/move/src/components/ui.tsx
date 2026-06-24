@@ -103,8 +103,9 @@ export function BottomSheet({
           }}
           >
             <div
-  className="overflow-y-auto px-6 pb-24 pt-4 no-scrollbar"
+  className="overflow-y-auto px-6 pb-8 pt-4 no-scrollbar"
   style={{ maxHeight: "calc(85vh - 80px)" }}
+>
 >
               <div className="mx-auto mt-2 mb-6 h-1.5 w-12 rounded-full bg-muted-foreground/20" />
 
