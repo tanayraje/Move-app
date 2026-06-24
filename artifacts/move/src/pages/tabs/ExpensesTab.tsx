@@ -727,8 +727,11 @@ function AddExpenseSheet({
   useEffect(() => {
   if (
     splitMode !== 'unequal' ||
+    Object.keys(splitAmounts).length > 0 ||
     selectedMemberIds.length === 0
-  ) return;
+  ) {
+    return;
+  }
 
   const total = parseFloat(amountInput) || 0;
   const perPerson = total / selectedMemberIds.length;
@@ -738,6 +741,7 @@ function AddExpenseSheet({
   selectedMemberIds.forEach((id, index) => {
     if (index === selectedMemberIds.length - 1) {
       const used = perPerson * (selectedMemberIds.length - 1);
+
       next[id] = String(
         Math.round((total - used) * 100) / 100
       );
@@ -749,7 +753,7 @@ function AddExpenseSheet({
   });
 
   setSplitAmounts(next);
-}, [splitMode, amountInput, selectedMemberIds]);
+}, [splitMode]);
 
  const updateSplitAmount = (
   memberId: string,
