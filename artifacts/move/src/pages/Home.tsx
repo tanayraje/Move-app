@@ -12,6 +12,7 @@ import { Button, Input, Label, BottomSheet } from "@/components/ui";
 import { COUNTRIES, Country } from "@/lib/countries";
 import type { Trip, TripStatus } from "@/lib/types";
 import { useSupabaseAuth } from "@/contexts/AuthContext";
+import { useProfile } from "@/hooks/use-profile";
 import { joinTripByCode } from "@/hooks/use-store";
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -23,6 +24,8 @@ export default function Home() {
   user,
   signOut: logout,
 } = useSupabaseAuth();
+
+const { data: profile } = useProfile(user?.id);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
   const [isJoinOpen, setIsJoinOpen] = useState(false);
@@ -75,16 +78,22 @@ export default function Home() {
                 onClick={() => setShowUserMenu(!showUserMenu)}
                 className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold hover:opacity-90 transition-opacity"
               >
-                {user?.email?.[0] || user?.email?.[0] || '?'}
+                {profile?.username?.[0]?.toUpperCase() || '?'}
               </button>
               {showUserMenu && (
   <div className="absolute right-0 top-12 bg-card border border-border rounded-2xl shadow-2xl p-2 min-w-[220px] z-[9999]">
 
     <div className="px-3 py-2 border-b border-border mb-1">
-      <p className="text-sm font-semibold text-foreground">
-        {user?.email || 'User'}
-      </p>
-    </div>
+  <p className="text-sm font-semibold text-foreground">
+    {profile?.username || "User"}
+  </p>
+
+  {profile?.name && (
+    <p className="text-xs text-muted-foreground mt-1">
+      {profile.name}
+    </p>
+  )}
+</div>
 
     <Link href="/profile">
       <button
