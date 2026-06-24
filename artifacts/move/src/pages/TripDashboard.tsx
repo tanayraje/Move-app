@@ -159,11 +159,14 @@ const removeMember = async (
 
   if (!confirmed) return;
 
-  const { error } = await supabase
-    .from("trip_members")
-    .delete()
-    .eq("trip_id", trip.id)
-    .eq("user_id", memberId);
+  const { data, error } = await supabase
+  .from("trip_members")
+  .delete()
+  .eq("trip_id", trip.id)
+  .eq("user_id", memberId)
+  .select();
+
+console.log("DELETED ROWS", data);
 
 console.log("REMOVE RESULT", {
   tripId: trip.id,
