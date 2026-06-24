@@ -181,7 +181,7 @@ const addMember = () => {
       </button>
 
       <BottomSheet isOpen={isOpen} onClose={() => setIsOpen(false)} title="Trip Members">
-  <div className="flex flex-col gap-4 pr-1">
+  <div className="flex flex-col gap-4 pr-1 min-h-[65vh]">
           {/* Invite Code */}
           {trip.inviteCode && (
             <div className="bg-muted/50 rounded-xl p-3 border border-border/50">
