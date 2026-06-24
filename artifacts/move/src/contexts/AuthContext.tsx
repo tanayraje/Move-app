@@ -34,14 +34,34 @@ export function AuthProvider({
     });
 
     const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        setLoading(false);
+  data: { subscription },
+} = supabase.auth.onAuthStateChange(
+  async (_event, session) => {
+    setSession(session);
+    setUser(session?.user ?? null);
+
+    if (session?.user) {
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', session.user.id)
+        .maybeSingle();
+
+      if (!existingProfile) {
+        await supabase
+          .from('profiles')
+          .insert({
+            id: session.user.id,
+            username:
+              session.user.email?.split('@')[0] ||
+              `user_${session.user.id.slice(0, 8)}`,
+          });
       }
-    );
+    }
+
+    setLoading(false);
+  }
+);
 
     return () => subscription.unsubscribe();
   }, []);

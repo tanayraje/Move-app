@@ -116,8 +116,7 @@ function MembersButton({ trip }: { trip: Trip }) {
   const { data: memberRows = [] } = useQuery({
   queryKey: ['trip-members', trip.id],
   queryFn: async () => {
-    console.log('TRIP ID', trip.id);
-
+    
     const { data, error } = await supabase.rpc(
   'get_trip_members',
   { p_trip_id: trip.id }
