@@ -122,7 +122,7 @@ const { data: profile } = useProfile(user?.id);
         </div>
       </header>
 
-      <main className="flex-1 px-6 pb-20 flex flex-col gap-4">
+      <main className="flex-1 px-6 pb-28 flex flex-col gap-4">
         {isLoading ? (
           <div className="flex flex-col gap-4">
             {[1, 2, 3].map(i => <div key={i} className="h-32 rounded-3xl bg-muted animate-pulse" />)}
@@ -216,9 +216,14 @@ const { data: profile } = useProfile(user?.id);
           <Button size="lg" className="rounded-full shadow-xl shadow-primary/30 px-6" onClick={() => setIsAddOpen(true)}>
             <Plus className="w-5 h-5 mr-2" /> New Trip
           </Button>
-          <Button variant="outline" size="lg" className="rounded-full px-5" onClick={() => setIsWishlistOpen(true)}>
-            <Heart className="w-5 h-5 mr-2" /> Wishlist
-          </Button>
+          <Button
+  size="lg"
+  className="rounded-full px-5 bg-white text-foreground border border-border shadow-xl hover:bg-white"
+  onClick={() => setIsWishlistOpen(true)}
+>
+  <Heart className="w-5 h-5 mr-2" />
+  Wishlist
+</Button>
         </div>
       )}
 
