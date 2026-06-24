@@ -78,18 +78,36 @@ export default function Home() {
                 {user?.email?.[0] || user?.email?.[0] || '?'}
               </button>
               {showUserMenu && (
-                <div className="absolute right-0 top-12 bg-card border border-border rounded-2xl shadow-2xl p-2 min-w-[160px] z-50">
-                  <div className="px-3 py-2 text-sm font-medium text-foreground border-b border-border mb-1">
-                    {user?.email || 'User'}
-                  </div>
-                  <button
-                    onClick={() => { setShowUserMenu(false); logout(); }}
-                    className="w-full text-left px-3 py-2.5 text-sm font-medium text-red-500 hover:bg-red-50 rounded-xl flex items-center gap-2"
-                  >
-                    <LogOut className="w-4 h-4" /> Log out
-                  </button>
-                </div>
-              )}
+  <div className="absolute right-0 top-12 bg-card border border-border rounded-2xl shadow-2xl p-2 min-w-[220px] z-50">
+
+    <div className="px-3 py-2 border-b border-border mb-1">
+      <p className="text-sm font-semibold text-foreground">
+        {user?.email || 'User'}
+      </p>
+    </div>
+
+    <Link href="/profile">
+      <button
+        onClick={() => setShowUserMenu(false)}
+        className="w-full text-left px-3 py-2.5 text-sm font-medium hover:bg-muted rounded-xl"
+      >
+        Profile
+      </button>
+    </Link>
+
+    <button
+      onClick={() => {
+        setShowUserMenu(false);
+        logout();
+      }}
+      className="w-full text-left px-3 py-2.5 text-sm font-medium text-red-500 hover:bg-red-50 rounded-xl flex items-center gap-2"
+    >
+      <LogOut className="w-4 h-4" />
+      Log out
+    </button>
+
+  </div>
+)}
             </div>
           </div>
         </div>
