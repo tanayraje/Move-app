@@ -603,7 +603,9 @@ function ExpenseRow({
   const Icon = EXPENSE_ICONS[expense.category] || CreditCard;
   const displayAmount = showInDest ? convertFromINR(expense.amount, destCurrency) : expense.amount;
   const payer = members.find(m => m.id === expense.payerId) || members[0] || { name: 'Me', color: '#2563eb' };
-  const isSplit = !!expense.split;
+  const isSplit =
+  !!expense.split &&
+  expense.split.length > 0;
 
   return (
     <div className="flex items-center justify-between p-4 group">
@@ -698,62 +700,54 @@ function AddExpenseSheet({
   );
     useEffect(() => {
   if (existingExpense) {
-    setAmountInput(String(Math.round(existingExpense.amount)));
-    setDateInput(existingExpense.date);
-    setPayerId(existingExpense.payerId || members[0]?.id || '');
-    setNotesInput(existingExpense.notes || '');
-    setSelectedMemberIds(
-      existingExpense.split?.map(s => s.memberId) || members.map(m => m.id)
+  setAmountInput(String(Math.round(existingExpense.amount)));
+  setDateInput(existingExpense.date);
+  setPayerId(existingExpense.payerId || members[0]?.id || '');
+  setNotesInput(existingExpense.notes || '');
+
+  setSelectedMemberIds(
+    existingExpense.split?.map(s => s.memberId) ||
+      members.map(m => m.id)
+  );
+
+  setSplitAmounts(
+    existingExpense.split?.reduce(
+      (acc, s) => ({
+        ...acc,
+        [s.memberId]: String(s.amount),
+      }),
+      {}
+    ) || {}
+  );
+
+  setShowSplit(
+    !!existingExpense.split &&
+      existingExpense.split.length > 0
+  );
+
+  const amounts =
+    existingExpense.split?.map(s => s.amount) || [];
+
+  if (amounts.length > 0) {
+    const allEqual = amounts.every(
+      a => a === amounts[0]
     );
-    setSplitAmounts(
-      existingExpense.split?.reduce(
-        (acc, s) => ({ ...acc, [s.memberId]: String(s.amount) }),
-        {}
-      ) || {}
+
+    setSplitMode(
+      allEqual ? 'equal' : 'unequal'
     );
-    setShowSplit(!!existingExpense.split);
-  } else {
-    setAmountInput('');
-    setDateInput(format(new Date(), 'yyyy-MM-dd'));
-    setPayerId(members[0]?.id || '');
-    setNotesInput('');
-    setShowSplit(false);
-    setSplitMode('equal');
-    setSelectedMemberIds(members.map(m => m.id));
-    setSplitAmounts({});
   }
+} else {
+  setAmountInput('');
+  setDateInput(format(new Date(), 'yyyy-MM-dd'));
+  setPayerId(members[0]?.id || '');
+  setNotesInput('');
+  setShowSplit(false);
+  setSplitMode('equal');
+  setSelectedMemberIds(members.map(m => m.id));
+  setSplitAmounts({});
+}
 }, [existingExpense, isOpen]);
-  useEffect(() => {
-  if (
-    splitMode !== 'unequal' ||
-    Object.keys(splitAmounts).length > 0 ||
-    selectedMemberIds.length === 0
-  ) {
-    return;
-  }
-
-  const total = parseFloat(amountInput) || 0;
-  const perPerson = total / selectedMemberIds.length;
-
-  const next: Record<string, string> = {};
-
-  selectedMemberIds.forEach((id, index) => {
-    if (index === selectedMemberIds.length - 1) {
-      const used = perPerson * (selectedMemberIds.length - 1);
-
-      next[id] = String(
-        Math.round((total - used) * 100) / 100
-      );
-    } else {
-      next[id] = String(
-        Math.round(perPerson * 100) / 100
-      );
-    }
-  });
-
-  setSplitAmounts(next);
-}, [splitMode]);
-
  const updateSplitAmount = (
   memberId: string,
   value: string
