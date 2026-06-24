@@ -238,7 +238,7 @@ const isSolo = members.length <= 1;
       category: 'settlement',
       date: format(new Date(), 'yyyy-MM-dd'),
       payerId: payer.id,
-      notes: undefined
+      notes: undefined,
       split: [
         {
           memberId: receiver.id,
@@ -822,12 +822,17 @@ if (expenseCurrency !== 'INR') {
         const first = per + (amount - per * involved.length); // handle rounding
         split = involved.map((mid, i) => ({ memberId: mid, amount: i === 0 ? first : per }));
       } else {
-        const parts = involved.map(mid => {
+        const rate =
+  expenseCurrency !== 'INR'
+    ? (await import('@/lib/countries')).RATES_PER_INR[
+        destCurrency
+      ] || 1
+    : 1;
+
+const parts = involved.map(mid => {
   let val = parseFloat(splitAmounts[mid] || '0');
 
   if (expenseCurrency !== 'INR') {
-    const { RATES_PER_INR } = await import('@/lib/countries');
-    const rate = RATES_PER_INR[destCurrency] || 1;
     val = val / rate;
   }
 
