@@ -12,6 +12,7 @@ import { Trip, Expense, ExpenseCategory, TripBudget, TripMember, ExpenseSplit } 
 import { generateId, cn, safeFormatDate, getTripStatus } from "@/lib/utils";
 import { Button, Input, Label, Select, BottomSheet, FAB } from "@/components/ui";
 import { formatCurrency, convertFromINR } from "@/lib/countries";
+import { useSupabaseAuth } from "@/contexts/AuthContext";
 
 const EXPENSE_ICONS: Record<ExpenseCategory, React.ElementType> = {
   food: Coffee,
@@ -37,6 +38,7 @@ const COLORS = ['#2563eb', '#dc2626', '#16a34a', '#d97706', '#9333ea', '#db2777'
 export default function ExpensesTab({ trip }: { trip: Trip }) {
   const { data: expenses = [] } = useExpenses(trip.id);
   const { mutate: updateTrip } = useUpdateTrip();
+  const { user } = useSupabaseAuth();
   const { mutateAsync: saveExp } = useSaveExpense();
   const { data: joinedMembers = [] } = useQuery({
   queryKey: ['trip-members', trip.id],
@@ -60,15 +62,24 @@ export default function ExpensesTab({ trip }: { trip: Trip }) {
   const [editExpense, setEditExpense] = useState<Expense | null>(null);
 
   const members = [
-  ...joinedMembers.map((m: any, index: number) => ({
-    id: m.user_id,
-    name: m.name || m.username,
-    username: m.username,
-    color: COLORS[index % COLORS.length],
-  })),
+  ...joinedMembers
+    .sort((a: any, b: any) =>
+      a.user_id === user?.id
+        ? -1
+        : b.user_id === user?.id
+        ? 1
+        : 0
+    )
+    .map((m: any, index: number) => ({
+      id: m.user_id,
+      name: m.name || m.username,
+      username: m.username,
+      color: COLORS[index % COLORS.length],
+    })),
   ...(trip.guests || []),
 ];
-  const isSolo = members.length <= 1;
+
+const isSolo = members.length <= 1;
   const destCurrency = trip.destinationCurrency || 'INR';
   const showToggle = destCurrency !== 'INR';
   const activeCurrency = showInDest ? destCurrency : 'INR';
@@ -675,7 +686,9 @@ function AddExpenseSheet({
   const [dateInput, setDateInput] = useState(
     existingExpense ? existingExpense.date : format(new Date(), 'yyyy-MM-dd')
   );
-  const [payerId, setPayerId] = useState(existingExpense?.payerId || 'self');
+  const [payerId, setPayerId] = useState(
+  existingExpense?.payerId || members[0]?.id || ''
+);
   const [notesInput, setNotesInput] = useState(existingExpense?.notes || '');
   const [showSplit, setShowSplit] = useState(false);
   const [splitMode, setSplitMode] = useState<'equal' | 'unequal'>('equal');
@@ -689,7 +702,7 @@ function AddExpenseSheet({
   if (existingExpense) {
     setAmountInput(String(Math.round(existingExpense.amount)));
     setDateInput(existingExpense.date);
-    setPayerId(existingExpense.payerId || 'self');
+    setPayerId(existingExpense.payerId || members[0]?.id || '');
     setNotesInput(existingExpense.notes || '');
     setSelectedMemberIds(
       existingExpense.split?.map(s => s.memberId) || members.map(m => m.id)
@@ -703,7 +716,7 @@ function AddExpenseSheet({
   } else {
     setAmountInput('');
     setDateInput(format(new Date(), 'yyyy-MM-dd'));
-    setPayerId('self');
+    setPayerId(members[0]?.id || '');
     setNotesInput('');
     setShowSplit(false);
     setSplitMode('equal');
