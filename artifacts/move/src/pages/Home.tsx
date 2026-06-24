@@ -122,7 +122,7 @@ const { data: profile } = useProfile(user?.id);
         </div>
       </header>
 
-      <main className="flex-1 px-6 pb-24 flex flex-col gap-4">
+      <main className="flex-1 px-6 pb-20 flex flex-col gap-4">
         {isLoading ? (
           <div className="flex flex-col gap-4">
             {[1, 2, 3].map(i => <div key={i} className="h-32 rounded-3xl bg-muted animate-pulse" />)}
@@ -212,7 +212,7 @@ const { data: profile } = useProfile(user?.id);
       </main>
 
       {allTrips.length > 0 && (
-        <div className="fixed bottom-6 left-0 right-0 flex justify-center z-20 max-w-md mx-auto gap-3">
+        <div className="fixed bottom-6 left-0 right-0 flex justify-center z-[999] max-w-md mx-auto gap-3">
           <Button size="lg" className="rounded-full shadow-xl shadow-primary/30 px-6" onClick={() => setIsAddOpen(true)}>
             <Plus className="w-5 h-5 mr-2" /> New Trip
           </Button>
