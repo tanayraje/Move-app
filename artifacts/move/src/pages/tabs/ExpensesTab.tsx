@@ -233,32 +233,33 @@ const isSolo = activeMembers.length <= 1;
   );
 
   for (const s of selected) {
-    const payer = members.find(m => m.name === s.from);
-    const receiver = members.find(m => m.name === s.to);
+  const payer = members.find(m => m.name === s.from);
+  const receiver = members.find(m => m.name === s.to);
 
-    if (!payer || !receiver) continue;
+  if (!payer || !receiver) continue;
 
-    await saveExp({
-      id: generateId(),
-      tripId: trip.id,
-      title: `Settlement: ${s.from} → ${s.to}`,
-      amount: s.amount,
-      category: 'settlement',
-      date: format(new Date(), 'yyyy-MM-dd'),
-      payerId: payer.id,
-      notes: undefined,
-      split: [
-        {
-          memberId: receiver.id,
-          amount: s.amount
-        }
-      ],
-      createdAt: Date.now(),
-    });
-  }
+  await saveExp({
+    id: generateId(),
+    tripId: trip.id,
+    title: `Settlement: ${s.from} → ${s.to}`,
+    amount: s.amount,
+    category: "settlement",
+    date: format(new Date(), "yyyy-MM-dd"),
+    payerId: payer.id,
+    payerName: payer.name,
+    notes: undefined,
+    split: [
+      {
+        memberId: receiver.id,
+        amount: s.amount,
+      },
+    ],
+    createdAt: Date.now(),
+  });
+}
 
-  setSelectedSettlements([]);
-  setShowSettlement(false);
+setSelectedSettlements([]);
+setShowSettlement(false);
 };
 
   const exportCSV = () => {
@@ -1075,4 +1076,3 @@ function BudgetSheet({ isOpen, onClose, current, onSave, activeCurrency }: {
     </BottomSheet>
   );
 }
-    

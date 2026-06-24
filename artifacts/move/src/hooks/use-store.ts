@@ -496,6 +496,7 @@ export function useSaveExpense() {
 
   return useMutation({
     mutationFn: async (item: Expense) => {
+      console.log("SAVE EXPENSE", item);
       const { error } = await supabase
         .from('expenses')
         .upsert({
