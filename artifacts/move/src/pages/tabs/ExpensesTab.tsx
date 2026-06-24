@@ -680,9 +680,7 @@ function AddExpenseSheet({
   const [amountInput, setAmountInput] = useState(
     existingExpense ? String(Math.round(existingExpense.amount)) : ''
   );
-  const [expenseCurrency, setExpenseCurrency] = useState(
-  destCurrency || 'INR'
-);
+  const [expenseCurrency, setExpenseCurrency] = useState('INR');
   const [dateInput, setDateInput] = useState(
     existingExpense ? existingExpense.date : format(new Date(), 'yyyy-MM-dd')
   );
@@ -713,6 +711,7 @@ function AddExpenseSheet({
         {}
       ) || {}
     );
+    setShowSplit(!!existingExpense.split);
   } else {
     setAmountInput('');
     setDateInput(format(new Date(), 'yyyy-MM-dd'));
