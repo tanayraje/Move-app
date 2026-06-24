@@ -134,6 +134,14 @@ React.useEffect(() => {
 console.log("TRIP ID", trip.id);
 console.log("RPC DATA", data);
 
+if (data?.length) {
+
+}
+console.log("RPC ERROR FULL", JSON.stringify(error, null, 2));
+
+    return data || [];
+  },
+});
 
 const memberCount = memberRows.length;
 const isSolo = memberCount <= 1;
@@ -157,6 +165,8 @@ const removeMember = async (
     p_user_id: memberId,
   }
 );
+
+
 
   if (error) {
   console.log("REMOVE MEMBER ERROR", error);
