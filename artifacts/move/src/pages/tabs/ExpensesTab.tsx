@@ -730,8 +730,8 @@ function AddExpenseSheet({
 
   if (amounts.length > 0) {
     const allEqual = amounts.every(
-      a => a === amounts[0]
-    );
+  a => Math.abs(a - amounts[0]) < 1
+);
 
     setSplitMode(
       allEqual ? 'equal' : 'unequal'
