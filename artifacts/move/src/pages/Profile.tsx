@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { useSupabaseAuth } from "@/contexts/AuthContext";
-import { useProfile } from "@/hooks/use-profile";
+import { useProfile, useUpdateProfile } from "@/hooks/use-profile";
 import { Link } from "wouter";
 
 export default function Profile() {
   const { user } = useSupabaseAuth();
 
 const { data: profile } = useProfile(user?.id);
+const updateProfile = useUpdateProfile(user?.id);
 
 const [username, setUsername] = useState("");
 const [name, setName] = useState("");
@@ -17,6 +18,29 @@ useEffect(() => {
   setUsername(profile.username || "");
   setName(profile.name || "");
 }, [profile]);
+
+const handleSave = async () => {
+  try {
+    await updateProfile.mutateAsync({
+      username: username.trim(),
+      name: name.trim(),
+    });
+
+    alert("Profile updated");
+  } catch (err: any) {
+    console.error(err);
+
+    if (
+      err.message?.includes("duplicate") ||
+      err.code === "23505"
+    ) {
+      alert("Username already taken");
+      return;
+    }
+
+    alert("Failed to update profile");
+  }
+};
 
   return (
     <div className="min-h-screen px-6 py-8">
@@ -50,6 +74,16 @@ useEffect(() => {
       className="w-full h-12 rounded-xl border px-4"
     />
   </div>
+
+  <button
+  onClick={handleSave}
+  disabled={updateProfile.isPending}
+  className="w-full h-12 rounded-xl bg-primary text-primary-foreground font-medium mt-4"
+>
+  {updateProfile.isPending
+    ? "Saving..."
+    : "Save Changes"}
+</button>
 
   <div className="mb-4">
     <label className="block text-sm font-medium mb-2">
@@ -88,3 +122,4 @@ useEffect(() => {
     </div>
   );
 }
+
