@@ -60,12 +60,12 @@ const { data: profile } = useProfile(user?.id);
   <div className="flex flex-col min-h-[100dvh] pb-8 relative">
     
       <header className="px-6 pt-12 pb-8 sticky top-0 bg-background/90 backdrop-blur-xl z-[100]">
-        <div className="flex items-center justify-between gap-6">
+        <div className="flex items-start justify-between gap-8">
           <div>
             <h1 className="text-4xl font-display font-extrabold text-foreground tracking-tight">Move.</h1>
             <p className="text-muted-foreground mt-1 text-lg">Where to next?</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <button
               onClick={() => setIsJoinOpen(true)}
               className="p-2.5 bg-muted rounded-full hover:bg-primary/10 hover:text-primary transition-colors"
@@ -135,7 +135,7 @@ const { data: profile } = useProfile(user?.id);
             <h2 className="text-2xl font-display font-bold text-foreground mb-2">No trips planned</h2>
             <p className="text-muted-foreground text-balance">Create your first itinerary or save a trip to your wishlist.</p>
             <div className="flex gap-3 mt-8">
-              <Button size="lg" className="rounded-full px-6" onClick={() => setIsAddOpen(true)}>
+              <Button size="lg" className="rounded-full px-7" onClick={() => setIsAddOpen(true)}>
   <Plus className="w-5 h-5 mr-2" /> New Trip
 </Button>
               <button
@@ -150,7 +150,7 @@ const { data: profile } = useProfile(user?.id);
         ) : (
           <>
 {/* Always show Active, Wishlist and Archived tabs even when count is 0 */}
-<div className="flex bg-muted p-1 rounded-xl mb-2">
+<div className="flex bg-muted p-1.5 rounded-xl mb-3">
   <button
     onClick={() => setTab('active')}
     className={`flex-1 py-2 px-2 text-xs font-semibold whitespace-nowrap rounded-lg transition-all ${
@@ -170,7 +170,7 @@ const { data: profile } = useProfile(user?.id);
     : 'text-muted-foreground'
 }`}
   >
-    <Heart className="w-3.5 h-3.5" />
+    <Heart className="w-3 h-3" />
     Wishlist ({wishlistTrips.length})
   </button>
 
@@ -182,7 +182,7 @@ const { data: profile } = useProfile(user?.id);
     : 'text-muted-foreground'
 }`}
   >
-    <Archive className="w-3.5 h-3.5" />
+    <Archive className="w-3 h-3" />
     Archived ({archivedTrips.length})
   </button>
 </div>
@@ -213,13 +213,13 @@ const { data: profile } = useProfile(user?.id);
 
       {!isAddOpen && !isWishlistOpen && !isJoinOpen && (
   <div className="fixed bottom-6 left-0 right-0 flex justify-center z-20 max-w-md mx-auto gap-3">
-    <Button size="lg" className="rounded-full px-6" onClick={() => setIsAddOpen(true)}>
+    <Button size="lg" className="rounded-full px-7" onClick={() => setIsAddOpen(true)}>
       <Plus className="w-5 h-5 mr-2" /> New Trip
     </Button>
 
     <Button
-      size="lg"
-      className="rounded-full px-5 bg-white text-foreground border border-border hover:bg-white"
+  size="lg"
+  className="rounded-full px-6 bg-white text-foreground border border-border hover:bg-white"
       onClick={() => setIsWishlistOpen(true)}
     >
       <Heart className="w-5 h-5 mr-2" />
