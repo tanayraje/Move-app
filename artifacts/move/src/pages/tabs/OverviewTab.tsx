@@ -1,4 +1,5 @@
 import React from "react";
+import { useLocation } from "wouter";
 import { differenceInDays, format, isBefore, isAfter, addDays } from "date-fns";
 import { useItinerary, useExpenses, useDocuments, usePlaces } from "@/hooks/use-store";
 import { Trip } from "@/lib/types";
@@ -7,6 +8,7 @@ import { formatCurrency } from "@/lib/countries";
 import { safeFormatDate, safeParseDate } from "@/lib/utils";
 
 export default function OverviewTab({ trip }: { trip: Trip }) {
+  const [, navigate] = useLocation();
   const { data: itinerary = [] } = useItinerary(trip.id);
   const { data: expenses = [] } = useExpenses(trip.id);
   const { data: documents = [] } = useDocuments(trip.id);
@@ -101,11 +103,35 @@ export default function OverviewTab({ trip }: { trip: Trip }) {
 
       {/* Stats grid */}
       <div className="grid grid-cols-2 gap-3">
-        <StatCard icon={Calendar} label="Timeline Items" value={itinerary.length} />
-        <StatCard icon={Receipt} label="Total Spent" value={formatCurrency(totalSpent, 'INR')} />
-        <StatCard icon={MapPin} label="Places" value={`${visitedPlaces}/${places.length}`} sub="visited" />
-        <StatCard icon={FileText} label="Documents" value={documents.length} />
-      </div>
+  <StatCard
+    icon={Calendar}
+    label="Timeline Items"
+    value={itinerary.length}
+    onClick={() => navigate(`/trip/${trip.id}/itinerary`)}
+  />
+
+  <StatCard
+    icon={Receipt}
+    label="Total Spent"
+    value={formatCurrency(totalSpent, 'INR')}
+    onClick={() => navigate(`/trip/${trip.id}/expenses`)}
+  />
+
+  <StatCard
+    icon={MapPin}
+    label="Places"
+    value={`${visitedPlaces}/${places.length}`}
+    sub="visited"
+    onClick={() => navigate(`/trip/${trip.id}/places`)}
+  />
+
+  <StatCard
+    icon={FileText}
+    label="Documents"
+    value={documents.length}
+    onClick={() => navigate(`/trip/${trip.id}/documents`)}
+  />
+</div>
 
       {/* Budget summary */}
       {budgetTotal > 0 && (
@@ -129,15 +155,30 @@ export default function OverviewTab({ trip }: { trip: Trip }) {
   );
 }
 
-function StatCard({ icon: Icon, label, value, sub }: { icon: any; label: string; value: string | number; sub?: string }) {
+function StatCard({
+  icon: Icon,
+  label,
+  value,
+  sub,
+  onClick,
+}: {
+  icon: any;
+  label: string;
+  value: string | number;
+  sub?: string;
+  onClick?: () => void;
+}) {
   return (
-    <div className="bg-card border border-border/60 p-4 rounded-2xl shadow-sm flex flex-col">
+    <button
+  onClick={onClick}
+  className="bg-card border border-border/60 p-4 rounded-2xl shadow-sm flex flex-col text-left transition-transform active:scale-[0.98]"
+>
       <div className="w-9 h-9 bg-primary/10 rounded-xl flex items-center justify-center text-primary mb-3">
         <Icon className="w-5 h-5" />
       </div>
       <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider mb-1">{label}</p>
       <p className="text-2xl font-display font-bold text-foreground">{value}</p>
       {sub && <p className="text-xs text-muted-foreground mt-0.5">{sub}</p>}
-    </div>
+    </button>
   );
 }
