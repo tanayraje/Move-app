@@ -11,6 +11,7 @@ import NotFound from "@/pages/not-found";
 import Home from "@/pages/Home";
 import TripDashboard from "@/pages/TripDashboard";
 import Profile from "@/pages/Profile";
+import JoinInvite from "@/pages/JoinInvite";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -27,6 +28,7 @@ function Router() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/profile" component={Profile} />
+      <Route path="/join/:inviteCode" component={JoinInvite} />
       <Route path="/trip/:id" component={TripDashboard} />
       <Route path="/trip/:id/:tab" component={TripDashboard} />
       <Route component={NotFound} />
