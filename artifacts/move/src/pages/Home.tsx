@@ -56,7 +56,7 @@ export default function Home() {
   return (
   <div className="flex flex-col min-h-[100dvh] pb-8 relative">
     
-      <header className="px-6 pt-12 pb-6 sticky top-0 bg-background/80 backdrop-blur-xl z-10">
+      <header className="px-6 pt-12 pb-6 sticky top-0 bg-background/80 backdrop-blur-xl z-[100]">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-4xl font-display font-extrabold text-foreground tracking-tight">Move.</h1>
@@ -78,7 +78,7 @@ export default function Home() {
                 {user?.email?.[0] || user?.email?.[0] || '?'}
               </button>
               {showUserMenu && (
-  <div className="absolute right-0 top-12 bg-card border border-border rounded-2xl shadow-2xl p-2 min-w-[220px] z-50">
+  <div className="absolute right-0 top-12 bg-card border border-border rounded-2xl shadow-2xl p-2 min-w-[220px] z-[9999]">
 
     <div className="px-3 py-2 border-b border-border mb-1">
       <p className="text-sm font-semibold text-foreground">
@@ -300,7 +300,7 @@ function TripCard({
       </Link>
 
       {/* Actions */}
-      <div className="absolute top-4 right-4 flex gap-1 z-10">
+      <div className="absolute top-4 right-4 flex gap-1">
         <TripMenu
   trip={trip}
   status={status}
