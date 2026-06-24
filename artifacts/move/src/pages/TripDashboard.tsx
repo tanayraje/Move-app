@@ -247,8 +247,6 @@ const addMember = () => {
     </div>
   ))}
 </div>
-          </div>
-
           {/* Add member */}
           <div className="pt-2 border-t border-border">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Add Guest Member</p>
