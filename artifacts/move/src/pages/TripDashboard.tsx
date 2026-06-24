@@ -79,7 +79,7 @@ export default function TripDashboard({ params }: { params: { id: string, tab?: 
       </main>
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 w-full max-w-md bg-card/90 backdrop-blur-xl border-t border-border/50 pb-[env(safe-area-inset-bottom)] z-40 px-2 pt-2">
+      <nav className="fixed bottom-0 w-full max-w-md bg-card/90 backdrop-blur-xl border-t border-border/50 pb-[env(safe-area-inset-bottom)] z-0 px-2 pt-2">
         <div className="flex justify-between items-center px-1">
           {tabs.map(tab => {
             const Icon = tab.icon;
@@ -181,7 +181,7 @@ const addMember = () => {
       </button>
 
       <BottomSheet isOpen={isOpen} onClose={() => setIsOpen(false)} title="Trip Members">
-  <div className="flex flex-col gap-4 pr-1 min-h-[65vh]">
+  <div className="flex flex-col gap-4 pr-1">
           {/* Invite Code */}
           {trip.inviteCode && (
             <div className="bg-muted/50 rounded-xl p-3 border border-border/50">
