@@ -42,7 +42,8 @@ export function useTrips() {
   const { data: memberships } = await supabase
   .from('trip_members')
   .select('trip_id')
-  .eq('user_id', user.id);
+  .eq('user_id', user.id)
+  .eq('status', 'active');
 
 const memberTripIds = memberships?.map(m => m.trip_id) || [];
 
