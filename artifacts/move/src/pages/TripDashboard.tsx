@@ -111,6 +111,8 @@ export default function TripDashboard({ params }: { params: { id: string, tab?: 
 
 function MembersButton({ trip }: { trip: Trip }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [name, setName] = useState('');
+  const { mutate: updateTrip } = useUpdateTrip();
   const { data: memberRows = [] } = useQuery({
   queryKey: ['trip-members', trip.id],
   queryFn: async () => {
@@ -131,6 +133,39 @@ console.log("RPC ERROR FULL", JSON.stringify(error, null, 2));
 
 const memberCount = memberRows.length;
 const isSolo = memberCount <= 1;
+
+const members = trip.guests || [];
+
+const addMember = () => {
+  if (!name.trim()) return;
+
+  const colors = [
+    '#2563eb',
+    '#dc2626',
+    '#16a34a',
+    '#d97706',
+    '#9333ea',
+    '#db2777',
+    '#0891b2',
+    '#65a30d',
+  ];
+
+  const color = colors[members.length % colors.length];
+
+  updateTrip({
+    ...trip,
+    guests: [
+      ...(trip.guests || []),
+      {
+        id: generateId(),
+        name: name.trim(),
+        color,
+      },
+    ],
+  });
+
+  setName('');
+};
 
     
   return (
