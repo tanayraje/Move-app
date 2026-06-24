@@ -165,10 +165,17 @@ const removeMember = async (
     .eq("trip_id", trip.id)
     .eq("user_id", memberId);
 
+console.log("REMOVE RESULT", {
+  tripId: trip.id,
+  memberId,
+  error,
+});
+
   if (error) {
-    alert(error.message);
-    return;
-  }
+  console.log("REMOVE MEMBER ERROR", error);
+  alert(error.message);
+  return;
+}
 
   await queryClient.invalidateQueries({
     queryKey: ["trip-members", trip.id],
