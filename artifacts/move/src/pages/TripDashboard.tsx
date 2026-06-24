@@ -119,7 +119,6 @@ const queryClient = useQueryClient();
 
 React.useEffect(() => {
   supabase.auth.getUser().then(({ data }) => {
-    console.log("CURRENT USER", data.user?.id);
     setCurrentUserId(data.user?.id ?? null);
   });
 }, []);
@@ -135,14 +134,6 @@ React.useEffect(() => {
 console.log("TRIP ID", trip.id);
 console.log("RPC DATA", data);
 
-if (data?.length) {
-  console.log("FIRST MEMBER", data[0]);
-}
-console.log("RPC ERROR FULL", JSON.stringify(error, null, 2));
-
-    return data || [];
-  },
-});
 
 const memberCount = memberRows.length;
 const isSolo = memberCount <= 1;
@@ -159,20 +150,13 @@ const removeMember = async (
 
   if (!confirmed) return;
 
-  const { data, error } = await supabase
-  .from("trip_members")
-  .delete()
-  .eq("trip_id", trip.id)
-  .eq("user_id", memberId)
-  .select();
-
-console.log("DELETED ROWS", data);
-
-console.log("REMOVE RESULT", {
-  tripId: trip.id,
-  memberId,
-  error,
-});
+  const { error } = await supabase.rpc(
+  "remove_trip_member",
+  {
+    p_trip_id: trip.id,
+    p_user_id: memberId,
+  }
+);
 
   if (error) {
   console.log("REMOVE MEMBER ERROR", error);
