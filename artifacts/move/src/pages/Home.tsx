@@ -135,7 +135,7 @@ const { data: profile } = useProfile(user?.id);
             <h2 className="text-2xl font-display font-bold text-foreground mb-2">No trips planned</h2>
             <p className="text-muted-foreground text-balance">Create your first itinerary or save a trip to your wishlist.</p>
             <div className="flex gap-3 mt-8">
-              <Button size="lg" className="rounded-full shadow-md shadow-black/5 px-6" onClick={() => setIsAddOpen(true)}>
+              <Button size="lg" className="rounded-full border border-primary/10 px-6" onClick={() => setIsAddOpen(true)}>
   <Plus className="w-5 h-5 mr-2" /> New Trip
 </Button>
               <button
