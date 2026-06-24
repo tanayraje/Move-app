@@ -48,25 +48,26 @@ export function AuthProvider({
         .maybeSingle();
 
       if (!existingProfile) {
-  const { data, error } = await supabase
-    .from('profiles')
-    .insert({
-      id: session.user.id,
-      username:
-        session.user.email?.split('@')[0] ||
-        `user_${session.user.id.slice(0, 8)}`,
-    })
-    .select();
+        const { data, error } = await supabase
+          .from('profiles')
+          .insert({
+            id: session.user.id,
+            username:
+              session.user.email?.split('@')[0] ||
+              `user_${session.user.id.slice(0, 8)}`,
+          })
+          .select();
 
-  console.log('PROFILE INSERT DATA', data);
-  console.log('PROFILE INSERT ERROR', error);
-}
+        console.log('PROFILE INSERT DATA', data);
+        console.log('PROFILE INSERT ERROR', error);
+      }
+    }
 
     setLoading(false);
   }
 );
 
-    return () => subscription.unsubscribe();
+return () => subscription.unsubscribe();
   }, []);
 
   const signInWithGoogle = async () => {
