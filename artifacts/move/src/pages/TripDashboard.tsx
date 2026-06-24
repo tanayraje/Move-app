@@ -222,9 +222,17 @@ const addMember = () => {
       {member.role === 'owner' ? 'O' : 'M'}
     </div>
 
-    <span className="flex-1 font-medium text-sm text-foreground">
-      {member.role === 'owner' ? 'Trip Owner' : 'Trip Member'}
-    </span>
+    <div className="flex-1">
+  <div className="font-medium text-sm text-foreground">
+    {member.username || 'Unknown User'}
+  </div>
+
+  {member.role === 'owner' && (
+    <div className="text-xs text-muted-foreground">
+      Owner
+    </div>
+  )}
+</div>
   </div>
 ))}
           </div>
