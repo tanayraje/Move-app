@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { format, differenceInDays } from "date-fns";
 import { safeParseDate } from "@/lib/utils";
+import { Button } from "@/components/ui";
 
 export default function JoinInvite() {
   const [, params] = useRoute("/join/:inviteCode");
@@ -110,7 +111,7 @@ export default function JoinInvite() {
         >
           Join Trip
         </Button>
-        
+
       </div>
     </div>
     
