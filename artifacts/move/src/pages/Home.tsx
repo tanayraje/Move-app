@@ -257,11 +257,11 @@ function TripCard({
           </div>
           <div className="mt-2 flex items-center gap-2 flex-wrap">
             {statusBadge}
-            {trip.members && trip.members.length > 1 && (
-              <span className="inline-flex bg-blue-50 text-blue-600 px-2.5 py-0.5 rounded-full text-xs font-semibold w-fit">
-                {trip.members.length} members
-              </span>
-            )}
+            {trip.guests && trip.guests.length > 0 && (
+  <span className="inline-flex bg-blue-50 text-blue-600 px-2.5 py-0.5 rounded-full text-xs font-semibold w-fit">
+    {trip.guests.length} member{trip.guests.length !== 1 ? 's' : ''}
+  </span>
+)}
           </div>
         </div>
 

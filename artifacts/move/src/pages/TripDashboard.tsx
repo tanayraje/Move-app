@@ -111,9 +111,6 @@ export default function TripDashboard({ params }: { params: { id: string, tab?: 
 
 function MembersButton({ trip }: { trip: Trip }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [name, setName] = useState('');
-   const { mutate: updateTrip } = useUpdateTrip();
-
   const { data: memberRows = [] } = useQuery({
   queryKey: ['trip-members', trip.id],
   queryFn: async () => {
@@ -134,28 +131,8 @@ console.log("RPC ERROR FULL", JSON.stringify(error, null, 2));
 
 const memberCount = memberRows.length;
 const isSolo = memberCount <= 1;
-const members = trip.members || [];
 
-  const addMember = () => {
-    if (!name.trim()) return;
-    const colors = ['#2563eb', '#dc2626', '#16a34a', '#d97706', '#9333ea', '#db2777', '#0891b2', '#65a30d'];
-    const color = colors[members.length % colors.length];
-    updateTrip({
-      ...trip,
-      members: [...members, { id: generateId(), name: name.trim(), color }]
-    });
-    setName('');
-  };
-
-  const removeMember = (id: string) => {
-    if (!confirm('Remove this member?')) return;
-    updateTrip({
-      ...trip,
-      members: members.filter((m: any) => m.id !== id)
-    });
-  };
-
-  
+    
   return (
     <>
       <button
@@ -195,7 +172,6 @@ const members = trip.members || [];
 
           {/* Member List */}
 <div className="space-y-2">
-  <p>Rows: {memberRows.length}</p>
 
   <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
     Members
@@ -213,7 +189,7 @@ const members = trip.members || [];
     </div>
 
     <span className="flex-1 font-medium text-sm text-foreground">
-      {member.role === 'owner' ? 'Owner' : `Member ${index}`}
+      {member.role === 'owner' ? 'Trip Owner' : 'Trip Member'}
     </span>
   </div>
 ))}
@@ -221,7 +197,7 @@ const members = trip.members || [];
 
           {/* Add member */}
           <div className="pt-2 border-t border-border">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Add Member</p>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Add Guest Member</p>
             <div className="flex gap-2">
               <Input value={name} onChange={e => setName(e.target.value)} placeholder="Name"
                 onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addMember(); } }} />

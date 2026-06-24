@@ -15,7 +15,7 @@ export interface Trip {
   endDate: string;
   budget?: TripBudget;
   dayCities?: Record<string, string>; // date → city name
-  members?: TripMember[];
+  guests?: TripMember[];
   inviteCode?: string;
   status?: TripStatus; // replaces `archived` boolean
   archived?: boolean; // legacy — kept for backward compat

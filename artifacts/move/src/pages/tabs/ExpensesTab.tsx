@@ -44,7 +44,9 @@ export default function ExpensesTab({ trip }: { trip: Trip }) {
   const [selectedSettlements, setSelectedSettlements] = useState<number[]>([]);
   const [editExpense, setEditExpense] = useState<Expense | null>(null);
 
-  const members = trip.members || [{ id: 'self', name: 'Me', color: '#2563eb' }];
+  const participants = trip.guests || [
+  { id: 'self', name: 'Me', color: '#2563eb' }
+];
   const isSolo = members.length <= 1;
   const destCurrency = trip.destinationCurrency || 'INR';
   const showToggle = destCurrency !== 'INR';
@@ -626,7 +628,7 @@ function AddExpenseSheet({
   existingExpense?: Expense;
 }) {
   const { mutateAsync: saveExp, isPending } = useSaveExpense();
-  const members = trip.members || [{ id: 'self', name: 'Me', color: '#2563eb' }];
+  const members = trip.guests || [{ id: 'self', name: 'Me', color: '#2563eb' }];
   const isSolo = members.length <= 1;
   const isEditing = !!existingExpense;
 
