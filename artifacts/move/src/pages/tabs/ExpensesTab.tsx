@@ -72,12 +72,23 @@ export default function ExpensesTab({ trip }: { trip: Trip }) {
     )
     .map((m: any, index: number) => ({
       id: m.user_id,
-      name: m.name || m.username,
+      name:
+        m.status === "removed"
+          ? `${m.name || m.username} (Removed)`
+          : (m.name || m.username),
       username: m.username,
-      color: COLORS[index % COLORS.length],
+      status: m.status,
+      color:
+        m.status === "removed"
+          ? "#9ca3af"
+          : COLORS[index % COLORS.length],
     })),
   ...(trip.guests || []),
 ];
+
+const activeMembers = members.filter(
+  (m: any) => m.status !== "removed"
+);
 
 const isSolo = members.length <= 1;
   const destCurrency = trip.destinationCurrency || 'INR';
@@ -106,7 +117,7 @@ const isSolo = members.length <= 1;
   // Per-member totals
   const memberTotals = useMemo(() => {
     const map: Record<string, number> = {};
-    members.forEach(m => map[m.id] = 0);
+    activeMembers.forEach(m => map[m.id] = 0);
     expenses.forEach(e => {
       const payerId = e.payerId || 'self';
       if (map[payerId] !== undefined) map[payerId] += e.amount;
@@ -122,7 +133,7 @@ const isSolo = members.length <= 1;
   const paid: Record<string, number> = {};
   const owed: Record<string, number> = {};
 
-  members.forEach(m => {
+  activeMembers.forEach(m => {
     paid[m.id] = 0;
     owed[m.id] = 0;
   });
@@ -162,14 +173,14 @@ const isSolo = members.length <= 1;
   const settlements = useMemo(() => {
   if (!balance) return [];
 
-  const creditors = members
+  const creditors = activeMembers
     .filter(m => (balance.net[m.id] || 0) > 0)
     .map(m => ({
       name: m.name,
       amount: balance.net[m.id]
     }));
 
-  const debtors = members
+  const debtors = activeMembers
     .filter(m => (balance.net[m.id] || 0) < 0)
     .map(m => ({
       name: m.name,
@@ -358,7 +369,7 @@ const isSolo = members.length <= 1;
       </thead>
 
       <tbody>
-        {members.map(m => {
+        {activeMembers.map(m => {
           const net = balance.net[m.id] || 0;
           const paid = memberTotals[m.id] || 0;
 
@@ -487,7 +498,7 @@ const isSolo = members.length <= 1;
                   <ExpenseRow
                     key={exp.id}
                     expense={exp}
-                    members={members}
+                    members={activeMembers}
                     activeCurrency={activeCurrency}
                     destCurrency={destCurrency}
                     showInDest={showInDest}
@@ -515,7 +526,7 @@ const isSolo = members.length <= 1;
   isOpen={!!editExpense}
   onClose={() => setEditExpense(null)}
   trip={trip}
-  members={members}
+  members={activeMembers}
     activeCurrency={activeCurrency}
     showInDest={showInDest}
     destCurrency={destCurrency}
@@ -602,7 +613,13 @@ function ExpenseRow({
   const { mutate: deleteExp } = useDeleteExpense();
   const Icon = EXPENSE_ICONS[expense.category] || CreditCard;
   const displayAmount = showInDest ? convertFromINR(expense.amount, destCurrency) : expense.amount;
-  const payer = members.find(m => m.id === expense.payerId) || members[0] || { name: 'Me', color: '#2563eb' };
+  const payer =
+  members.find(m => m.id === expense.payerId) || {
+    name: "Deleted User",
+    username: "",
+    color: "#9ca3af",
+    status: "removed",
+  };
   const isSplit =
   !!expense.split &&
   expense.split.length > 0;
@@ -687,8 +704,7 @@ function AddExpenseSheet({
     existingExpense ? existingExpense.date : format(new Date(), 'yyyy-MM-dd')
   );
   const [payerId, setPayerId] = useState(
-  existingExpense?.payerId || members[0]?.id || ''
-);
+  existingExpense?.payerId || members[0]?.id || '');
   const [notesInput, setNotesInput] = useState(existingExpense?.notes || '');
   const [showSplit, setShowSplit] = useState(false);
   const [splitMode, setSplitMode] = useState<'equal' | 'unequal'>('equal');
@@ -702,12 +718,12 @@ function AddExpenseSheet({
   if (existingExpense) {
   setAmountInput(String(Math.round(existingExpense.amount)));
   setDateInput(existingExpense.date);
-  setPayerId(existingExpense.payerId || members[0]?.id || '');
+  setPayerId(existingExpense.payerId || members[0]?.id|| '');
   setNotesInput(existingExpense.notes || '');
 
   setSelectedMemberIds(
     existingExpense.split?.map(s => s.memberId) ||
-      members.map(m => m.id)
+      members.map(m => m.user_id)
   );
 
   setSplitAmounts(
@@ -740,7 +756,7 @@ function AddExpenseSheet({
 } else {
   setAmountInput('');
   setDateInput(format(new Date(), 'yyyy-MM-dd'));
-  setPayerId(members[0]?.id || '');
+  setPayerId(members[0]?.user_id || '');
   setNotesInput('');
   setShowSplit(false);
   setSplitMode('equal');
