@@ -206,35 +206,47 @@ const addMember = () => {
 
           {/* Member List */}
 <div className="space-y-2">
-
   <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
     Members
   </p>
-            {memberRows.map((member: any, index: number) => (
-  <div
-    key={member.user_id}
-    className="flex items-center gap-3 bg-card border border-border rounded-xl px-3 py-2.5"
-  >
+
+  {memberRows.map((member: any) => (
     <div
-      className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
-      style={{ backgroundColor: member.role === 'owner' ? '#2563eb' : '#16a34a' }}
+      key={member.user_id}
+      className="flex items-center gap-3 bg-card border border-border rounded-xl px-3 py-2.5"
     >
-      {member.role === 'owner' ? 'O' : 'M'}
-    </div>
+      <div
+        className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
+        style={{
+          backgroundColor:
+            member.role === "owner" ? "#2563eb" : "#16a34a",
+        }}
+      >
+        {(member.name || member.username || "?")
+          .charAt(0)
+          .toUpperCase()}
+      </div>
 
-    <div className="flex-1">
-  <div className="font-medium text-sm text-foreground">
-    {member.username || 'Unknown User'}
-  </div>
+      <div className="flex-1">
+        <div className="font-medium text-sm text-foreground">
+          {member.name || member.username || "Unknown User"}
+        </div>
 
-  {member.role === 'owner' && (
-    <div className="text-xs text-muted-foreground">
-      Owner
+        {member.username && (
+          <div className="text-xs text-muted-foreground">
+            @{member.username}
+          </div>
+        )}
+
+        {member.role === "owner" && (
+          <div className="text-xs text-primary font-medium mt-0.5">
+            Owner
+          </div>
+        )}
+      </div>
     </div>
-  )}
+  ))}
 </div>
-  </div>
-))}
           </div>
 
           {/* Add member */}
