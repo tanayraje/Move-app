@@ -12,6 +12,10 @@ const updateProfile = useUpdateProfile(user?.id);
 const [username, setUsername] = useState("");
 const [name, setName] = useState("");
 
+const hasChanges =
+  username !== (profile?.username || "") ||
+  name !== (profile?.name || "");
+
 useEffect(() => {
   if (!profile) return;
 
@@ -62,7 +66,6 @@ const handleSave = async () => {
 
         <div className="w-full mt-8 max-w-md">
 
-          <>
   <div className="mb-4">
     <label className="block text-sm font-medium mb-2">
       Username
@@ -75,17 +78,7 @@ const handleSave = async () => {
     />
   </div>
 
-  <button
-  onClick={handleSave}
-  disabled={updateProfile.isPending}
-  className="w-full h-12 rounded-xl bg-primary text-primary-foreground font-medium mt-4"
->
-  {updateProfile.isPending
-    ? "Saving..."
-    : "Save Changes"}
-</button>
-
-  <div className="mb-4">
+    <div className="mb-4">
     <label className="block text-sm font-medium mb-2">
       Name
     </label>
@@ -108,7 +101,17 @@ const handleSave = async () => {
       className="w-full h-12 rounded-xl border px-4 bg-muted"
     />
   </div>
-</>
+  {hasChanges && (
+  <button
+    onClick={handleSave}
+    disabled={updateProfile.isPending}
+    className="w-full h-12 rounded-xl bg-primary text-primary-foreground font-medium mt-6"
+  >
+    {updateProfile.isPending
+      ? "Saving..."
+      : "Save Changes"}
+  </button>
+)}
 
         </div>
 
