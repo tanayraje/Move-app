@@ -9,7 +9,7 @@ export function Button({ className, variant = 'primary', size = 'default', isLoa
       className={cn(
         "inline-flex items-center justify-center rounded-xl font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98]",
         {
-          'bg-primary text-primary-foreground shadow-lg shadow-primary/25 hover:bg-primary/90': variant === 'primary',
+          'bg-primary text-primary-foreground shadow-sm shadow-black/10 hover:bg-primary/90': variant === 'primary',
           'bg-muted text-foreground hover:bg-muted/80': variant === 'secondary',
           'border-2 border-border bg-transparent hover:bg-muted/50 text-foreground': variant === 'outline',
           'bg-transparent hover:bg-muted text-foreground': variant === 'ghost',
