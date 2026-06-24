@@ -124,6 +124,10 @@ function MembersButton({ trip }: { trip: Trip }) {
 
 console.log("TRIP ID", trip.id);
 console.log("RPC DATA", data);
+
+if (data?.length) {
+  console.log("FIRST MEMBER", data[0]);
+}
 console.log("RPC ERROR FULL", JSON.stringify(error, null, 2));
 
     return data || [];
