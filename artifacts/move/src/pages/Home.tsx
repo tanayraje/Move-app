@@ -347,6 +347,10 @@ function TripMenu({
   const { mutate: updateTrip } = useUpdateTrip();
   const { mutate: saveItem } = useSaveItineraryItem();
   const [isOpen, setIsOpen] = useState(false);
+const [menuPosition, setMenuPosition] = useState({
+  top: 0,
+  left: 0,
+});
 
 
   const handleArchive = () => {
@@ -386,18 +390,33 @@ const handleWishlist = () => {
    return (
     <>
       <button
-        onClick={(e) => { e.preventDefault(); setIsOpen(true); }}
-        className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-full transition-colors"
-      >
+  onClick={(e) => {
+    e.preventDefault();
+
+    const rect = e.currentTarget.getBoundingClientRect();
+
+    setMenuPosition({
+      top: rect.bottom + 8,
+      left: rect.right - 160,
+    });
+
+    setIsOpen(true);
+  }}
+  className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-full transition-colors"
+>
         <MoreVertical className="w-4 h-4" />
       </button>
 
       {isOpen && (
   <div className="fixed inset-0 z-[60]" onClick={() => setIsOpen(false)}>
     <div
-      className="absolute right-4 top-20 bg-card border border-border rounded-2xl shadow-2xl p-2 min-w-[160px]"
-      onClick={e => e.stopPropagation()}
-    >
+  className="fixed bg-card border border-border rounded-2xl shadow-2xl p-2 min-w-[160px] z-[9999]"
+  style={{
+    top: menuPosition.top,
+    left: menuPosition.left,
+  }}
+  onClick={e => e.stopPropagation()}
+>
 
      {/* Convert wishlist to active trip */}
 {status === 'wishlist' && (
