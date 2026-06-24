@@ -192,7 +192,9 @@ const addMember = () => {
                 </code>
                 <button
                   onClick={() => {
-                    navigator.clipboard?.writeText(trip.inviteCode!);
+                    navigator.clipboard?.writeText(
+  trip.inviteCode!.replace('MOVE-', '')
+);
                     alert('Copied to clipboard!');
                   }}
                   className="text-xs font-bold bg-primary text-primary-foreground px-3 py-2.5 rounded-lg shrink-0"
