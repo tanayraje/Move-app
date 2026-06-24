@@ -120,12 +120,13 @@ function MembersButton({ trip }: { trip: Trip }) {
     console.log('TRIP ID', trip.id);
 
     const { data, error } = await supabase.rpc(
-      'get_trip_members',
-      { p_trip_id: trip.id }
-    );
+  'get_trip_members',
+  { p_trip_id: trip.id }
+);
 
-    console.log('RPC DATA', data);
-    console.log('RPC ERROR', error);
+console.log("TRIP ID", trip.id);
+console.log("RPC DATA", data);
+console.log("RPC ERROR FULL", JSON.stringify(error, null, 2));
 
     return data || [];
   },
@@ -199,25 +200,23 @@ const members = trip.members || [];
   <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
     Members
   </p>
-            {members.map((member: any) => (
-              <div key={member.id} className="flex items-center gap-3 bg-card border border-border rounded-xl px-3 py-2.5">
-                <div
-                  className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
-                  style={{ backgroundColor: member.color || '#2563eb' }}
-                >
-                  {member.name.charAt(0).toUpperCase()}
-                </div>
-                <span className="flex-1 font-medium text-sm text-foreground">{member.name}</span>
-                {member.id !== 'self' && (
-                  <button
-                    onClick={() => removeMember(member.id)}
-                    className="text-xs text-muted-foreground hover:text-red-500 px-2 py-1"
-                  >
-                    Remove
-                  </button>
-                )}
-              </div>
-            ))}
+            {memberRows.map((member: any, index: number) => (
+  <div
+    key={member.user_id}
+    className="flex items-center gap-3 bg-card border border-border rounded-xl px-3 py-2.5"
+  >
+    <div
+      className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
+      style={{ backgroundColor: member.role === 'owner' ? '#2563eb' : '#16a34a' }}
+    >
+      {member.role === 'owner' ? 'O' : 'M'}
+    </div>
+
+    <span className="flex-1 font-medium text-sm text-foreground">
+      {member.role === 'owner' ? 'Owner' : `Member ${index}`}
+    </span>
+  </div>
+))}
           </div>
 
           {/* Add member */}
