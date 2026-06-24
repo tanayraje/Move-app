@@ -59,8 +59,8 @@ const { data: profile } = useProfile(user?.id);
   return (
   <div className="flex flex-col min-h-[100dvh] pb-8 relative">
     
-      <header className="px-6 pt-12 pb-6 sticky top-0 bg-background/80 backdrop-blur-xl z-[100]">
-        <div className="flex items-center justify-between">
+      <header className="px-6 pt-12 pb-8 sticky top-0 bg-background/90 backdrop-blur-xl z-[100]">
+        <div className="flex items-center justify-between gap-6">
           <div>
             <h1 className="text-4xl font-display font-extrabold text-foreground tracking-tight">Move.</h1>
             <p className="text-muted-foreground mt-1 text-lg">Where to next?</p>
@@ -122,7 +122,7 @@ const { data: profile } = useProfile(user?.id);
         </div>
       </header>
 
-      <main className="flex-1 px-6 flex flex-col gap-4">
+      <main className="flex-1 px-6 pb-32 flex flex-col gap-4">
         {isLoading ? (
           <div className="flex flex-col gap-4">
             {[1, 2, 3].map(i => <div key={i} className="h-32 rounded-3xl bg-muted animate-pulse" />)}
@@ -138,9 +138,15 @@ const { data: profile } = useProfile(user?.id);
               <Button size="lg" onClick={() => setIsAddOpen(true)}>
                 <Plus className="w-5 h-5 mr-2" /> New Trip
               </Button>
-              <Button variant="outline" size="lg" onClick={() => setIsWishlistOpen(true)}>
-                <Heart className="w-5 h-5 mr-2" /> Wishlist
-              </Button>
+              <Button
+  variant="outline"
+  size="lg"
+  className="rounded-full px-5 bg-white border border-border shadow-xl"
+  onClick={() => setIsWishlistOpen(true)}
+>
+  <Heart className="w-5 h-5 mr-2" />
+  Wishlist
+</Button>
             </div>
           </div>
         ) : (
@@ -149,22 +155,22 @@ const { data: profile } = useProfile(user?.id);
 <div className="flex bg-muted p-1 rounded-xl mb-2">
   <button
     onClick={() => setTab('active')}
-    className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all ${
-      tab === 'active'
-        ? 'bg-background text-foreground shadow-sm'
-        : 'text-muted-foreground'
-    }`}
+    className={`flex-1 py-2 px-2 text-xs font-semibold whitespace-nowrap rounded-lg transition-all ${
+  tab === 'active'
+    ? 'bg-background text-foreground shadow-sm'
+    : 'text-muted-foreground'
+}`}
   >
     Active ({activeTrips.length})
   </button>
 
   <button
     onClick={() => setTab('wishlist')}
-    className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all flex items-center justify-center gap-1.5 ${
-      tab === 'wishlist'
-        ? 'bg-background text-foreground shadow-sm'
-        : 'text-muted-foreground'
-    }`}
+    className={`flex-1 py-2 px-2 text-xs font-semibold whitespace-nowrap rounded-lg transition-all flex items-center justify-center gap-1 ${
+  tab === 'wishlist'
+    ? 'bg-background text-foreground shadow-sm'
+    : 'text-muted-foreground'
+}`}
   >
     <Heart className="w-3.5 h-3.5" />
     Wishlist ({wishlistTrips.length})
@@ -172,11 +178,11 @@ const { data: profile } = useProfile(user?.id);
 
   <button
     onClick={() => setTab('archived')}
-    className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all flex items-center justify-center gap-1.5 ${
-      tab === 'archived'
-        ? 'bg-background text-foreground shadow-sm'
-        : 'text-muted-foreground'
-    }`}
+    className={`flex-1 py-2 px-2 text-xs font-semibold whitespace-nowrap rounded-lg transition-all flex items-center justify-center gap-1 ${
+  tab === 'archived'
+    ? 'bg-background text-foreground shadow-sm'
+    : 'text-muted-foreground'
+}`}
   >
     <Archive className="w-3.5 h-3.5" />
     Archived ({archivedTrips.length})
