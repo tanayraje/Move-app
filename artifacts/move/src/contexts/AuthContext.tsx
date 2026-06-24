@@ -51,11 +51,16 @@ export function AuthProvider({
         const { data, error } = await supabase
           .from('profiles')
           .insert({
-            id: session.user.id,
-            username:
-              session.user.email?.split('@')[0] ||
-              `user_${session.user.id.slice(0, 8)}`,
-          })
+  id: session.user.id,
+  username:
+    session.user.email?.split('@')[0] ||
+    `user_${session.user.id.slice(0, 8)}`,
+  name:
+    session.user.user_metadata?.full_name ||
+    null,
+  email:
+    session.user.email || null,
+})
           .select();
 
         console.log('PROFILE INSERT DATA', data);
