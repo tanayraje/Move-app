@@ -491,18 +491,20 @@ export default function ExpensesTab({ trip }: { trip: Trip }) {
 
       {getTripStatus(trip) !== 'archived' && <FAB icon={Plus} onClick={() => setIsAddOpen(true)} />}
       <AddExpenseSheet
-        isOpen={isAddOpen}
-        onClose={() => setIsAddOpen(false)}
-        trip={trip}
-        activeCurrency={activeCurrency}
+  isOpen={isAddOpen}
+  onClose={() => setIsAddOpen(false)}
+  trip={trip}
+  members={members}
+  activeCurrency={activeCurrency}
         showInDest={showInDest}
         destCurrency={destCurrency}
       />
       {editExpense && (
   <AddExpenseSheet
-    isOpen={!!editExpense}
-    onClose={() => setEditExpense(null)}
-    trip={trip}
+  isOpen={!!editExpense}
+  onClose={() => setEditExpense(null)}
+  trip={trip}
+  members={members}
     activeCurrency={activeCurrency}
     showInDest={showInDest}
     destCurrency={destCurrency}
@@ -642,14 +644,25 @@ function ExpenseRow({
 
 // ── Add/Edit Expense Sheet ────────────────────────────────────────────────
 function AddExpenseSheet({
-  isOpen, onClose, trip, activeCurrency, showInDest, destCurrency, existingExpense
+  isOpen,
+  onClose,
+  trip,
+  members,
+  activeCurrency,
+  showInDest,
+  destCurrency,
+  existingExpense
 }: {
-  isOpen: boolean; onClose: () => void; trip: Trip;
-  activeCurrency: string; showInDest: boolean; destCurrency: string;
+  isOpen: boolean;
+  onClose: () => void;
+  trip: Trip;
+  members: any[];
+  activeCurrency: string;
+  showInDest: boolean;
+  destCurrency: string;
   existingExpense?: Expense;
 }) {
   const { mutateAsync: saveExp, isPending } = useSaveExpense();
-  const members = trip.guests || [{ id: 'self', name: 'Me', color: '#2563eb' }];
   const isSolo = members.length <= 1;
   const isEditing = !!existingExpense;
 
