@@ -138,15 +138,13 @@ const { data: profile } = useProfile(user?.id);
               <Button size="lg" onClick={() => setIsAddOpen(true)}>
                 <Plus className="w-5 h-5 mr-2" /> New Trip
               </Button>
-              <Button
-  variant="outline"
-  size="lg"
-  className="rounded-full px-5 !bg-white !opacity-100 border border-border shadow-xl backdrop-blur-none"
+              <button
   onClick={() => setIsWishlistOpen(true)}
+  className="h-10 px-5 rounded-full bg-white text-foreground border border-border shadow-xl flex items-center justify-center font-medium"
 >
   <Heart className="w-5 h-5 mr-2" />
   Wishlist
-</Button>
+</button>
             </div>
           </div>
         ) : (
