@@ -63,8 +63,11 @@ export default function JoinInvite() {
         </h1>
 
         <p className="text-center text-muted-foreground mb-6">
-          You've been invited to join a trip.
-        </p>
+  You've been invited to join a trip by{" "}
+  <span className="font-semibold text-foreground">
+    {trip.owner_name}
+  </span>.
+</p>
 
         <div className="bg-card border border-border rounded-3xl p-5">
           <h2 className="text-2xl font-bold mb-1">
@@ -100,7 +103,16 @@ export default function JoinInvite() {
             </div>
           </div>
         </div>
+
+        <Button
+          size="lg"
+          className="w-full mt-4"
+        >
+          Join Trip
+        </Button>
+        
       </div>
     </div>
+    
   );
 }
