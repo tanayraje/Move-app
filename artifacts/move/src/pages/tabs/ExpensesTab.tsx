@@ -44,9 +44,9 @@ export default function ExpensesTab({ trip }: { trip: Trip }) {
   queryKey: ['trip-members', trip.id],
   queryFn: async () => {
     const { data, error } = await supabase.rpc(
-      'get_trip_members',
-      { p_trip_id: trip.id }
-    );
+  'get_trip_members_all',
+  { p_trip_id: trip.id }
+);
 
     if (error) throw error;
 
