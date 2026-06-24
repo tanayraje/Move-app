@@ -167,12 +167,15 @@ const removeMember = async (
 );
 
 if (error) {
+  alert(error.message);
+  return;
+}
 
-  await queryClient.invalidateQueries({
-    queryKey: ["trip-members", trip.id],
-  });
+await queryClient.invalidateQueries({
+  queryKey: ["trip-members", trip.id],
+});
 
-  alert("Member removed");
+alert("Member removed");
 };
 
 const leaveTrip = async () => {
