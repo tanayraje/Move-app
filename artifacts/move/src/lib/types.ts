@@ -81,7 +81,13 @@ export interface TripDocument {
   createdAt: number;
 }
 
-export type ExpenseCategory = 'food' | 'transport' | 'accommodation' | 'activities' | 'misc';
+export type ExpenseCategory =
+  'food' |
+  'transport' |
+  'accommodation' |
+  'activities' |
+  'misc' |
+  'settlement';
 
 export interface ExpenseSplit {
   memberId: string;

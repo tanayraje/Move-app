@@ -483,9 +483,14 @@ function SortableItem({
   const MealIcon = mealInfo?.icon ?? UtensilsCrossed;
 
   const openDoc = (doc: TripDocument) => {
-    const url = URL.createObjectURL(doc.blob);
-    window.open(url, '_blank');
-  };
+  if (!doc.blob) {
+    alert("Document file not found");
+    return;
+  }
+
+  const url = URL.createObjectURL(doc.blob);
+  window.open(url, '_blank');
+};
 
   const detachDoc = (docId: string) => {
     if (!confirm('Remove this file from the item?')) return;

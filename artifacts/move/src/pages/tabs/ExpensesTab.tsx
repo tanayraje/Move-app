@@ -6,7 +6,7 @@ import {
   ChevronDown, ChevronUp, Check, Handshake, Pencil
 } from "lucide-react";
 import { useExpenses, useSaveExpense, useDeleteExpense, useUpdateTrip } from "@/hooks/use-store";
-import { Trip, Expense, ExpenseCategory, TripBudget, TripMember } from "@/lib/types";
+import { Trip, Expense, ExpenseCategory, TripBudget, TripMember, ExpenseSplit } from "@/lib/types";
 import { generateId, cn, safeFormatDate, getTripStatus } from "@/lib/utils";
 import { Button, Input, Label, Select, BottomSheet, FAB } from "@/components/ui";
 import { formatCurrency, convertFromINR } from "@/lib/countries";
@@ -44,7 +44,7 @@ export default function ExpensesTab({ trip }: { trip: Trip }) {
   const [selectedSettlements, setSelectedSettlements] = useState<number[]>([]);
   const [editExpense, setEditExpense] = useState<Expense | null>(null);
 
-  const participants = trip.guests || [
+  const members = trip.guests || [
   { id: 'self', name: 'Me', color: '#2563eb' }
 ];
   const isSolo = members.length <= 1;
@@ -103,7 +103,7 @@ export default function ExpensesTab({ trip }: { trip: Trip }) {
 
     // Only split expenses affect balances
     if (e.split && e.split.length > 0) {
-      e.split.forEach(s => {
+      e.split.forEach((s: ExpenseSplit) => {
         owed[s.memberId] =
           (owed[s.memberId] || 0) + s.amount;
       });
@@ -226,11 +226,11 @@ export default function ExpensesTab({ trip }: { trip: Trip }) {
       ['Date', 'Title', 'Category', 'Amount (INR)', 'Payer', 'Notes', 'Split'],
       ...expenses.map(e => {
         const payer = members.find(m => m.id === e.payerId)?.name || 'Me';
-        const split = e.split?.map(s => `${members.find(m => m.id === s.memberId)?.name || s.memberId}: ₹${s.amount}`).join('; ') || '';
+        const split = e.split?.map((s: ExpenseSplit) => `${members.find(m => m.id === s.memberId)?.name || s.memberId}: ₹${s.amount}`).join('; ') || '';
         return [
           e.date,
           e.title,
-          EXPENSE_LABELS[e.category],
+          EXPENSE_LABELS[e.category as ExpenseCategory],
           String(Math.round(e.amount)),
           payer,
           e.notes || '',

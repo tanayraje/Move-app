@@ -424,6 +424,7 @@ const handleWishlist = () => {
      
 function JoinTripSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const [code, setCode] = useState('');
+  const queryClient = useQueryClient();
   
   const handleJoin = async () => {
   try {
@@ -531,7 +532,6 @@ function AddTripSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
       startDate: fd.get('startDate') as string,
       endDate: fd.get('endDate') as string,
       inviteCode: `MOVE-${id.slice(0, 4).toUpperCase()}`,
-      members: [{ id: 'self', name: 'Me', color: '#2563eb' }],
       status: 'active',
       createdAt: Date.now()
     });
@@ -577,7 +577,6 @@ function AddWishlistSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
       startDate: '',
       endDate: '',
       inviteCode: `MOVE-${id.slice(0, 4).toUpperCase()}`,
-      members: [{ id: 'self', name: 'Me', color: '#2563eb' }],
       status: 'wishlist',
       createdAt: Date.now()
     });
