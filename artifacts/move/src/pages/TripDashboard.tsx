@@ -15,7 +15,7 @@ import ExpensesTab from "./tabs/ExpensesTab";
 import PlacesTab from "./tabs/PlacesTab";
 import OverviewTab from "./tabs/OverviewTab";
 import { BottomSheet, Button, Input, Label } from "@/components/ui";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 
 export default function TripDashboard({ params }: { params: { id: string, tab?: string } }) {
@@ -115,6 +115,8 @@ function MembersButton({ trip }: { trip: Trip }) {
   const { mutate: updateTrip } = useUpdateTrip();
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
+const queryClient = useQueryClient();
+
 React.useEffect(() => {
   supabase.auth.getUser().then(({ data }) => {
     console.log("CURRENT USER", data.user?.id);
@@ -146,6 +148,55 @@ const memberCount = memberRows.length;
 const isSolo = memberCount <= 1;
 
 const members = trip.guests || [];
+
+const removeMember = async (
+  memberId: string,
+  memberName: string
+) => {
+  const confirmed = window.confirm(
+    `Remove ${memberName} from this trip?\n\nThey will lose access to the trip.\nExisting expenses and splits will remain unchanged.`
+  );
+
+  if (!confirmed) return;
+
+  const { error } = await supabase
+    .from("trip_members")
+    .delete()
+    .eq("trip_id", trip.id)
+    .eq("user_id", memberId);
+
+  if (error) {
+    alert(error.message);
+    return;
+  }
+
+  await queryClient.invalidateQueries({
+    queryKey: ["trip-members", trip.id],
+  });
+
+  alert("Member removed");
+};
+
+const leaveTrip = async () => {
+  const confirmed = window.confirm(
+    `Leave this trip?\n\nYou will lose access to the trip.\nYour expenses and splits will remain in the trip history.`
+  );
+
+  if (!confirmed) return;
+
+  const { error } = await supabase
+    .from("trip_members")
+    .delete()
+    .eq("trip_id", trip.id)
+    .eq("user_id", currentUserId);
+
+  if (error) {
+    alert(error.message);
+    return;
+  }
+
+  window.location.href = "/";
+};
 
 const addMember = () => {
   if (!name.trim()) return;
@@ -258,7 +309,18 @@ https://move-app-theta.vercel.app/join/${trip.inviteCode}`;
     Members
   </p>
 
-  {memberRows.map((member: any) => (
+  {memberRows.map((member: any) => {
+  const owner = memberRows.find(
+    (m: any) => m.role === "owner"
+  );
+
+  const isOwner =
+    owner?.user_id === currentUserId;
+
+  const isCurrentUser =
+    member.user_id === currentUserId;
+
+  return (
     <div
       key={member.user_id}
       className="flex items-center gap-3 bg-card border border-border rounded-xl px-3 py-2.5"
@@ -275,7 +337,7 @@ https://move-app-theta.vercel.app/join/${trip.inviteCode}`;
           .toUpperCase()}
       </div>
 
-      <div className="flex-1">
+            <div className="flex-1">
         <div className="font-medium text-sm text-foreground">
           {member.name || member.username || "Unknown User"}
         </div>
@@ -292,8 +354,33 @@ https://move-app-theta.vercel.app/join/${trip.inviteCode}`;
           </div>
         )}
       </div>
+            {isOwner &&
+        member.role !== "owner" && (
+          <button
+            onClick={() =>
+              removeMember(
+                member.user_id,
+                member.name || member.username
+              )
+            }
+            className="text-red-600 text-xs font-semibold px-2"
+          >
+            Remove
+          </button>
+        )}
+
+      {!isOwner &&
+        isCurrentUser && (
+          <button
+            onClick={leaveTrip}
+            className="text-red-600 text-xs font-semibold px-2"
+          >
+            Leave
+          </button>
+        )}
     </div>
-  ))}
+    );
+})}
 </div>
           {/* Add member */}
           <div className="pt-2 border-t border-border">
