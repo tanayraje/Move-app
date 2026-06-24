@@ -48,16 +48,19 @@ export function AuthProvider({
         .maybeSingle();
 
       if (!existingProfile) {
-        await supabase
-          .from('profiles')
-          .insert({
-            id: session.user.id,
-            username:
-              session.user.email?.split('@')[0] ||
-              `user_${session.user.id.slice(0, 8)}`,
-          });
-      }
-    }
+  const { data, error } = await supabase
+    .from('profiles')
+    .insert({
+      id: session.user.id,
+      username:
+        session.user.email?.split('@')[0] ||
+        `user_${session.user.id.slice(0, 8)}`,
+    })
+    .select();
+
+  console.log('PROFILE INSERT DATA', data);
+  console.log('PROFILE INSERT ERROR', error);
+}
 
     setLoading(false);
   }
