@@ -506,9 +506,7 @@ export function useSaveExpense() {
           category: item.category,
           date: item.date,
           payer_id: item.payerId,
-payer_name: item.payerName,
-payer_name:
-  members.find(m => m.id === item.payerId)?.name ?? "",
+          payer_name: item.payerName,
           notes: item.notes,
           split: item.split || [],
           created_at_ms: item.createdAt,

@@ -609,16 +609,17 @@ function ExpenseRow({
 }) {
   const { mutate: deleteExp } = useDeleteExpense();
   const Icon = EXPENSE_ICONS[expense.category] || CreditCard;
-  const displayAmount = showInDest ? convertFromINR(expense.amount, destCurrency) : expense.amount;
-  const payer =
+  const displayAmount = showInDest
+  ? convertFromINR(expense.amount, destCurrency)
+  : expense.amount;
+
+const payer =
   members.find(m => m.id === expense.payerId) || {
     name: expense.payerName || "Unknown User",
     color: "#9ca3af",
   };
-    name: expense.payerName || "Unknown User",
-    color: "#9ca3af",
-  };
-  const isSplit =
+
+const isSplit =
   !!expense.split &&
   expense.split.length > 0;
 
