@@ -159,10 +159,14 @@ const removeMember = async (
   if (!confirmed) return;
 
   const { error } = await supabase.rpc(
+  "remove_trip_member",
+  {
+    p_trip_id: trip.id,
+    p_user_id: memberId,
+  }
+);
 
-
-
-  if (error) {
+if (error) {
   console.log("REMOVE MEMBER ERROR", error);
   alert(error.message);
   return;
