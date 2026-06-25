@@ -666,9 +666,10 @@ function AddExpenseSheet({
   const isEditing = !!existingExpense;
 
   const [amountInput, setAmountInput] = useState(
-    existingExpense ? String(Math.round(existingExpense.amount)) : ''
-  );
-  const [expenseCurrency, setExpenseCurrency] = useState('INR');
+  existingExpense ? String(existingExpense.amount) : ""
+);
+
+const [expenseCurrency, setExpenseCurrency] = useState("INR");
   const [dateInput, setDateInput] = useState(
     existingExpense ? existingExpense.date : format(new Date(), 'yyyy-MM-dd')
   );
@@ -685,7 +686,7 @@ function AddExpenseSheet({
   );
     useEffect(() => {
   if (existingExpense) {
-  setAmountInput(String(Math.round(existingExpense.amount)));
+  setAmountInput(String(existingExpense.amount));
   setDateInput(existingExpense.date);
   setPayerId(existingExpense.payerId || members[0]?.id|| '');
   setNotesInput(existingExpense.notes || '');
@@ -809,25 +810,17 @@ if (expenseCurrency !== 'INR') {
       const involved = selectedMemberIds;
       if (involved.length === 0) { alert('Select at least one member'); return; }
       if (splitMode === 'equal') {
-        const per = Math.floor((amount / involved.length) * 100) / 100;
+        const totalCents = Math.round(amount * 100);
+const base = Math.floor(totalCents / involved.length);
+const remainder = totalCents % involved.length;
 
-let remaining = amount;
-
-split = involved.map((mid, index) => {
-  const value =
-    index === involved.length - 1
-      ? Math.round(remaining * 100) / 100
-      : per;
-
-  remaining -= value;
-
-  return {
-    memberId: mid,
-    memberName:
-      members.find(m => m.id === mid)?.name || "",
-    amount: value,
-  };
-});
+split = involved.map((mid, index) => ({
+  memberId: mid,
+  memberName:
+    members.find(m => m.id === mid)?.name || "",
+  amount:
+    (base + (index < remainder ? 1 : 0)) / 100,
+}));
       } else {
         const rate =
   expenseCurrency !== 'INR'
