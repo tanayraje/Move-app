@@ -166,18 +166,46 @@ const { data: profile } = useProfile(user?.id);
   </div>
 
   {tripsToShow.length === 0 ? (
+  allTrips.length === 0 ? (
+    <div className="flex-1 flex flex-col items-center justify-center text-center px-4">
+      <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center mb-6">
+        <Plane className="w-10 h-10 text-primary" />
+      </div>
+
+      <h2 className="text-2xl font-display font-bold text-foreground mb-2">
+        No trips yet
+      </h2>
+
+      <p className="text-muted-foreground">
+        Create your first trip to start planning.
+      </p>
+    </div>
+  ) : (
     <div className="flex-1 flex items-center justify-center">
       <div className="text-center">
-        <Plane className="w-12 h-12 mx-auto mb-4 opacity-30" />
+        {tab === "active" && (
+          <Plane className="w-12 h-12 mx-auto mb-4 opacity-30" />
+        )}
+
+        {tab === "wishlist" && (
+          <Heart className="w-12 h-12 mx-auto mb-4 opacity-30" />
+        )}
+
+        {tab === "archived" && (
+          <Archive className="w-12 h-12 mx-auto mb-4 opacity-30" />
+        )}
+
         <h2 className="text-xl font-semibold mb-2">
           No {tab} trips
         </h2>
+
         <p className="text-muted-foreground">
-          Create one using the button below.
+          Nothing here yet.
         </p>
       </div>
     </div>
-  ) : (
+  )
+) : (
     tripsToShow.map((trip) => (
       <TripCard
         key={trip.id}
