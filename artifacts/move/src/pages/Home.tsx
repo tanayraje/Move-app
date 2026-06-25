@@ -230,22 +230,9 @@ const { data: profile } = useProfile(user?.id);
     </Button>
   </div>
 )}
-      <AddTripSheet
-  isOpen={isAddOpen}
-  onClose={() => setIsAddOpen(false)}
-/>
-
-<AddWishlistSheet
-  isOpen={isWishlistOpen}
-  onClose={() => setIsWishlistOpen(false)}
-/>
-
-<JoinTripSheet
-  isOpen={isJoinOpen}
-  onClose={() => setIsJoinOpen(false)}
-/>
-
-<ConvertTripSheet
+      <AddWishlistSheet isOpen={isWishlistOpen} onClose={() => setIsWishlistOpen(false)} />
+      <JoinTripSheet isOpen={isJoinOpen} onClose={() => setIsJoinOpen(false)} />
+        <ConvertTripSheet
   trip={convertTrip}
   isOpen={!!convertTrip}
   onClose={() => setConvertTrip(null)}
