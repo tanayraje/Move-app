@@ -167,26 +167,30 @@ export function useUpdateTrip() {
 
   return useMutation({
     mutationFn: async (trip: Trip) => {
-      const { error } = await supabase
-        .from('trips')
-        .update({
-  name: trip.name,
-  destination: trip.destination,
-  destination_currency: trip.destinationCurrency,
-  start_date: trip.startDate,
-  end_date: trip.endDate,
-  invite_code: trip.inviteCode,
-  members: trip.guests || [],
-  status: trip.status || 'active',
-  day_cities: trip.dayCities || {},
-  budget: trip.budget ?? null,
-})
-        .eq('id', trip.id);
+      const response = await supabase
+  .from("trips")
+  .update({
+    name: trip.name,
+    destination: trip.destination,
+    destination_currency: trip.destinationCurrency,
+    start_date: trip.startDate,
+    end_date: trip.endDate,
+    invite_code: trip.inviteCode,
+    members: trip.guests || [],
+    status: trip.status || "active",
+    day_cities: trip.dayCities || {},
+    budget: trip.budget ?? null,
+  })
+  .eq("id", trip.id)
+  .select();
 
-      if (error) {
-  console.error("UPDATE TRIP ERROR", error);
-  throw error;
+console.log("UPDATE RESPONSE", response);
+
+if (response.error) {
+  throw response.error;
 }
+
+return trip;
 
       return trip;
     },
