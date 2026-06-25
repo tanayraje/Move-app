@@ -120,9 +120,15 @@ const isSolo = activeMembers.length <= 1;
 
   // Grouped by date — handle old ISO, new YYYY-MM-DD, and invalid dates
   const grouped = [...expenses]
-    .filter(e => e.date && typeof e.date === 'string')
-    .sort((a, b) => a.date.localeCompare(b.date))
-    .reduce((acc, exp) => {
+  .filter(e => e.date && typeof e.date === "string")
+  .sort((a, b) => {
+    const dateDiff = b.date.localeCompare(a.date);
+
+    if (dateDiff !== 0) return dateDiff;
+
+    return (b.createdAt || 0) - (a.createdAt || 0);
+  })
+  .reduce((acc, exp) => {
       const raw = exp.date;
       // Extract YYYY-MM-DD from ISO or plain string
       const datePart = /^\d{4}-\d{2}-\d{2}/.test(raw) ? raw.slice(0, 10) : '';
@@ -803,14 +809,25 @@ if (expenseCurrency !== 'INR') {
       const involved = selectedMemberIds;
       if (involved.length === 0) { alert('Select at least one member'); return; }
       if (splitMode === 'equal') {
-        const per = Math.round(amount / involved.length);
-        const first = per + (amount - per * involved.length); // handle rounding
-        split = involved.map((mid, i) => ({
-  memberId: mid,
-  memberName:
-    members.find(m => m.id === mid)?.name || "",
-  amount: i === 0 ? first : per,
-}));
+        const per = Math.floor((amount / involved.length) * 100) / 100;
+
+let remaining = amount;
+
+split = involved.map((mid, index) => {
+  const value =
+    index === involved.length - 1
+      ? Math.round(remaining * 100) / 100
+      : per;
+
+  remaining -= value;
+
+  return {
+    memberId: mid,
+    memberName:
+      members.find(m => m.id === mid)?.name || "",
+    amount: value,
+  };
+});
       } else {
         const rate =
   expenseCurrency !== 'INR'
