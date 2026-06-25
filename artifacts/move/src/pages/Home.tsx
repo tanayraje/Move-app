@@ -166,46 +166,18 @@ const { data: profile } = useProfile(user?.id);
   </div>
 
   {tripsToShow.length === 0 ? (
-  allTrips.length === 0 ? (
-    <div className="flex-1 flex flex-col items-center justify-center text-center px-4">
-      <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center mb-6">
-        <Plane className="w-10 h-10 text-primary" />
-      </div>
-
-      <h2 className="text-2xl font-display font-bold text-foreground mb-2">
-        No trips yet
-      </h2>
-
-      <p className="text-muted-foreground">
-        Create your first trip to start planning.
-      </p>
-    </div>
-  ) : (
     <div className="flex-1 flex items-center justify-center">
       <div className="text-center">
-        {tab === "active" && (
-          <Plane className="w-12 h-12 mx-auto mb-4 opacity-30" />
-        )}
-
-        {tab === "wishlist" && (
-          <Heart className="w-12 h-12 mx-auto mb-4 opacity-30" />
-        )}
-
-        {tab === "archived" && (
-          <Archive className="w-12 h-12 mx-auto mb-4 opacity-30" />
-        )}
-
+        <Plane className="w-12 h-12 mx-auto mb-4 opacity-30" />
         <h2 className="text-xl font-semibold mb-2">
           No {tab} trips
         </h2>
-
         <p className="text-muted-foreground">
-          Nothing here yet.
+          Create one using the button below.
         </p>
       </div>
     </div>
-  )
-) : (
+  ) : (
     tripsToShow.map((trip) => (
       <TripCard
         key={trip.id}
@@ -222,10 +194,24 @@ const { data: profile } = useProfile(user?.id);
  !isWishlistOpen &&
  !isJoinOpen && (
   <div className="fixed bottom-6 left-0 right-0 flex justify-center z-20 max-w-md mx-auto gap-3">
-    <Button size="lg" className="rounded-full px-7" onClick={() => setIsAddOpen(true)}>
-      <Plus className="w-5 h-5 mr-2" /> New Trip
+    <Button
+      size="lg"
+      className="rounded-full px-7"
+      onClick={() => setIsAddOpen(true)}
+    >
+      <Plus className="w-5 h-5 mr-2" />
+      New Trip
     </Button>
 
+    <Button
+      size="lg"
+      variant="outline"
+      className="rounded-full px-7"
+      onClick={() => setIsWishlistOpen(true)}
+    >
+      <Heart className="w-5 h-5 mr-2" />
+      Wishlist
+    </Button>
   </div>
 )}
       <AddTripSheet
