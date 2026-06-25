@@ -3,7 +3,7 @@ import { Link } from "wouter";
 import { format, differenceInDays, addMonths, addDays } from "date-fns";
 import {
   Plus, MapPin, Calendar, Plane, Trash2, Search, ChevronDown, X,
-  Archive, Heart, Clock, MoreVertical, Users, LogOut
+  Archive, Heart, Clock, MoreVertical, Users, LogOut, Pencil
 } from "lucide-react";
 import { useTrips, useCreateTrip, useDeleteTrip, useUpdateTrip } from "@/hooks/use-store";
 import { useSaveItineraryItem } from "@/hooks/use-store";
@@ -479,8 +479,9 @@ const handleWishlist = () => {
     setIsOpen(false);
     onEdit(trip);
   }}
-  className="w-full text-left px-3 py-2.5 text-sm font-medium hover:bg-muted rounded-xl"
+  className="w-full text-left px-3 py-2.5 text-sm font-medium hover:bg-muted rounded-xl flex items-center gap-2"
 >
+  <Pencil className="w-4 h-4" />
   Edit Trip
 </button>
      {/* Convert wishlist to active trip */}
