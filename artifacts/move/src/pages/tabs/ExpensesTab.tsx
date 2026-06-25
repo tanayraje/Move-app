@@ -422,14 +422,15 @@ setShowSettlement(false);
               <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden divide-y divide-border/50">
                 {items.map(exp => (
                   <ExpenseRow
-  key={exp.id}
-  expense={exp}
-  members={ledger.members}
-  activeCurrency={activeCurrency}
-  destCurrency={destCurrency}
-  showInDest={showInDest}
-  onEdit={() => setEditExpense(exp)}
-/>
+                  key={exp.id}
+                  expense={exp}
+                  members={ledger.members}
+                  historicalMembers={ledger.members}
+                  activeCurrency={activeCurrency}
+                  destCurrency={destCurrency}
+                  showInDest={showInDest}
+                  onEdit={() => setEditExpense(exp)}
+                />
                 ))}
               </div>
             </div>
@@ -532,10 +533,22 @@ setShowSettlement(false);
 
 // ── Expense Row ───────────────────────────────────────────────────
 function ExpenseRow({
-  expense, members, activeCurrency, destCurrency, showInDest, onEdit
+  expense,
+  members,
+  historicalMembers,
+  activeCurrency,
+  destCurrency,
+  showInDest,
+  onEdit
 }: {
-  expense: Expense; members: TripMember[]; activeCurrency: string; destCurrency: string; showInDest: boolean; onEdit: () => void;
-}) {
+  expense: Expense;
+  members: TripMember[];
+  historicalMembers: TripMember[];
+  activeCurrency: string;
+  destCurrency: string;
+  showInDest: boolean;
+  onEdit: () => void;
+}){
   const { mutate: deleteExp } = useDeleteExpense();
   const Icon = EXPENSE_ICONS[expense.category] || CreditCard;
   const displayAmount = showInDest
@@ -551,6 +564,19 @@ const payer =
 const isSplit =
   !!expense.split &&
   expense.split.length > 0;
+
+  const splitMembers =
+  expense.split?.map(split => {
+    return (
+      historicalMembers.find(
+        m => m.id === split.memberId
+      ) || {
+        id: split.memberId,
+        name: split.memberName || "Unknown User",
+        color: "#9ca3af",
+      }
+    );
+  }) || [];
 
   return (
     <div className="flex items-center justify-between p-4 group">
