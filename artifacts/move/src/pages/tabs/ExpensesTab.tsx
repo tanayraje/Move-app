@@ -58,6 +58,7 @@ export default function ExpensesTab({ trip }: { trip: Trip }) {
   const [isBudgetOpen, setIsBudgetOpen] = useState(false);
   const [showInDest, setShowInDest] = useState(false);
   const [showBalance, setShowBalance] = useState(false);
+const [showBudgetBreakdown, setShowBudgetBreakdown] = useState(false);
   const [showSettlement, setShowSettlement] = useState(false);
   const [selectedSettlements, setSelectedSettlements] = useState<number[]>([]);
   const [editExpense, setEditExpense] = useState<Expense | null>(null);
@@ -380,40 +381,100 @@ setShowSettlement(false);
       )}
 
       {/* Category breakdown */}
-      {budget && (
-        <div className="bg-card border border-border rounded-2xl overflow-hidden mb-5">
-          <div className="px-4 py-3 border-b border-border">
-            <p className="font-bold text-sm text-foreground">Category Breakdown</p>
-          </div>
-          {BUDGET_KEYS.map(cat => {
-            const spent = byCategory[cat] ?? 0;
-            const budgeted = (budget as any)[cat] ?? 0;
-            const pct = budgeted > 0 ? Math.min((spent / budgeted) * 100, 100) : 0;
-            const Icon = EXPENSE_ICONS[cat];
-            return (
-              <div key={cat} className="px-4 py-3 border-b border-border/50 last:border-0">
-                <div className="flex items-center justify-between mb-1.5">
-                  <div className="flex items-center gap-2">
-                    <Icon className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-sm font-medium text-foreground">{EXPENSE_LABELS[cat]}</span>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-sm font-bold text-foreground">{formatCurrency(showInDest ? convertFromINR(spent, destCurrency) : spent, activeCurrency)}</span>
-                    {budgeted > 0 && (
-                      <span className="text-xs text-muted-foreground ml-1">/ {formatCurrency(showInDest ? convertFromINR(budgeted, destCurrency) : budgeted, activeCurrency)}</span>
-                    )}
-                  </div>
+      {/* Category breakdown */}
+{budget && (
+  <div className="bg-card border border-border rounded-2xl overflow-hidden mb-5">
+    <button
+      onClick={() => setShowBudgetBreakdown(v => !v)}
+      className="flex items-center justify-between w-full px-4 py-3"
+    >
+      <div className="flex items-center gap-2">
+        <Target className="w-4 h-4 text-primary" />
+        <p className="font-bold text-sm text-foreground">
+          Category Breakdown
+        </p>
+      </div>
+
+      <ChevronDown
+        className={cn(
+          "w-4 h-4 text-muted-foreground transition-transform",
+          showBudgetBreakdown && "rotate-180"
+        )}
+      />
+    </button>
+
+    {showBudgetBreakdown && (
+      <>
+        {BUDGET_KEYS.map(cat => {
+          const spent = byCategory[cat] ?? 0;
+          const budgeted = (budget as any)[cat] ?? 0;
+          const pct =
+            budgeted > 0
+              ? Math.min((spent / budgeted) * 100, 100)
+              : 0;
+
+          const Icon = EXPENSE_ICONS[cat];
+
+          return (
+            <div
+              key={cat}
+              className="px-4 py-3 border-t border-border/50"
+            >
+              <div className="flex items-center justify-between mb-1.5">
+                <div className="flex items-center gap-2">
+                  <Icon className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-sm font-medium">
+                    {EXPENSE_LABELS[cat]}
+                  </span>
                 </div>
-                {budgeted > 0 && (
-                  <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-                    <div className={cn("h-full rounded-full transition-all", pct >= 100 ? "bg-red-500" : "bg-primary")} style={{ width: `${pct}%` }} />
-                  </div>
-                )}
+
+                <div className="text-right">
+                  <span className="text-sm font-bold">
+                    {formatCurrency(
+                      showInDest
+                        ? convertFromINR(spent, destCurrency)
+                        : spent,
+                      activeCurrency
+                    )}
+                  </span>
+
+                  {budgeted > 0 && (
+                    <span className="text-xs text-muted-foreground ml-1">
+                      /{" "}
+                      {formatCurrency(
+                        showInDest
+                          ? convertFromINR(
+                              budgeted,
+                              destCurrency
+                            )
+                          : budgeted,
+                        activeCurrency
+                      )}
+                    </span>
+                  )}
+                </div>
               </div>
-            );
-          })}
-        </div>
-      )}
+
+              {budgeted > 0 && (
+                <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                  <div
+                    className={cn(
+                      "h-full rounded-full transition-all",
+                      pct >= 100
+                        ? "bg-red-500"
+                        : "bg-primary"
+                    )}
+                    style={{ width: `${pct}%` }}
+                  />
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </>
+    )}
+  </div>
+)}
 
       {/* Expense list */}
       <div className="space-y-6">
