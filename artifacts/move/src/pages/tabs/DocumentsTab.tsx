@@ -68,17 +68,27 @@ function DocCard({ doc, onOpen }: { doc: TripDocument, onOpen: () => void }) {
         <Icon className="w-6 h-6" />
       </div>
       <div className="flex-1 min-w-0">
-        <h4 className="font-bold text-foreground truncate">{doc.name}</h4>
+        <h4 className="font-bold text-foreground whitespace-nowrap overflow-hidden text-ellipsis">
+  {doc.name}
+</h4>
         <div className="text-xs text-muted-foreground mt-1 flex items-center gap-2">
           <span className="uppercase tracking-wider">{doc.category}</span>
           <span>•</span>
-          <span>{(doc.fileSize / 1024 / 1024).toFixed(1)} MB</span>
+          <span>
+  {typeof doc.fileSize === "number"
+    ? `${(doc.fileSize / 1024 / 1024).toFixed(1)} MB`
+    : "Unknown size"}
+</span>
         </div>
       </div>
-      <button 
-        onClick={(e) => { e.stopPropagation(); if(confirm('Delete document?')) deleteDoc({ id: doc.id, tripId: doc.tripId }); }}
-        className="p-2 -mr-2 text-muted-foreground hover:text-red-500 transition-colors"
-      >
+      <button
+  onClick={(e) => {
+    e.stopPropagation();
+    if (confirm("Delete document?"))
+      deleteDoc({ id: doc.id, tripId: doc.tripId });
+  }}
+  className="p-2 -mr-2 shrink-0 text-muted-foreground hover:text-red-500 transition-colors"
+>
         <Trash2 className="w-5 h-5" />
       </button>
     </div>
