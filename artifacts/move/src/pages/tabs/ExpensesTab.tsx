@@ -140,8 +140,8 @@ const isSolo = activeMembers.length <= 1;
   );
 
   for (const s of selected) {
-  const payer = members.find(m => m.id === s.fromId);
-const receiver = members.find(m => m.id === s.toId);
+  const payer = ledger.members.find(m => m.id === s.fromId);
+const receiver = ledger.members.find(m => m.id === s.toId);
 
   if (!payer || !receiver) continue;
 
