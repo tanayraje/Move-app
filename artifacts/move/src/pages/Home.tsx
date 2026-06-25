@@ -127,87 +127,66 @@ const { data: profile } = useProfile(user?.id);
           <div className="flex flex-col gap-4">
             {[1, 2, 3].map(i => <div key={i} className="h-32 rounded-3xl bg-muted animate-pulse" />)}
           </div>
-        ) : allTrips.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center text-center px-4 mt-16">
-            <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center mb-6">
-              <Plane className="w-10 h-10 text-primary" />
-            </div>
-            <h2 className="text-2xl font-display font-bold text-foreground mb-2">No trips planned</h2>
-            <p className="text-muted-foreground text-balance">Create your first itinerary or save a trip to your wishlist.</p>
-            <div className="flex gap-3 mt-8">
-              <Button size="lg" className="rounded-full px-7" onClick={() => setIsAddOpen(true)}>
-  <Plus className="w-5 h-5 mr-2" /> New Trip
-</Button>
-              <button
-  onClick={() => setIsWishlistOpen(true)}
-  className="h-10 px-5 rounded-full bg-white text-foreground border border-border shadow-xl flex items-center justify-center font-medium"
->
-  <Heart className="w-5 h-5 mr-2" />
-  Wishlist
-</button>
-            </div>
-          </div>
         ) : (
           <>
-{/* Always show Active, Wishlist and Archived tabs even when count is 0 */}
-<div className="flex bg-muted p-1.5 rounded-xl mb-3">
-  <button
-    onClick={() => setTab('active')}
-    className={`flex-1 py-2 px-2 text-xs font-semibold whitespace-nowrap rounded-lg transition-all ${
-  tab === 'active'
-    ? 'bg-background text-foreground shadow-sm'
-    : 'text-muted-foreground'
-}`}
-  >
-    Active ({activeTrips.length})
-  </button>
+  {/* Always show Active, Wishlist and Archived tabs even when count is 0 */}
+  <div className="flex bg-muted p-1.5 rounded-xl mb-3">
+    <button
+      onClick={() => setTab("active")}
+      className={`flex-1 py-2 px-2 text-xs font-semibold rounded-lg transition-all ${
+        tab === "active"
+          ? "bg-background text-foreground shadow-sm"
+          : "text-muted-foreground"
+      }`}
+    >
+      Active ({activeTrips.length})
+    </button>
 
-  <button
-    onClick={() => setTab('wishlist')}
-    className={`flex-1 py-2 px-2 text-xs font-semibold whitespace-nowrap rounded-lg transition-all flex items-center justify-center gap-1 ${
-  tab === 'wishlist'
-    ? 'bg-background text-foreground shadow-sm'
-    : 'text-muted-foreground'
-}`}
-  >
-    <Heart className="w-3 h-3" />
-    Wishlist ({wishlistTrips.length})
-  </button>
+    <button
+      onClick={() => setTab("wishlist")}
+      className={`flex-1 py-2 px-2 text-xs font-semibold rounded-lg transition-all ${
+        tab === "wishlist"
+          ? "bg-background text-foreground shadow-sm"
+          : "text-muted-foreground"
+      }`}
+    >
+      Wishlist ({wishlistTrips.length})
+    </button>
 
-  <button
-    onClick={() => setTab('archived')}
-    className={`flex-1 py-2 px-2 text-xs font-semibold whitespace-nowrap rounded-lg transition-all flex items-center justify-center gap-1 ${
-  tab === 'archived'
-    ? 'bg-background text-foreground shadow-sm'
-    : 'text-muted-foreground'
-}`}
-  >
-    <Archive className="w-3 h-3" />
-    Archived ({archivedTrips.length})
-  </button>
-</div>
-{/* Trip list */}
-{tripsToShow.length === 0 ? (
-  <div className="text-center text-muted-foreground mt-16">
-    {tab === 'active' ? (
-      <Plane className="w-10 h-10 mx-auto mb-3 opacity-30" />
-    ) : tab === 'wishlist' ? (
-      <Heart className="w-10 h-10 mx-auto mb-3 opacity-30" />
-    ) : (
-      <Archive className="w-10 h-10 mx-auto mb-3 opacity-30" />
-    )}
-    <p className="font-medium">No {tab} trips.</p>
+    <button
+      onClick={() => setTab("archived")}
+      className={`flex-1 py-2 px-2 text-xs font-semibold rounded-lg transition-all ${
+        tab === "archived"
+          ? "bg-background text-foreground shadow-sm"
+          : "text-muted-foreground"
+      }`}
+    >
+      Archived ({archivedTrips.length})
+    </button>
   </div>
-) : (
-  tripsToShow.map(trip => (
-  <TripCard
-    key={trip.id}
-    trip={trip}
-    onConvert={setConvertTrip}
-  />
-))
-)}
-          </>
+
+  {tripsToShow.length === 0 ? (
+    <div className="flex-1 flex items-center justify-center">
+      <div className="text-center">
+        <Plane className="w-12 h-12 mx-auto mb-4 opacity-30" />
+        <h2 className="text-xl font-semibold mb-2">
+          No {tab} trips
+        </h2>
+        <p className="text-muted-foreground">
+          Create one using the button below.
+        </p>
+      </div>
+    </div>
+  ) : (
+    tripsToShow.map((trip) => (
+      <TripCard
+        key={trip.id}
+        trip={trip}
+        onConvert={setConvertTrip}
+      />
+    ))
+  )}
+</>
         )}
       </main>
 
