@@ -100,9 +100,14 @@ orderedExpenses
 
     if (!payerId) return;
 
+    // Only shared expenses affect participant balances.
+    if (!expense.split || expense.split.length < 2) {
+      return;
+    }
+
     paid[payerId] += expense.amount;
 
-    expense.split?.forEach(split => {
+    expense.split.forEach(split => {
       owed[split.memberId] += split.amount;
     });
   });
