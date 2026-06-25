@@ -60,14 +60,14 @@ function DocCard({ doc, onOpen }: { doc: TripDocument, onOpen: () => void }) {
   const Icon = DOC_ICONS[doc.category] || FileText;
 
   return (
-    <div 
-      onClick={onOpen}
-      className="bg-card p-4 rounded-2xl shadow-sm border border-border flex items-center gap-4 active:scale-[0.98] transition-transform cursor-pointer"
-    >
+    <div
+  onClick={onOpen}
+  className="w-full bg-card p-4 rounded-2xl shadow-sm border border-border flex items-center gap-4 active:scale-[0.98] transition-transform cursor-pointer overflow-hidden"
+>
       <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
         <Icon className="w-6 h-6" />
       </div>
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-0 overflow-hidden">
         <h4 className="font-bold text-foreground whitespace-nowrap overflow-hidden text-ellipsis">
   {doc.name}
 </h4>
@@ -87,7 +87,7 @@ function DocCard({ doc, onOpen }: { doc: TripDocument, onOpen: () => void }) {
     if (confirm("Delete document?"))
       deleteDoc({ id: doc.id, tripId: doc.tripId });
   }}
-  className="p-2 -mr-2 shrink-0 text-muted-foreground hover:text-red-500 transition-colors"
+  className="p-2 shrink-0 text-muted-foreground hover:text-red-500 transition-colors"
 >
         <Trash2 className="w-5 h-5" />
       </button>
