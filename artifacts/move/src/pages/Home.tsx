@@ -211,7 +211,10 @@ const { data: profile } = useProfile(user?.id);
         )}
       </main>
 
-      {!isAddOpen && !isWishlistOpen && !isJoinOpen && (
+      {allTrips.length > 0 &&
+ !isAddOpen &&
+ !isWishlistOpen &&
+ !isJoinOpen && (
   <div className="fixed bottom-6 left-0 right-0 flex justify-center z-20 max-w-md mx-auto gap-3">
     <Button size="lg" className="rounded-full px-7" onClick={() => setIsAddOpen(true)}>
       <Plus className="w-5 h-5 mr-2" /> New Trip
