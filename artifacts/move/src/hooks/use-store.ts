@@ -93,18 +93,19 @@ export function useTrip(id: string) {
       }
 
       return {
-        id: data.id,
-        name: data.name,
-        destination: data.destination,
-        destinationCurrency: data.destination_currency,
-        startDate: data.start_date || '',
-        endDate: data.end_date || '',
-        inviteCode: data.invite_code,
-        members: data.members || [],
-        status: data.status || 'active',
-        dayCities: data.day_cities || {},
-        createdAt: data.created_at_ms,
-      };
+  id: data.id,
+  name: data.name,
+  destination: data.destination,
+  destinationCurrency: data.destination_currency,
+  startDate: data.start_date || '',
+  endDate: data.end_date || '',
+  inviteCode: data.invite_code,
+  guests: data.members || [],
+  status: data.status || 'active',
+  dayCities: data.day_cities || {},
+  budget: data.budget || undefined,
+  createdAt: data.created_at_ms,
+};
     },
     enabled: !!id,
   });
