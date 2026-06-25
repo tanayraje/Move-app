@@ -1104,7 +1104,6 @@ function BudgetSheet({ isOpen, onClose, current, onSave, activeCurrency }: {
   );
 }, [current, isOpen]);
   const handleSave = () => {
-  console.log("Saving budget:", vals);
 
   onSave(vals);
 

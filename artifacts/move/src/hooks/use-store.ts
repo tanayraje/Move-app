@@ -54,8 +54,6 @@ const { data, error } = await supabase
     `owner_id.eq.${user.id},id.in.(${memberTripIds.length ? memberTripIds.join(',') : '00000000-0000-0000-0000-000000000000'})`
   );
 
-      console.log("TRIPS DATA", JSON.stringify(data, null, 2));
-      console.log('TRIPS ERROR', error);
 
       if (error) throw error;
 
@@ -186,7 +184,6 @@ export function useUpdateTrip() {
   .eq("id", trip.id)
   .select();
 
-console.log("UPDATE RESPONSE", response);
 
 if (response.error) {
   throw response.error;
