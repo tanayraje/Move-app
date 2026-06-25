@@ -90,24 +90,15 @@ export function buildExpenseLedger(
     return (a.createdAt || 0) - (b.createdAt || 0);
   });
 
-  orderedExpenses.forEach(expense => {
+  // -----------------------------------------------------------------------------
+// Pass 1: replay only expense entries
+// -----------------------------------------------------------------------------
+orderedExpenses
+  .filter(expense => expense.category !== "settlement")
+  .forEach(expense => {
     const payerId = expense.payerId;
 
     if (!payerId) return;
-
-    // Settlement transfers money from debtor to creditor.
-// The payer reduces what they owe.
-// The receiver reduces what they should receive.
-if (expense.category === "settlement") {
-  const receiver = expense.split?.[0];
-
-  if (!receiver) return;
-
-  net[payerId] -= expense.amount;
-  net[receiver.memberId] += expense.amount;
-
-  return;
-}
 
     paid[payerId] += expense.amount;
 
@@ -116,11 +107,38 @@ if (expense.category === "settlement") {
     });
   });
 
-  members.forEach(member => {
-    net[member.id] += paid[member.id] - owed[member.id];
-    net[member.id] = round2(net[member.id]);
+// Initial balances
+members.forEach(member => {
+  net[member.id] = round2(
+    paid[member.id] - owed[member.id]
+  );
+});
+
+// -----------------------------------------------------------------------------
+// Pass 2: replay settlements as transfers
+// -----------------------------------------------------------------------------
+orderedExpenses
+  .filter(expense => expense.category === "settlement")
+  .forEach(expense => {
+    const payerId = expense.payerId;
+    const receiver = expense.split?.[0];
+
+    if (!payerId || !receiver) return;
+
+    // Money moves from payer → receiver.
+    // Reduce the debt of the payer.
+    net[payerId] += expense.amount;
+
+    // Reduce what the receiver should receive.
+    net[receiver.memberId] -= expense.amount;
+
+    net[payerId] = round2(net[payerId]);
+    net[receiver.memberId] = round2(
+      net[receiver.memberId]
+    );
   });
 
+  
   const creditors = members
     .filter(member => net[member.id] > 0.01)
     .map(member => ({
