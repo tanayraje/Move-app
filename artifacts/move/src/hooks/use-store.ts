@@ -183,7 +183,10 @@ export function useUpdateTrip() {
 })
         .eq('id', trip.id);
 
-      if (error) throw error;
+      if (error) {
+  console.error("UPDATE TRIP ERROR", error);
+  throw error;
+}
 
       return trip;
     },
