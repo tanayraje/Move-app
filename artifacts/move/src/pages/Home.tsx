@@ -200,7 +200,15 @@ const { data: profile } = useProfile(user?.id);
 
   </div>
 )}
-      <AddWishlistSheet isOpen={isWishlistOpen} onClose={() => setIsWishlistOpen(false)} />
+      <AddTripSheet
+  isOpen={isAddOpen}
+  onClose={() => setIsAddOpen(false)}
+/>
+
+<AddWishlistSheet
+  isOpen={isWishlistOpen}
+  onClose={() => setIsWishlistOpen(false)}
+/>
       <JoinTripSheet isOpen={isJoinOpen} onClose={() => setIsJoinOpen(false)} />
         <ConvertTripSheet
   trip={convertTrip}
