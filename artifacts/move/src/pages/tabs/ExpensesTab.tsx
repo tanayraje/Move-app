@@ -1031,8 +1031,25 @@ function BudgetSheet({ isOpen, onClose, current, onSave, activeCurrency }: {
   isOpen: boolean; onClose: () => void; current?: TripBudget; onSave: (b: TripBudget) => void; activeCurrency: string;
 }) {
   const [vals, setVals] = useState<TripBudget>(current || { total: 0, transport: 0, food: 0, accommodation: 0, activities: 0, misc: 0 });
+  useEffect(() => {
+  setVals(
+    current || {
+      total: 0,
+      transport: 0,
+      food: 0,
+      accommodation: 0,
+      activities: 0,
+      misc: 0,
+    }
+  );
+}, [current, isOpen]);
+  const handleSave = () => {
+  console.log("Saving budget:", vals);
 
-  const handleSave = () => { onSave(vals); onClose(); };
+  onSave(vals);
+
+  onClose();
+};
 
   const field = (key: keyof TripBudget, label: string) => (
     <div key={key}>
