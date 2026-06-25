@@ -31,6 +31,19 @@ const { data: profile } = useProfile(user?.id);
   const [isJoinOpen, setIsJoinOpen] = useState(false);
   const [convertTrip, setConvertTrip] = useState<Trip | null>(null);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  useEffect(() => {
+  if (!showUserMenu) return;
+
+  const handleClickOutside = () => {
+    setShowUserMenu(false);
+  };
+
+  window.addEventListener("click", handleClickOutside);
+
+  return () => {
+    window.removeEventListener("click", handleClickOutside);
+  };
+}, [showUserMenu]);
   const [tab, setTab] = useState<TripStatus>('active');
   const queryClient = useQueryClient();
   
@@ -75,13 +88,19 @@ const { data: profile } = useProfile(user?.id);
             </button>
             <div className="relative">
               <button
-                onClick={() => setShowUserMenu(!showUserMenu)}
+  onClick={(e) => {
+    e.stopPropagation();
+    setShowUserMenu(!showUserMenu);
+  }}
                 className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold hover:opacity-90 transition-opacity"
               >
                 {profile?.username?.[0]?.toUpperCase() || '?'}
               </button>
               {showUserMenu && (
-  <div className="absolute right-0 top-12 bg-card border border-border rounded-2xl shadow-2xl p-2 min-w-[220px] z-[9999]">
+  <div
+  className="absolute right-0 top-12 bg-card border border-border rounded-2xl shadow-2xl p-2 min-w-[220px] z-[9999]"
+  onClick={(e) => e.stopPropagation()}
+>
 
     <div className="px-3 py-2 border-b border-border mb-1">
   <p className="text-sm font-semibold text-foreground">
