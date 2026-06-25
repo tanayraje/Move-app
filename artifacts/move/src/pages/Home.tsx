@@ -199,14 +199,6 @@ const { data: profile } = useProfile(user?.id);
       <Plus className="w-5 h-5 mr-2" /> New Trip
     </Button>
 
-    <Button
-  size="lg"
-  className="rounded-full px-6 bg-white text-foreground border border-border hover:bg-white"
-      onClick={() => setIsWishlistOpen(true)}
-    >
-      <Heart className="w-5 h-5 mr-2" />
-      Wishlist
-    </Button>
   </div>
 )}
       <AddWishlistSheet isOpen={isWishlistOpen} onClose={() => setIsWishlistOpen(false)} />
