@@ -381,7 +381,6 @@ setShowSettlement(false);
       )}
 
       {/* Category breakdown */}
-      {/* Category breakdown */}
 {budget && (
   <div className="bg-card border border-border rounded-2xl overflow-hidden mb-5">
     <button
@@ -391,7 +390,7 @@ setShowSettlement(false);
       <div className="flex items-center gap-2">
         <Target className="w-4 h-4 text-primary" />
         <p className="font-bold text-sm text-foreground">
-          Category Breakdown
+          Category Budget Breakdown
         </p>
       </div>
 
