@@ -705,17 +705,24 @@ function AddExpenseSheet({
   );
 
   const amounts =
-    existingExpense.split?.map(s => s.amount) || [];
+  existingExpense.split?.map(s => s.amount) || [];
 
-  if (amounts.length > 0) {
-    const allEqual = amounts.every(
-  a => Math.abs(a - amounts[0]) < 1
-);
+if (amounts.length > 0) {
+  const total = amounts.reduce(
+    (sum, value) => sum + value,
+    0
+  );
 
-    setSplitMode(
-      allEqual ? 'equal' : 'unequal'
-    );
-  }
+  const expected = total / amounts.length;
+
+  const allEqual = amounts.every(
+    value => Math.abs(value - expected) <= 0.01
+  );
+
+  setSplitMode(
+    allEqual ? "equal" : "unequal"
+  );
+}
 } else {
   setAmountInput('');
   setDateInput(format(new Date(), 'yyyy-MM-dd'));
