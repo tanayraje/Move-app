@@ -429,9 +429,12 @@ const handleWishlist = () => {
     const rect = e.currentTarget.getBoundingClientRect();
 
     setMenuPosition({
-      top: rect.bottom + 8,
-      left: rect.right - 160,
-    });
+  top: rect.bottom + 8,
+  left: Math.min(
+    rect.right - 160,
+    window.innerWidth - 176
+  ),
+});
 
     setIsOpen(true);
   }}
