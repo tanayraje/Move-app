@@ -111,8 +111,6 @@ export default function TripDashboard({ params }: { params: { id: string, tab?: 
 
 function MembersButton({ trip }: { trip: Trip }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [name, setName] = useState('');
-  const { mutate: updateTrip } = useUpdateTrip();
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
 const queryClient = useQueryClient();
@@ -146,7 +144,6 @@ console.log("RPC ERROR FULL", JSON.stringify(error, null, 2));
 const memberCount = memberRows.length;
 const isSolo = memberCount <= 1;
 
-const members = trip.guests || [];
 
 const removeMember = async (
   memberId: string,
@@ -199,38 +196,7 @@ const leaveTrip = async () => {
   window.location.href = "/";
 };
 
-const addMember = () => {
-  if (!name.trim()) return;
-
-  const colors = [
-    '#2563eb',
-    '#dc2626',
-    '#16a34a',
-    '#d97706',
-    '#9333ea',
-    '#db2777',
-    '#0891b2',
-    '#65a30d',
-  ];
-
-  const color = colors[members.length % colors.length];
-
-  updateTrip({
-    ...trip,
-    guests: [
-      ...(trip.guests || []),
-      {
-        id: generateId(),
-        name: name.trim(),
-        color,
-      },
-    ],
-  });
-
-  setName('');
-};
-
-    
+   
   return (
     <>
       <button
@@ -383,17 +349,7 @@ https://move-app-theta.vercel.app/join/${trip.inviteCode}`;
     );
 })}
 </div>
-          {/* Add member */}
-          <div className="pt-2 border-t border-border">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Add Guest Member</p>
-            <div className="flex gap-2">
-              <Input value={name} onChange={e => setName(e.target.value)} placeholder="Name"
-                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addMember(); } }} />
-              <Button onClick={addMember} className="shrink-0 px-4">Add</Button>
-            </div>
-          </div>
-
-          
+         
           </div>
       </BottomSheet>
     </>

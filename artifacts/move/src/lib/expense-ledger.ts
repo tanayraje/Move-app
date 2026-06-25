@@ -130,17 +130,17 @@ orderedExpenses
 
     if (!payerId || !receiver) return;
 
-    // Money moves from payer → receiver.
-    // Reduce the debt of the payer.
-    net[payerId] += expense.amount;
+    // Settlement transfers money from the debtor to the creditor.
+// The debtor's balance increases towards zero.
+// The creditor's balance decreases towards zero.
 
-    // Reduce what the receiver should receive.
-    net[receiver.memberId] -= expense.amount;
+net[payerId] = round2(
+  net[payerId] + expense.amount
+);
 
-    net[payerId] = round2(net[payerId]);
-    net[receiver.memberId] = round2(
-      net[receiver.memberId]
-    );
+net[receiver.memberId] = round2(
+  net[receiver.memberId] - expense.amount
+);
   });
 
   
@@ -187,8 +187,8 @@ orderedExpenses
       debtors[d].amount - amount
     );
 
-    if (creditors[c].amount < 0.01) c++;
-    if (debtors[d].amount < 0.01) d++;
+    if (Math.abs(creditors[c].amount) < 0.01) c++;
+if (Math.abs(debtors[d].amount) < 0.01) d++;
   }
 
   return {
