@@ -422,14 +422,14 @@ setShowSettlement(false);
               <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden divide-y divide-border/50">
                 {items.map(exp => (
                   <ExpenseRow
-                    key={exp.id}
-                    expense={exp}
-                    members={members}
-                    activeCurrency={activeCurrency}
-                    destCurrency={destCurrency}
-                    showInDest={showInDest}
-                    onEdit={() => setEditExpense(exp)}
-                  />
+  key={exp.id}
+  expense={exp}
+  members={ledger.members}
+  activeCurrency={activeCurrency}
+  destCurrency={destCurrency}
+  showInDest={showInDest}
+  onEdit={() => setEditExpense(exp)}
+/>
                 ))}
               </div>
             </div>
@@ -452,12 +452,12 @@ setShowSettlement(false);
   isOpen={!!editExpense}
   onClose={() => setEditExpense(null)}
   trip={trip}
-  members={activeMembers}
-    activeCurrency={activeCurrency}
-    showInDest={showInDest}
-    destCurrency={destCurrency}
-    existingExpense={editExpense}
-  />
+  members={ledger.members}
+  activeCurrency={activeCurrency}
+  showInDest={showInDest}
+  destCurrency={destCurrency}
+  existingExpense={editExpense}
+/>
 )}
 
 <BottomSheet

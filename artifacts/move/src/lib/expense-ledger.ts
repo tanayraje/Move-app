@@ -95,17 +95,19 @@ export function buildExpenseLedger(
 
     if (!payerId) return;
 
-    // Settlement behaves like money transferred
-    if (expense.category === "settlement") {
-      const receiver = expense.split?.[0];
+    // Settlement transfers money from debtor to creditor.
+// The payer reduces what they owe.
+// The receiver reduces what they should receive.
+if (expense.category === "settlement") {
+  const receiver = expense.split?.[0];
 
-      if (!receiver) return;
+  if (!receiver) return;
 
-      net[payerId] += expense.amount;
-      net[receiver.memberId] -= expense.amount;
+  net[payerId] -= expense.amount;
+  net[receiver.memberId] += expense.amount;
 
-      return;
-    }
+  return;
+}
 
     paid[payerId] += expense.amount;
 
