@@ -76,7 +76,9 @@ function DocCard({ doc, onOpen }: { doc: TripDocument, onOpen: () => void }) {
           <span>•</span>
           <span>
   {typeof doc.fileSize === "number"
-    ? `${(doc.fileSize / 1024 / 1024).toFixed(1)} MB`
+    ? doc.fileSize < 1024 * 1024
+      ? `${Math.round(doc.fileSize / 1024)} KB`
+      : `${(doc.fileSize / 1024 / 1024).toFixed(1)} MB`
     : "Unknown size"}
 </span>
         </div>
