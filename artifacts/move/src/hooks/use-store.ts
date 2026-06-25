@@ -60,18 +60,19 @@ const { data, error } = await supabase
       if (error) throw error;
 
       return (data || []).map((trip: any) => ({
-        id: trip.id,
-        name: trip.name,
-        destination: trip.destination,
-        destinationCurrency: trip.destination_currency,
-        startDate: trip.start_date || '',
-        endDate: trip.end_date || '',
-        inviteCode: trip.invite_code,
-        members: trip.guests || [],
-        status: trip.status || 'active',
-        dayCities: trip.day_cities || {},
-        createdAt: trip.created_at_ms,
-      }));
+  id: trip.id,
+  name: trip.name,
+  destination: trip.destination,
+  destinationCurrency: trip.destination_currency,
+  startDate: trip.start_date || '',
+  endDate: trip.end_date || '',
+  inviteCode: trip.invite_code,
+  guests: trip.members || [],
+  status: trip.status || 'active',
+  dayCities: trip.day_cities || {},
+  budget: trip.budget || undefined,
+  createdAt: trip.created_at_ms,
+}));
     },
   });
 }
