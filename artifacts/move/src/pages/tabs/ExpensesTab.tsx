@@ -13,6 +13,7 @@ import { generateId, cn, safeFormatDate, getTripStatus } from "@/lib/utils";
 import { Button, Input, Label, Select, BottomSheet, FAB } from "@/components/ui";
 import { formatCurrency, convertFromINR } from "@/lib/countries";
 import { useSupabaseAuth } from "@/contexts/AuthContext";
+import { buildExpenseLedger } from "@/lib/expense-ledger";
 
 const EXPENSE_ICONS: Record<ExpenseCategory, React.ElementType> = {
   food: Coffee,
@@ -112,146 +113,10 @@ const isSolo = activeMembers.length <= 1;
   }, {} as Record<ExpenseCategory, number>);
 
   // Per-member totals
-  const memberTotals = useMemo(() => {
-    const map: Record<string, number> = {};
-    members.forEach(m => map[m.id] = 0);
-    expenses.forEach(e => {
-      const payerId = e.payerId || 'self';
-      if (map[payerId] !== undefined) map[payerId] += e.amount;
-      else map['self'] = (map['self'] || 0) + e.amount;
-    });
-    return map;
-  }, [expenses, members]);
-
-  // Participants (who owes whom)
- const balance = useMemo(() => {
-  if (members.length <= 1 || expenses.length === 0) return null;
-
-  const paid: Record<string, number> = {};
-const owed: Record<string, number> = {};
-
-members.forEach(m => {
-  paid[m.id] = 0;
-  owed[m.id] = 0;
-});
-
-expenses.forEach(e => {
-  if (!paid[e.payerId || "self"]) {
-    paid[e.payerId || "self"] = 0;
-  }
-
-  e.split?.forEach((s: ExpenseSplit) => {
-    if (!owed[s.memberId]) {
-      owed[s.memberId] = 0;
-    }
-  });
-});
-
-  expenses.forEach(e => {
-    const payerId = e.payerId || 'self';
-
-    // Total paid by each member
-    paid[payerId] = (paid[payerId] || 0) + e.amount;
-
-    // Only split expenses affect balances
-    if (e.split && e.split.length > 0) {
-      e.split.forEach((s: ExpenseSplit) => {
-        owed[s.memberId] =
-          (owed[s.memberId] || 0) + s.amount;
-      });
-    }
-  });
-
-  const net: Record<string, number> = {};
-
-Object.keys(paid).forEach(id => {
-  const splitPaid = expenses
-    .filter(
-      e =>
-        e.payerId === id &&
-        e.split &&
-        e.split.length > 0
-    )
-    .reduce((sum, e) => sum + e.amount, 0);
-
-  net[id] = splitPaid - (owed[id] || 0);
-});
-
-  return { paid, owed, net };
-}, [expenses, members, isSolo]);
-  const settlements = useMemo(() => {
-  if (!balance) return [];
-
-  const memberMap = new Map(
-  members.map(m => [m.id, m])
+  const ledger = useMemo(
+  () => buildExpenseLedger(expenses, members),
+  [expenses, members]
 );
-
-expenses.forEach(e => {
-  if (e.payerId && e.payerName && !memberMap.has(e.payerId)) {
-    memberMap.set(e.payerId, {
-      id: e.payerId,
-      name: e.payerName,
-      color: "#9ca3af",
-    });
-  }
-
-  e.split?.forEach((s: ExpenseSplit) => {
-    if (s.memberName && !memberMap.has(s.memberId)) {
-      memberMap.set(s.memberId, {
-        id: s.memberId,
-        name: s.memberName,
-        color: "#9ca3af",
-      });
-    }
-  });
-});
-
-const allMembers = [...memberMap.values()];
-
-const creditors = allMembers
-  .filter(m => (balance.net[m.id] || 0) > 0)
-  .map(m => ({
-    id: m.id,
-    name: m.name,
-    amount: balance.net[m.id],
-  }));
-
-const debtors = allMembers
-  .filter(m => (balance.net[m.id] || 0) < 0)
-  .map(m => ({
-    id: m.id,
-    name: m.name,
-    amount: Math.abs(balance.net[m.id]),
-  }));
-
-  const result = [];
-
-  let c = 0;
-  let d = 0;
-
-  while (c < creditors.length && d < debtors.length) {
-    const value = Math.min(
-      creditors[c].amount,
-      debtors[d].amount
-    );
-
-    result.push({
-  fromId: debtors[d].id,
-  from: debtors[d].name,
-  toId: creditors[c].id,
-  to: creditors[c].name,
-  amount: value,
-});
-
-    creditors[c].amount -= value;
-    debtors[d].amount -= value;
-
-    if (creditors[c].amount < 0.01) c++;
-    if (debtors[d].amount < 0.01) d++;
-  }
-
-  return result;
-}, [balance, members]);
 
   // Grouped by date — handle old ISO, new YYYY-MM-DD, and invalid dates
   const grouped = [...expenses]
@@ -270,7 +135,7 @@ const debtors = allMembers
 
   const saveBudget = (b: TripBudget) => updateTrip({ ...trip, budget: b });
   const handleSettleSelected = async () => {
-  const selected = settlements.filter((_, i) =>
+  const selected = ledger.settlements.filter((_, i) =>
     selectedSettlements.includes(i)
   );
 
@@ -387,7 +252,7 @@ setShowSettlement(false);
       </div>
 
       {/* Participants (shown when multi-member) */}
-      {members.length > 1 && balance && (
+      {ledger.members.length > 1 && (
         <div className="bg-card border border-border rounded-2xl overflow-hidden mb-5">
           <button
             onClick={() => setShowBalance(v => !v)}
@@ -418,21 +283,16 @@ setShowSettlement(false);
       </thead>
 
       <tbody>
-        {Object.keys(balance.net).map(id => {
+        {Object.keys(ledger.net).map(id => {
   const m =
-    members.find(x => x.id === id) || {
-      id,
-      name:
-        expenses.find(e => e.payerId === id)?.payerName ||
-        expenses
-          .flatMap((e: Expense) => e.split || [])
-          .find((s: ExpenseSplit) => s.memberId === id)?.memberName ||
-        "Unknown User",
-      color: "#9ca3af",
-    };
+  ledger.members.find(x => x.id === id) || {
+    id,
+    name: "Unknown User",
+    color: "#9ca3af",
+  };
 
-  const net = balance.net[id] || 0;
-  const paid = memberTotals[id] || 0;
+  const net = ledger.net[id] || 0;
+  const paid = ledger.paid[id] || 0;
 
   return (
     <tr key={id} className="border-b border-border/30 last:border-0">
@@ -606,12 +466,12 @@ setShowSettlement(false);
   title="Settle Up"
 >
   <div className="flex flex-col gap-3">
-    {settlements.length === 0 ? (
+    {ledger.settlements.length === 0 ? (
       <p className="text-sm text-muted-foreground">
         Everyone is settled.
       </p>
     ) : (
-      settlements.map((s, i) => (
+      ledger.settlements.map((s, i) => (
         <label
           key={i}
           className="flex gap-3 bg-card border border-border rounded-xl p-3 cursor-pointer"
