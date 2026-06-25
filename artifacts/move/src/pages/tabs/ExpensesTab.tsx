@@ -128,11 +128,23 @@ const isSolo = activeMembers.length <= 1;
   if (members.length <= 1 || expenses.length === 0) return null;
 
   const paid: Record<string, number> = {};
-  const owed: Record<string, number> = {};
+const owed: Record<string, number> = {};
 
-  members.forEach(m => {
-    paid[m.id] = 0;
-    owed[m.id] = 0;
+members.forEach(m => {
+  paid[m.id] = 0;
+  owed[m.id] = 0;
+});
+
+expenses.forEach(e => {
+  if (!paid[e.payerId || "self"]) {
+    paid[e.payerId || "self"] = 0;
+  }
+
+  e.split?.forEach((s: ExpenseSplit) => {
+    if (!owed[s.memberId]) {
+      owed[s.memberId] = 0;
+    }
+  });
 });
 
   expenses.forEach(e => {
@@ -152,37 +164,65 @@ const isSolo = activeMembers.length <= 1;
 
   const net: Record<string, number> = {};
 
-  members.forEach(m => {
-    const splitPaid = expenses
-      .filter(
-        e =>
-          e.payerId === m.id &&
-          e.split &&
-          e.split.length > 0
-      )
-      .reduce((sum, e) => sum + e.amount, 0);
+Object.keys(paid).forEach(id => {
+  const splitPaid = expenses
+    .filter(
+      e =>
+        e.payerId === id &&
+        e.split &&
+        e.split.length > 0
+    )
+    .reduce((sum, e) => sum + e.amount, 0);
 
-    net[m.id] = splitPaid - (owed[m.id] || 0);
-  });
+  net[id] = splitPaid - (owed[id] || 0);
+});
 
   return { paid, owed, net };
 }, [expenses, members, isSolo]);
   const settlements = useMemo(() => {
   if (!balance) return [];
 
-  const creditors = members
-    .filter(m => (balance.net[m.id] || 0) > 0)
-    .map(m => ({
-      name: m.name,
-      amount: balance.net[m.id]
-    }));
+  const memberMap = new Map(
+  members.map(m => [m.id, m])
+);
 
-  const debtors = members
-    .filter(m => (balance.net[m.id] || 0) < 0)
-    .map(m => ({
-      name: m.name,
-      amount: Math.abs(balance.net[m.id])
-    }));
+expenses.forEach(e => {
+  if (e.payerId && e.payerName && !memberMap.has(e.payerId)) {
+    memberMap.set(e.payerId, {
+      id: e.payerId,
+      name: e.payerName,
+      color: "#9ca3af",
+    });
+  }
+
+  e.split?.forEach((s: ExpenseSplit) => {
+    if (s.memberName && !memberMap.has(s.memberId)) {
+      memberMap.set(s.memberId, {
+        id: s.memberId,
+        name: s.memberName,
+        color: "#9ca3af",
+      });
+    }
+  });
+});
+
+const allMembers = [...memberMap.values()];
+
+const creditors = allMembers
+  .filter(m => (balance.net[m.id] || 0) > 0)
+  .map(m => ({
+    id: m.id,
+    name: m.name,
+    amount: balance.net[m.id],
+  }));
+
+const debtors = allMembers
+  .filter(m => (balance.net[m.id] || 0) < 0)
+  .map(m => ({
+    id: m.id,
+    name: m.name,
+    amount: Math.abs(balance.net[m.id]),
+  }));
 
   const result = [];
 
@@ -196,10 +236,12 @@ const isSolo = activeMembers.length <= 1;
     );
 
     result.push({
-      from: debtors[d].name,
-      to: creditors[c].name,
-      amount: value
-    });
+  fromId: debtors[d].id,
+  from: debtors[d].name,
+  toId: creditors[c].id,
+  to: creditors[c].name,
+  amount: value,
+});
 
     creditors[c].amount -= value;
     debtors[d].amount -= value;
@@ -233,8 +275,8 @@ const isSolo = activeMembers.length <= 1;
   );
 
   for (const s of selected) {
-  const payer = members.find(m => m.name === s.from);
-  const receiver = members.find(m => m.name === s.to);
+  const payer = members.find(m => m.id === s.fromId);
+const receiver = members.find(m => m.id === s.toId);
 
   if (!payer || !receiver) continue;
 
@@ -268,7 +310,15 @@ setShowSettlement(false);
       ['Date', 'Title', 'Category', 'Amount (INR)', 'Payer', 'Notes', 'Split'],
       ...expenses.map(e => {
         const payer = members.find(m => m.id === e.payerId)?.name || 'Me';
-        const split = e.split?.map((s: ExpenseSplit) => `${members.find(m => m.id === s.memberId)?.name || s.memberId}: ₹${s.amount}`).join('; ') || '';
+        const split =
+  e.split
+    ?.map((s: ExpenseSplit) => {
+      const member =
+        members.find(m => m.id === s.memberId);
+
+      return `${member?.name || s.memberName || "Unknown User"}: ₹${s.amount}`;
+    })
+    .join("; ") || "";
         return [
           e.date,
           e.title,
@@ -368,12 +418,24 @@ setShowSettlement(false);
       </thead>
 
       <tbody>
-        {members.map(m => {
-          const net = balance.net[m.id] || 0;
-          const paid = memberTotals[m.id] || 0;
+        {Object.keys(balance.net).map(id => {
+  const m =
+    members.find(x => x.id === id) || {
+      id,
+      name:
+        expenses.find(e => e.payerId === id)?.payerName ||
+        expenses
+          .flatMap((e: Expense) => e.split || [])
+          .find((s: ExpenseSplit) => s.memberId === id)?.memberName ||
+        "Unknown User",
+      color: "#9ca3af",
+    };
 
-          return (
-            <tr key={m.id} className="border-b border-border/30 last:border-0">
+  const net = balance.net[id] || 0;
+  const paid = memberTotals[id] || 0;
+
+  return (
+    <tr key={id} className="border-b border-border/30 last:border-0">
               <td className="py-3">
                 <div className="flex items-center gap-2">
                   <div
@@ -382,9 +444,14 @@ setShowSettlement(false);
                   >
                     {m.name.charAt(0)}
                   </div>
-                  <span className="font-medium text-foreground">
-                    {m.name}
-                  </span>
+                  <span
+  className="font-medium"
+  style={{
+    color: m.color === "#9ca3af" ? "#9ca3af" : undefined,
+  }}
+>
+  {m.name}
+</span>
                 </div>
               </td>
 
