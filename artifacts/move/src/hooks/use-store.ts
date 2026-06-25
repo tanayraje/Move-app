@@ -373,7 +373,18 @@ export function useDocuments(tripId: string) {
 
       if (error) throw error;
 
-      return data || [];
+      return (data || []).map((doc: any) => ({
+  id: doc.id,
+  tripId: doc.trip_id,
+  name: doc.name,
+  category: doc.category,
+  notes: doc.notes,
+  fileName: doc.file_name,
+  fileType: doc.file_type,
+  fileSize: doc.file_size,
+  file_url: doc.file_url,
+  createdAt: doc.created_at_ms,
+}));
     },
     enabled: !!tripId,
   });
