@@ -45,7 +45,7 @@ const { data: profile } = useProfile(user?.id);
   };
 }, [showUserMenu]);
   const [tab, setTab] = useState<TripStatus>('active');
-  const queryClient = useQueryClient();
+  
   
 
   
@@ -358,7 +358,14 @@ function TripCard({
   onConvert={onConvert}
 />
         <button
-          onClick={(e) => { e.preventDefault(); if (confirm('Delete trip?')) deleteTrip(trip.id); }}
+          onClick={(e) => {
+  e.preventDefault();
+  e.stopPropagation();
+
+  if (confirm("Delete trip?")) {
+    deleteTrip(trip.id);
+  }
+}}
           className="p-2 text-muted-foreground hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
         >
           <Trash2 className="w-4 h-4" />
@@ -424,9 +431,10 @@ const handleWishlist = () => {
     <>
       <button
   onClick={(e) => {
-    e.preventDefault();
+  e.preventDefault();
+  e.stopPropagation();
 
-    const rect = e.currentTarget.getBoundingClientRect();
+  const rect = e.currentTarget.getBoundingClientRect();
 
     setMenuPosition({
   top: rect.bottom + 8,
@@ -518,7 +526,7 @@ const FULL_PREFIX = 'MOVE-';
     setCode('');
   } catch (err: any) {
   console.error("JOIN ERROR", err);
-  alert(JSON.stringify(err, null, 2));
+  alert(err?.message ?? "Unable to join trip.");
 }
 };
 
