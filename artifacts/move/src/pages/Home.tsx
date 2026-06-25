@@ -30,6 +30,7 @@ const { data: profile } = useProfile(user?.id);
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
   const [isJoinOpen, setIsJoinOpen] = useState(false);
   const [convertTrip, setConvertTrip] = useState<Trip | null>(null);
+const [editingTrip, setEditingTrip] = useState<Trip | null>(null);
   const [showUserMenu, setShowUserMenu] = useState(false);
   useEffect(() => {
   if (!showUserMenu) return;
@@ -219,10 +220,11 @@ const { data: profile } = useProfile(user?.id);
 ) : (
     tripsToShow.map((trip) => (
       <TripCard
-        key={trip.id}
-        trip={trip}
-        onConvert={setConvertTrip}
-      />
+  key={trip.id}
+  trip={trip}
+  onConvert={setConvertTrip}
+  onEdit={setEditingTrip}
+/>
     ))
   )}
 </>
@@ -263,7 +265,13 @@ const { data: profile } = useProfile(user?.id);
   onClose={() => setIsWishlistOpen(false)}
 />
       <JoinTripSheet isOpen={isJoinOpen} onClose={() => setIsJoinOpen(false)} />
-        <ConvertTripSheet
+        <EditTripSheet
+  trip={editingTrip}
+  isOpen={!!editingTrip}
+  onClose={() => setEditingTrip(null)}
+/>
+
+<ConvertTripSheet
   trip={convertTrip}
   isOpen={!!convertTrip}
   onClose={() => setConvertTrip(null)}
@@ -275,9 +283,11 @@ const { data: profile } = useProfile(user?.id);
 function TripCard({
   trip,
   onConvert,
+  onEdit,
 }: {
   trip: Trip;
   onConvert: (trip: Trip) => void;
+  onEdit: (trip: Trip) => void;
 }) {
   const { mutate: deleteTrip } = useDeleteTrip();
   const { mutate: updateTrip } = useUpdateTrip();
@@ -356,6 +366,7 @@ function TripCard({
   trip={trip}
   status={status}
   onConvert={onConvert}
+  onEdit={onEdit}
 />
         <button
           onClick={(e) => {
@@ -379,10 +390,12 @@ function TripMenu({
   trip,
   status,
   onConvert,
+  onEdit,
 }: {
   trip: Trip;
   status: TripStatus;
   onConvert: (trip: Trip) => void;
+  onEdit: (trip: Trip) => void;
 }) {
   const { mutate: updateTrip } = useUpdateTrip();
   const { mutate: saveItem } = useSaveItineraryItem();
@@ -461,7 +474,15 @@ const handleWishlist = () => {
   }}
   onClick={e => e.stopPropagation()}
 >
-
+<button
+  onClick={() => {
+    setIsOpen(false);
+    onEdit(trip);
+  }}
+  className="w-full text-left px-3 py-2.5 text-sm font-medium hover:bg-muted rounded-xl"
+>
+  Edit Trip
+</button>
      {/* Convert wishlist to active trip */}
 {status === 'wishlist' && (
   <button
@@ -692,6 +713,139 @@ function AddWishlistSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
         </div>
         <Button type="submit" size="lg" className="mt-4" isLoading={isPending}>
           <Heart className="w-5 h-5 mr-2" /> Save to Wishlist
+        </Button>
+      </form>
+    </BottomSheet>
+  );
+}
+
+function EditTripSheet({
+  trip,
+  isOpen,
+  onClose,
+}: {
+  trip: Trip | null;
+  isOpen: boolean;
+  onClose: () => void;
+}) {
+  const { mutate: updateTrip, isPending } = useUpdateTrip();
+
+  const [country, setCountry] = useState<Country | null>(null);
+
+  useEffect(() => {
+    if (!trip) return;
+
+    const found =
+      COUNTRIES.find(c => c.name === trip.destination) ?? null;
+
+    setCountry(found);
+  }, [trip]);
+
+  if (!trip) return null;
+
+  const handleSubmit = async (
+    e: React.FormEvent<HTMLFormElement>
+  ) => {
+    e.preventDefault();
+
+    if (!country) {
+      alert("Please select a destination country");
+      return;
+    }
+
+    const fd = new FormData(e.currentTarget);
+
+    updateTrip({
+      ...trip,
+      name: fd.get("name") as string,
+      destination: country.name,
+      destinationCurrency: country.currency,
+      startDate:
+        trip.status === "wishlist"
+          ? ""
+          : (fd.get("startDate") as string),
+      endDate:
+        trip.status === "wishlist"
+          ? ""
+          : (fd.get("endDate") as string),
+    });
+
+    onClose();
+  };
+
+  return (
+    <BottomSheet
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Edit Trip"
+    >
+      <form
+        onSubmit={handleSubmit}
+        className="flex flex-col gap-5"
+      >
+        <div>
+          <Label htmlFor="edit-name">
+            Trip Name
+          </Label>
+
+          <Input
+            id="edit-name"
+            name="name"
+            defaultValue={trip.name}
+            required
+          />
+        </div>
+
+        <div>
+          <Label>
+            Destination Country
+          </Label>
+
+          <CountryPicker
+            value={country}
+            onChange={setCountry}
+          />
+        </div>
+
+        {trip.status !== "wishlist" && (
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="edit-start">
+                Start Date
+              </Label>
+
+              <Input
+                id="edit-start"
+                name="startDate"
+                type="date"
+                defaultValue={trip.startDate}
+                required
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="edit-end">
+                End Date
+              </Label>
+
+              <Input
+                id="edit-end"
+                name="endDate"
+                type="date"
+                defaultValue={trip.endDate}
+                required
+              />
+            </div>
+          </div>
+        )}
+
+        <Button
+          type="submit"
+          size="lg"
+          className="mt-4"
+          isLoading={isPending}
+        >
+          Save Changes
         </Button>
       </form>
     </BottomSheet>
