@@ -249,11 +249,12 @@ const isSolo = activeMembers.length <= 1;
     payerName: payer.name,
     notes: undefined,
     split: [
-      {
-        memberId: receiver.id,
-        amount: s.amount,
-      },
-    ],
+  {
+    memberId: receiver.id,
+    memberName: receiver.name,
+    amount: s.amount,
+  },
+],
     createdAt: Date.now(),
   });
 }
@@ -831,14 +832,25 @@ if (expenseCurrency !== 'INR') {
     const category = fd.get('category') as ExpenseCategory;
 
     // Build split
-    let split: { memberId: string; amount: number }[] | undefined;
+    let split:
+  | {
+      memberId: string;
+      memberName: string;
+      amount: number;
+    }[]
+  | undefined;
     if (!isSolo && showSplit) {
       const involved = selectedMemberIds;
       if (involved.length === 0) { alert('Select at least one member'); return; }
       if (splitMode === 'equal') {
         const per = Math.round(amount / involved.length);
         const first = per + (amount - per * involved.length); // handle rounding
-        split = involved.map((mid, i) => ({ memberId: mid, amount: i === 0 ? first : per }));
+        split = involved.map((mid, i) => ({
+  memberId: mid,
+  memberName:
+    members.find(m => m.id === mid)?.name || "",
+  amount: i === 0 ? first : per,
+}));
       } else {
         const rate =
   expenseCurrency !== 'INR'
@@ -855,9 +867,11 @@ const parts = involved.map(mid => {
   }
 
   return {
-    memberId: mid,
-    amount: isNaN(val) ? 0 : val,
-  };
+  memberId: mid,
+  memberName:
+    members.find(m => m.id === mid)?.name || "",
+  amount: isNaN(val) ? 0 : val,
+};
 });
         const total = parts.reduce((s, p) => s + p.amount, 0);
         console.log("amountInput", amountInput);

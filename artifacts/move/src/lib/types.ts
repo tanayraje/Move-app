@@ -91,6 +91,7 @@ export type ExpenseCategory =
 
 export interface ExpenseSplit {
   memberId: string;
+  memberName?: string;
   amount: number; // in INR
 }
 
