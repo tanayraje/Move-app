@@ -314,16 +314,31 @@ function TripCard({
   }
 
   const statusBadge = isWishlist ? (
-    <span className="inline-flex bg-pink-50 text-pink-500 px-2.5 py-0.5 rounded-full text-xs font-semibold w-fit">Wishlist</span>
-  ) : status === 'archived' ? (
-    <span className="inline-flex bg-muted text-muted-foreground px-2.5 py-0.5 rounded-full text-xs font-semibold w-fit">Archived</span>
-  ) : isPast ? (
-    <span className="inline-flex bg-muted text-muted-foreground px-2.5 py-0.5 rounded-full text-xs font-semibold w-fit">Past</span>
-  ) : isActiveNow ? (
-    <span className="inline-flex bg-primary/10 text-primary px-2.5 py-0.5 rounded-full text-xs font-semibold w-fit">In Progress</span>
-  ) : (
-    <span className="inline-flex bg-orange-500/10 text-orange-600 px-2.5 py-0.5 rounded-full text-xs font-semibold w-fit">In {daysUntil}d</span>
-  );
+  <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-pink-500/20 backdrop-blur-md px-3 py-1 text-xs font-semibold text-white shadow-lg shadow-black/10">
+    <span className="w-2 h-2 rounded-full bg-pink-300" />
+    Wishlist
+  </span>
+) : status === "archived" ? (
+  <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-black/30 backdrop-blur-md px-3 py-1 text-xs font-semibold text-white shadow-lg shadow-black/10">
+    <span className="w-2 h-2 rounded-full bg-gray-300" />
+    Archived
+  </span>
+) : isPast ? (
+  <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-black/30 backdrop-blur-md px-3 py-1 text-xs font-semibold text-white shadow-lg shadow-black/10">
+    <span className="w-2 h-2 rounded-full bg-gray-300" />
+    Past
+  </span>
+) : isActiveNow ? (
+  <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-blue-500/20 backdrop-blur-md px-3 py-1 text-xs font-semibold text-white shadow-lg shadow-black/10">
+    <span className="w-2 h-2 rounded-full bg-blue-300" />
+    In Progress
+  </span>
+) : (
+  <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-orange-500/20 backdrop-blur-md px-3 py-1 text-xs font-semibold text-white shadow-lg shadow-black/10">
+    <span className="w-2 h-2 rounded-full bg-orange-300" />
+    In {daysUntil}d
+  </span>
+);
 
   return (
     <div className="relative group">
@@ -348,6 +363,9 @@ function TripCard({
     }
   >
     <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+    <div className="absolute top-4 left-4">
+  {statusBadge}
+</div>
 
     <div className="absolute inset-x-0 bottom-0 p-4">
       <h3 className="text-2xl font-bold text-white leading-tight">
@@ -364,18 +382,9 @@ function TripCard({
   </div>
 
   {/* Content */}
-  <div className="p-5">
+  <div className="px-6 py-5 bg-card">
+    
     <div className="flex items-center justify-between">
-      {statusBadge}
-
-      {trip.guests && trip.guests.length > 0 && (
-        <span className="inline-flex bg-blue-50 text-blue-600 px-2.5 py-0.5 rounded-full text-xs font-semibold">
-          {trip.guests.length} member{trip.guests.length !== 1 ? "s" : ""}
-        </span>
-      )}
-    </div>
-
-    <div className="flex items-center justify-between mt-5">
       {isWishlist ? (
         <div className="flex items-center text-sm font-medium text-foreground/80 bg-muted/50 px-3 py-1.5 rounded-lg">
           <Heart className="w-4 h-4 mr-2 text-pink-500" />
@@ -390,16 +399,19 @@ function TripCard({
       )}
 
       {days !== null && (
-        <div className="text-sm font-semibold text-muted-foreground">
-          {days}d
-        </div>
-      )}
+  <div className="flex items-center gap-4">
+    <div className="h-8 w-px bg-border" />
+    <span className="text-primary text-2xl font-bold">
+      {days}d
+    </span>
+  </div>
+)}
     </div>
   </div>
   </Link>
 
       {/* Actions */}
-      <div className="absolute top-4 right-4 flex gap-1">
+      <div className="absolute top-4 right-4 z-20 flex gap-2">
         <TripMenu
   trip={trip}
   status={status}
@@ -415,7 +427,7 @@ function TripCard({
     deleteTrip(trip.id);
   }
 }}
-          className="p-2 text-muted-foreground hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
+          className="w-10 h-10 rounded-full bg-white/90 backdrop-blur flex items-center justify-center hover:bg-white"
         >
           <Trash2 className="w-4 h-4" />
         </button>
