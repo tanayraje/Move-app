@@ -314,27 +314,27 @@ function TripCard({
   }
 
   const statusBadge = isWishlist ? (
-  <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-pink-500/20 backdrop-blur-md px-3 py-1 text-xs font-semibold text-white shadow-lg shadow-black/10">
+  <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-pink-500/20 backdrop-blur-md px-3.5 py-1.5 text-xs font-semibold text-white shadow-lg shadow-black/10">
     <span className="w-2 h-2 rounded-full bg-pink-300" />
     Wishlist
   </span>
 ) : status === "archived" ? (
-  <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-black/30 backdrop-blur-md px-3 py-1 text-xs font-semibold text-white shadow-lg shadow-black/10">
+  <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-black/30 backdrop-blur-md px-3.5 py-1.5 text-xs font-semibold text-white shadow-lg shadow-black/10">
     <span className="w-2 h-2 rounded-full bg-gray-300" />
     Archived
   </span>
 ) : isPast ? (
-  <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-black/30 backdrop-blur-md px-3 py-1 text-xs font-semibold text-white shadow-lg shadow-black/10">
+  <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-black/30 backdrop-blur-md px-3.5 py-1.5 text-xs font-semibold text-white shadow-lg shadow-black/10">
     <span className="w-2 h-2 rounded-full bg-gray-300" />
     Past
   </span>
 ) : isActiveNow ? (
-  <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-blue-500/20 backdrop-blur-md px-3 py-1 text-xs font-semibold text-white shadow-lg shadow-black/10">
+  <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-blue-500/20 backdrop-blur-md px-3.5 py-1.5 text-xs font-semibold text-white shadow-lg shadow-black/10">
     <span className="w-2 h-2 rounded-full bg-blue-300" />
     In Progress
   </span>
 ) : (
-  <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-orange-500/20 backdrop-blur-md px-3 py-1 text-xs font-semibold text-white shadow-lg shadow-black/10">
+  <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-orange-500/20 backdrop-blur-md px-3.5 py-1.5 text-xs font-semibold text-white shadow-lg shadow-black/10">
     <span className="w-2 h-2 rounded-full bg-orange-300" />
     In {daysUntil}d
   </span>
@@ -367,7 +367,7 @@ function TripCard({
   {statusBadge}
 </div>
 
-    <div className="absolute inset-x-0 bottom-0 p-4">
+    <div className="absolute inset-x-0 bottom-0 px-5 pb-5 pt-10">
       <h3 className="text-2xl font-bold text-white leading-tight">
         {trip.name}
       </h3>
@@ -382,16 +382,16 @@ function TripCard({
   </div>
 
   {/* Content */}
-  <div className="px-6 py-5 bg-card">
+  <div className="px-5 py-3.5 bg-card">
     
     <div className="flex items-center justify-between">
       {isWishlist ? (
-        <div className="flex items-center text-sm font-medium text-foreground/80 bg-muted/50 px-3 py-1.5 rounded-lg">
+        <div className="flex items-center text-sm font-medium text-foreground/80 bg-muted/50 px-3 py-2 rounded-xl">
           <Heart className="w-4 h-4 mr-2 text-pink-500" />
           Saved for later
         </div>
       ) : (
-        <div className="flex items-center text-sm font-medium text-foreground/80 bg-muted/50 px-3 py-1.5 rounded-lg">
+        <div className="flex items-center text-sm font-medium text-foreground/80 bg-muted/50 px-3 py-2 rounded-xl">
           <Calendar className="w-4 h-4 mr-2 opacity-70" />
           {safeFormatDate(trip.startDate, d => format(d, "MMM d"), "")} –{" "}
           {safeFormatDate(trip.endDate, d => format(d, "MMM d, yyyy"), "")}
@@ -427,7 +427,7 @@ function TripCard({
     deleteTrip(trip.id);
   }
 }}
-          className="w-10 h-10 rounded-full bg-white/90 backdrop-blur flex items-center justify-center hover:bg-white"
+          className="w-11 h-11 rounded-full border border-white/20 bg-white/15 backdrop-blur-xl flex items-center justify-center text-white shadow-lg shadow-black/10 hover:bg-white/25 transition-all"
         >
           <Trash2 className="w-4 h-4" />
         </button>
@@ -494,25 +494,25 @@ const handleWishlist = () => {
     <>
       <button
   onClick={(e) => {
-  e.preventDefault();
-  e.stopPropagation();
+    e.preventDefault();
+    e.stopPropagation();
 
-  const rect = e.currentTarget.getBoundingClientRect();
+    const rect = e.currentTarget.getBoundingClientRect();
 
     setMenuPosition({
-  top: rect.bottom + 8,
-  left: Math.min(
-    rect.right - 160,
-    window.innerWidth - 176
-  ),
-});
+      top: rect.bottom + 8,
+      left: Math.min(
+        rect.right - 160,
+        window.innerWidth - 176
+      ),
+    });
 
     setIsOpen(true);
   }}
-  className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-full transition-colors"
+  className="w-11 h-11 rounded-full border border-white/20 bg-white/15 backdrop-blur-xl flex items-center justify-center text-white shadow-lg shadow-black/10 hover:bg-white/25 transition-all"
 >
-        <MoreVertical className="w-4 h-4" />
-      </button>
+  <MoreVertical className="w-5 h-5" />
+</button>
 
       {isOpen && (
   <div className="fixed inset-0 z-[60]" onClick={() => setIsOpen(false)}>
