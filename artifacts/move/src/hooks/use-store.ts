@@ -70,6 +70,7 @@ const { data, error } = await supabase
   dayCities: trip.day_cities || {},
   budget: trip.budget || undefined,
   createdAt: trip.created_at_ms,
+  heroImage: trip.hero_image,
 }));
     },
   });
@@ -103,6 +104,7 @@ export function useTrip(id: string) {
   dayCities: data.day_cities || {},
   budget: data.budget || undefined,
   createdAt: data.created_at_ms,
+  heroImage: data.hero_image,
 };
     },
     enabled: !!id,
@@ -148,9 +150,28 @@ const { error: memberError } = await supabase
     role: 'owner',
   });
 
+// ======================================================
+// Fetch and save hero image after creating the trip
+// ======================================================
+
 if (memberError) {
-  console.error('OWNER MEMBER ERROR', memberError);
+  console.error("OWNER MEMBER ERROR", memberError);
   throw memberError;
+}
+
+// ======================================================
+// Fetch destination hero image
+// ======================================================
+
+try {
+  await supabase.functions.invoke("hero-image", {
+    body: {
+      trip_id: trip.id,
+      destination: trip.destination,
+    },
+  });
+} catch (err) {
+  console.error("Hero image failed", err);
 }
 
 return trip;

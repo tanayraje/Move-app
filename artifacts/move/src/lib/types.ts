@@ -20,6 +20,7 @@ export interface Trip {
   status?: TripStatus; // replaces `archived` boolean
   archived?: boolean; // legacy — kept for backward compat
   createdAt: number;
+  heroImage?: string;
 }
 
 export interface TripBudget {
