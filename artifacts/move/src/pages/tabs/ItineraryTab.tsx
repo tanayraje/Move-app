@@ -255,9 +255,6 @@ export default function ItineraryTab({ trip }: { trip: Trip }) {
                     isSelected ? "text-primary-foreground/60" : "text-violet-400"
                   )}>STAY</span>
                 )}
-                {hasItems && !isSelected && !hasAccom && (
-                  <span className="absolute bottom-1.5 w-1.5 h-1.5 rounded-full bg-primary/60" />
-                )}
               </button>
             );
           })}
