@@ -56,7 +56,7 @@ const { data, error } = await supabase
     )
   `)
   .or(
-    `owner_id.eq.${user.id},id.in(${
+  `owner_id.eq.${user.id},id.in.(${
       memberTripIds.length
         ? memberTripIds.join(",")
         : "00000000-0000-0000-0000-000000000000"
