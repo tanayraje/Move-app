@@ -109,6 +109,29 @@ export default function TripDashboard({ params }: { params: { id: string, tab?: 
   );
 }
 
+// Avatar colours for members
+const avatarColours = [
+  "#16a34a", // green
+  "#ea580c", // orange
+  "#7c3aed", // purple
+  "#0891b2", // cyan
+  "#dc2626", // red
+  "#ca8a04", // yellow
+  "#db2777", // pink
+  "#4f46e5", // indigo
+  "#0f766e", // teal
+];
+
+function getAvatarColour(userId: string) {
+  let hash = 0;
+
+  for (let i = 0; i < userId.length; i++) {
+    hash = userId.charCodeAt(i) + ((hash << 5) - hash);
+  }
+
+  return avatarColours[Math.abs(hash) % avatarColours.length];
+}
+
 function MembersButton({ trip }: { trip: Trip }) {
   const [isOpen, setIsOpen] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
@@ -296,7 +319,9 @@ https://move-app-theta.vercel.app/join/${trip.inviteCode}`;
         className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
         style={{
           backgroundColor:
-            member.role === "owner" ? "#2563eb" : "#16a34a",
+  member.role === "owner"
+    ? "#2563eb"
+    : getAvatarColour(member.user_id),
         }}
       >
         {(member.name || member.username || "?")
