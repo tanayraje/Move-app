@@ -54,7 +54,7 @@ export default function OverviewTab({ trip }: { trip: Trip }) {
   }
 
   return (
-    <div className="p-5 flex flex-col gap-4 pb-16">
+    <div className="p-5 flex flex-col gap-4">
       {/* Hero card */}
       <div className="bg-primary text-primary-foreground rounded-[2rem] p-6 shadow-xl shadow-primary/20 relative overflow-hidden">
         <div className="absolute -right-6 -bottom-6 opacity-10">

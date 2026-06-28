@@ -67,7 +67,12 @@ export default function TripDashboard({ params }: { params: { id: string, tab?: 
       )}
 
       {/* Main Content Area */}
-     <main className="relative flex-1 overflow-x-hidden">
+     <main
+  className="relative flex-1 overflow-x-hidden pb-28"
+  style={{
+    paddingBottom: "calc(88px + env(safe-area-inset-bottom))",
+  }}
+>
         <Switch>
           <Route path="/trip/:id/overview"><OverviewTab trip={trip} /></Route>
           <Route path="/trip/:id/itinerary"><ItineraryTab trip={trip} /></Route>
@@ -116,7 +121,7 @@ const avatarColours = [
   "#7c3aed", // purple
   "#0891b2", // cyan
   "#dc2626", // red
-  "#ca8a04", // yellow
+  "#FFAA01", // yellow
   "#db2777", // pink
   "#4f46e5", // indigo
   "#0f766e", // teal
