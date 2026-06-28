@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
 import { useLocation } from "wouter";
+import { useQueryClient } from "@tanstack/react-query";
 import { differenceInDays, format, isBefore, isAfter, addDays } from "date-fns";
 import { useItinerary, useExpenses, useDocuments, usePlaces } from "@/hooks/use-store";
 import { Trip } from "@/lib/types";
@@ -10,6 +11,7 @@ import { supabase } from "@/lib/supabase";
 
 export default function OverviewTab({ trip }: { trip: Trip }) {
   const [, navigate] = useLocation();
+  const queryClient = useQueryClient();
   const { data: itinerary = [] } = useItinerary(trip.id);
   const { data: expenses = [] } = useExpenses(trip.id);
   const { data: documents = [] } = useDocuments(trip.id);
@@ -68,20 +70,62 @@ if (!isWishlist) {
     trip.destination;
 }
 
+useEffect(() => {
+  if (!heroLocation) return;
+
+  // Already have the correct image
+  if (trip.heroLocation === heroLocation) return;
+
+  supabase.functions.invoke("hero-image", {
+    body: {
+      trip_id: trip.id,
+      destination: heroLocation,
+    },
+  });
+}, [trip.id, heroLocation, trip.heroLocation]);
+
+useEffect(() => {
+  if (!heroLocation) return;
+
+  if (trip.heroLocation === heroLocation) return;
+
+  (async () => {
+    try {
+      await supabase.functions.invoke("hero-image", {
+        body: {
+          trip_id: trip.id,
+          destination: heroLocation,
+        },
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: ["trips", trip.id],
+      });
+    } catch (err) {
+      console.error("Failed to update hero image", err);
+    }
+  })();
+}, [
+  trip.id,
+  heroLocation,
+  trip.heroLocation,
+  queryClient,
+]);
+
 return (
     <div className="p-5 flex flex-col gap-4">
       {/* Hero card */}
 <div
   className="relative rounded-[2rem] overflow-hidden shadow-xl min-h-[220px] flex items-end"
   style={
-    trip.heroLocation === heroLocation && trip.heroImage
-      ? {
-          backgroundImage: `url(${trip.heroImage})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-        }
-      : {}
-  }
+  trip.heroImage
+    ? {
+        backgroundImage: `url(${trip.heroImage})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      }
+    : {}
+}
 >
 
   {/* Fallback */}
