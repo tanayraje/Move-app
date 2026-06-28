@@ -56,27 +56,58 @@ export default function OverviewTab({ trip }: { trip: Trip }) {
   return (
     <div className="p-5 flex flex-col gap-4">
       {/* Hero card */}
-      <div className="bg-primary text-primary-foreground rounded-[2rem] p-6 shadow-xl shadow-primary/20 relative overflow-hidden">
-        <div className="absolute -right-6 -bottom-6 opacity-10">
-          <Plane className="w-44 h-44" />
-        </div>
-        <div className="relative z-10">
-          <p className="text-primary-foreground/70 font-medium text-sm mb-0.5">{trip.destination}</p>
-          <h2 className="text-3xl font-display font-extrabold mb-3">{tripStatusLabel}</h2>
-          <div className="flex items-center gap-2 text-sm font-medium bg-white/20 backdrop-blur-md px-3 py-1.5 rounded-xl w-fit">
-            {isWishlist ? (
-              <>
-                <Heart className="w-4 h-4 text-pink-300" /> Saved to Wishlist
-              </>
-            ) : (
-              <>
-                <Calendar className="w-4 h-4" />
-                {safeFormatDate(trip.startDate, d => format(d, 'MMM d'), '')} – {safeFormatDate(trip.endDate, d => format(d, 'MMM d, yyyy'), '')}
-              </>
-            )}
-          </div>
-        </div>
-      </div>
+<div
+  className="relative rounded-[2rem] overflow-hidden shadow-xl min-h-[220px] flex items-end"
+  style={
+    trip.heroImage
+      ? {
+          backgroundImage: `url(${trip.heroImage})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }
+      : {}
+  }
+>
+  {/* Fallback */}
+  {!trip.heroImage && (
+    <div className="absolute inset-0 bg-primary" />
+  )}
+
+  {/* Dark overlay */}
+  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/25 to-black/10" />
+
+  {/* Plane icon only when no image */}
+  {!trip.heroImage && (
+    <div className="absolute -right-6 -bottom-6 opacity-10 text-white">
+      <Plane className="w-44 h-44" />
+    </div>
+  )}
+
+  <div className="relative z-10 p-6 text-white w-full">
+    <p className="text-white/80 font-medium text-sm mb-1">
+      {trip.destination}
+    </p>
+
+    <h2 className="text-3xl font-display font-extrabold mb-3">
+      {tripStatusLabel}
+    </h2>
+
+    <div className="flex items-center gap-2 text-sm font-medium bg-white/20 backdrop-blur-md px-3 py-1.5 rounded-xl w-fit">
+      {isWishlist ? (
+        <>
+          <Heart className="w-4 h-4 text-pink-300" />
+          Saved to Wishlist
+        </>
+      ) : (
+        <>
+          <Calendar className="w-4 h-4" />
+          {safeFormatDate(trip.startDate, d => format(d, "MMM d"), "")} –{" "}
+          {safeFormatDate(trip.endDate, d => format(d, "MMM d, yyyy"), "")}
+        </>
+      )}
+    </div>
+  </div>
+</div>
 
       {/* Next item */}
       {nextItem && !isWishlist && (
