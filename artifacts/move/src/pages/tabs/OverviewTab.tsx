@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useLocation } from "wouter";
 import { differenceInDays, format, isBefore, isAfter, addDays } from "date-fns";
 import { useItinerary, useExpenses, useDocuments, usePlaces } from "@/hooks/use-store";
@@ -6,6 +6,7 @@ import { Trip } from "@/lib/types";
 import { Calendar, FileText, Receipt, MapPin, Plane, Clock, Heart } from "lucide-react";
 import { formatCurrency } from "@/lib/countries";
 import { safeFormatDate, safeParseDate } from "@/lib/utils";
+import { supabase } from "@/lib/supabase";
 
 export default function OverviewTab({ trip }: { trip: Trip }) {
   const [, navigate] = useLocation();
@@ -53,13 +54,27 @@ export default function OverviewTab({ trip }: { trip: Trip }) {
     nextItem = upcomingItems[0] ?? null;
   }
 
-  return (
+// ==========================================
+// Hero location (city if available)
+// ==========================================
+
+let heroLocation = trip.destination;
+
+if (!isWishlist) {
+  const today = format(new Date(), "yyyy-MM-dd");
+
+  heroLocation =
+    trip.dayCities?.[today] ||
+    trip.destination;
+}
+
+return (
     <div className="p-5 flex flex-col gap-4">
       {/* Hero card */}
 <div
   className="relative rounded-[2rem] overflow-hidden shadow-xl min-h-[220px] flex items-end"
   style={
-    trip.heroImage
+    trip.heroLocation === heroLocation && trip.heroImage
       ? {
           backgroundImage: `url(${trip.heroImage})`,
           backgroundSize: "cover",
@@ -68,6 +83,7 @@ export default function OverviewTab({ trip }: { trip: Trip }) {
       : {}
   }
 >
+
   {/* Fallback */}
   {!trip.heroImage && (
     <div className="absolute inset-0 bg-primary" />
@@ -85,7 +101,7 @@ export default function OverviewTab({ trip }: { trip: Trip }) {
 
   <div className="relative z-10 p-6 text-white w-full">
     <p className="text-white/80 font-medium text-sm mb-1">
-      {trip.destination}
+      {heroLocation}
     </p>
 
     <h2 className="text-3xl font-display font-extrabold mb-3">

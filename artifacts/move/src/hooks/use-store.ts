@@ -71,6 +71,7 @@ const { data, error } = await supabase
   budget: trip.budget || undefined,
   createdAt: trip.created_at_ms,
   heroImage: trip.hero_image,
+  heroLocation: trip.hero_location,
 }));
     },
   });
@@ -105,6 +106,7 @@ export function useTrip(id: string) {
   budget: data.budget || undefined,
   createdAt: data.created_at_ms,
   heroImage: data.hero_image,
+  heroLocation: data.hero_location,
 };
     },
     enabled: !!id,

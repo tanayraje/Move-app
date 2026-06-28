@@ -21,6 +21,7 @@ export interface Trip {
   archived?: boolean; // legacy — kept for backward compat
   createdAt: number;
   heroImage?: string;
+  heroLocation?: string;
 }
 
 export interface TripBudget {
