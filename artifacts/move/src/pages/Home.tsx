@@ -3,7 +3,7 @@ import { Link } from "wouter";
 import { format, differenceInDays, addMonths, addDays } from "date-fns";
 import {
   Plus, MapPin, Calendar, Plane, Trash2, Search, ChevronDown, X,
-  Archive, Heart, Clock, MoreVertical, Users, LogOut, Pencil
+  Archive, Heart, User, MoreVertical, Users, LogOut, Pencil
 } from "lucide-react";
 import { useTrips, useCreateTrip, useDeleteTrip, useUpdateTrip } from "@/hooks/use-store";
 import { useSaveItineraryItem } from "@/hooks/use-store";
@@ -103,7 +103,7 @@ const [editingTrip, setEditingTrip] = useState<Trip | null>(null);
   onClick={(e) => e.stopPropagation()}
 >
 
-    <div className="px-3 py-2 border-b border-border mb-1">
+    <div className="px-3 py-1 border-b border-border mb-1">
   <p className="text-sm font-semibold text-foreground">
     {profile?.username || "User"}
   </p>
@@ -118,7 +118,7 @@ const [editingTrip, setEditingTrip] = useState<Trip | null>(null);
     <Link href="/profile">
       <button
         onClick={() => setShowUserMenu(false)}
-        className="w-full text-left px-3 py-2.5 text-sm font-medium hover:bg-muted rounded-xl"
+        className="w-full text-left px-3 py-1.5 text-sm font-medium hover:bg-muted rounded-xl"
       >
         Profile
       </button>
@@ -129,7 +129,7 @@ const [editingTrip, setEditingTrip] = useState<Trip | null>(null);
         setShowUserMenu(false);
         logout();
       }}
-      className="w-full text-left px-3 py-2.5 text-sm font-medium text-red-500 hover:bg-red-50 rounded-xl flex items-center gap-2"
+      className="w-full text-left px-3 py-1.5 text-sm font-medium text-red-500 hover:bg-red-50 rounded-xl flex items-center gap-2"
     >
       <LogOut className="w-4 h-4" />
       Log out
@@ -292,7 +292,8 @@ function TripCard({
   const { mutate: deleteTrip } = useDeleteTrip();
   const { mutate: updateTrip } = useUpdateTrip();
   const status = getTripStatus(trip);
-  const isWishlist = status === 'wishlist';
+  const isWishlist = status === "wishlist";
+  const hasMembers = (trip.guests?.length ?? 0) > 1;
 
   const startD = isWishlist ? null : safeParseDate(trip.startDate);
   const endD = isWishlist ? null : safeParseDate(trip.endDate);
@@ -315,27 +316,27 @@ function TripCard({
 
   const statusBadge = isWishlist ? (
   <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-pink-500/20 backdrop-blur-md px-3.5 py-1.5 text-xs font-semibold text-white shadow-lg shadow-black/10">
-    <span className="w-2 h-2 rounded-full bg-pink-300" />
+    <span className="w-1.5 h-1.5 rounded-full bg-pink-300" />
     Wishlist
   </span>
 ) : status === "archived" ? (
-  <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-black/30 backdrop-blur-md px-3.5 py-1.5 text-xs font-semibold text-white shadow-lg shadow-black/10">
-    <span className="w-2 h-2 rounded-full bg-gray-300" />
+  <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-black/30 backdrop-blur-md px-2.5 py-1 gap-1.5 text-[11px] font-semibold text-white shadow-lg shadow-black/10">
+    <span className="w-1.5 h-1.5 rounded-full bg-gray-300" />
     Archived
   </span>
 ) : isPast ? (
-  <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-black/30 backdrop-blur-md px-3.5 py-1.5 text-xs font-semibold text-white shadow-lg shadow-black/10">
-    <span className="w-2 h-2 rounded-full bg-gray-300" />
+  <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-black/30 backdrop-blur-md px-2.5 py-1 gap-1.5 text-[11px] font-semibold text-white shadow-lg shadow-black/10">
+    <span className="w-1.5 h-1.5 rounded-full bg-gray-300" />
     Past
   </span>
 ) : isActiveNow ? (
-  <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-blue-500/20 backdrop-blur-md px-3.5 py-1.5 text-xs font-semibold text-white shadow-lg shadow-black/10">
-    <span className="w-2 h-2 rounded-full bg-blue-300" />
+  <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-blue-500/20 backdrop-blur-md px-2.5 py-1 gap-1.5 text-[11px] font-semibold text-white shadow-lg shadow-black/10">
+    <span className="w-1.5 h-1.5 rounded-full bg-blue-300" />
     In Progress
   </span>
 ) : (
-  <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-orange-500/20 backdrop-blur-md px-3.5 py-1.5 text-xs font-semibold text-white shadow-lg shadow-black/10">
-    <span className="w-2 h-2 rounded-full bg-orange-300" />
+  <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-orange-500/20 backdrop-blur-md px-2.5 py-1 gap-1.5 text-[11px] font-semibold text-white shadow-lg shadow-black/10">
+    <span className="w-1.5 h-1.5 rounded-full bg-orange-300" />
     In {daysUntil}d
   </span>
 );
@@ -348,7 +349,7 @@ function TripCard({
 >
   {/* Hero image */}
   <div
-    className="relative h-28"
+    className="relative h-24"
     style={
       trip.heroImage
         ? {
@@ -367,7 +368,7 @@ function TripCard({
   {statusBadge}
 </div>
 
-    <div className="absolute inset-x-0 bottom-0 px-5 pb-5 pt-10">
+    <div className="absolute inset-x-0 bottom-0 px-5 pb-5 pt-16">
       <h3 className="text-2xl font-bold text-white leading-tight">
         {trip.name}
       </h3>
@@ -382,16 +383,16 @@ function TripCard({
   </div>
 
   {/* Content */}
-  <div className="px-5 py-3.5 bg-card">
+  <div className="px-5 py-2 bg-card">
     
     <div className="flex items-center justify-between">
       {isWishlist ? (
-        <div className="flex items-center text-sm font-medium text-foreground/80 bg-muted/50 px-3 py-2 rounded-xl">
+        <div className="flex items-center text-sm font-medium text-foreground/80 bg-muted/50 px-3 py-1 rounded-xl">
           <Heart className="w-4 h-4 mr-2 text-pink-500" />
           Saved for later
         </div>
       ) : (
-        <div className="flex items-center text-sm font-medium text-foreground/80 bg-muted/50 px-3 py-2 rounded-xl">
+        <div className="flex items-center text-sm font-medium text-foreground/80 bg-muted/50 px-3 py-1 rounded-xl">
           <Calendar className="w-4 h-4 mr-2 opacity-70" />
           {safeFormatDate(trip.startDate, d => format(d, "MMM d"), "")} –{" "}
           {safeFormatDate(trip.endDate, d => format(d, "MMM d, yyyy"), "")}
@@ -399,19 +400,26 @@ function TripCard({
       )}
 
       {days !== null && (
-  <div className="flex items-center gap-4">
-    <div className="h-8 w-px bg-border" />
-    <span className="text-primary text-2xl font-bold">
-      {days}d
-    </span>
-  </div>
+  <div className="flex items-center">
+  {hasMembers ? (
+    <Users className="w-4 h-4 text-primary" />
+  ) : (
+    <User className="w-4 h-4 text-muted-foreground" />
+  )}
+
+  <div className="mx-3 h-5 w-px bg-border/70" />
+
+  <span className="text-primary text-xl font-bold leading-none">
+    {days}d
+  </span>
+</div>
 )}
     </div>
   </div>
   </Link>
 
       {/* Actions */}
-      <div className="absolute top-4 right-4 z-20 flex gap-2">
+      <div className="absolute top-3 right-3 z-20 flex gap-1.5">
         <TripMenu
   trip={trip}
   status={status}
@@ -427,9 +435,9 @@ function TripCard({
     deleteTrip(trip.id);
   }
 }}
-          className="w-11 h-11 rounded-full border border-white/20 bg-white/15 backdrop-blur-xl flex items-center justify-center text-white shadow-lg shadow-black/10 hover:bg-white/25 transition-all"
+          className="w-9 h-9 rounded-full border border-white/20 bg-white/15 backdrop-blur-xl flex items-center justify-center text-white shadow-lg shadow-black/10 hover:bg-white/25 transition-all"
         >
-          <Trash2 className="w-4 h-4" />
+          <Trash2 className="w-3.5 h-3.5" />
         </button>
       </div>
     </div>
@@ -509,9 +517,9 @@ const handleWishlist = () => {
 
     setIsOpen(true);
   }}
-  className="w-11 h-11 rounded-full border border-white/20 bg-white/15 backdrop-blur-xl flex items-center justify-center text-white shadow-lg shadow-black/10 hover:bg-white/25 transition-all"
+  className="w-9 h-9 rounded-full border border-white/20 bg-white/15 backdrop-blur-xl flex items-center justify-center text-white shadow-lg shadow-black/10 hover:bg-white/25 transition-all"
 >
-  <MoreVertical className="w-5 h-5" />
+  <MoreVertical className="w-4 h-4" />
 </button>
 
       {isOpen && (
@@ -529,7 +537,7 @@ const handleWishlist = () => {
     setIsOpen(false);
     onEdit(trip);
   }}
-  className="w-full text-left px-3 py-2.5 text-sm font-medium hover:bg-muted rounded-xl flex items-center gap-2"
+  className="w-full text-left px-3 py-1.5 text-sm font-medium hover:bg-muted rounded-xl flex items-center gap-2"
 >
   <Pencil className="w-4 h-4" />
   Edit Trip
@@ -541,7 +549,7 @@ const handleWishlist = () => {
   setIsOpen(false);
   onConvert(trip);
 }}
-    className="w-full text-left px-3 py-2.5 text-sm font-medium hover:bg-muted rounded-xl flex items-center gap-2"
+    className="w-full text-left px-3 py-1.5 text-sm font-medium hover:bg-muted rounded-xl flex items-center gap-2"
   >
     <Users className="w-4 h-4" />
     Convert to Trip
@@ -552,7 +560,7 @@ const handleWishlist = () => {
       {status !== 'wishlist' && status !== 'archived' && (
         <button
           onClick={handleWishlist}
-          className="w-full text-left px-3 py-2.5 text-sm font-medium hover:bg-muted rounded-xl flex items-center gap-2"
+          className="w-full text-left px-3 py-1.5 text-sm font-medium hover:bg-muted rounded-xl flex items-center gap-2"
         >
           <Heart className="w-4 h-4" />
           Move to Wishlist
@@ -562,7 +570,7 @@ const handleWishlist = () => {
       {/* Archive / Unarchive trip */}
       <button
         onClick={handleArchive}
-        className="w-full text-left px-3 py-2.5 text-sm font-medium hover:bg-muted rounded-xl flex items-center gap-2"
+        className="w-full text-left px-3 py-1.5 text-sm font-medium hover:bg-muted rounded-xl flex items-center gap-2"
       >
         <Archive className="w-4 h-4" />
         {status === 'archived' ? 'Unarchive' : 'Archive'}
