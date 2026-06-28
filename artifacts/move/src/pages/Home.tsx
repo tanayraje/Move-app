@@ -293,7 +293,7 @@ function TripCard({
   const { mutate: updateTrip } = useUpdateTrip();
   const status = getTripStatus(trip);
   const isWishlist = status === "wishlist";
-  const hasMembers = (trip.guests?.length ?? 0) > 0;
+  const hasMembers = (trip.guests?.length ?? 0) > 1;
 
   const startD = isWishlist ? null : safeParseDate(trip.startDate);
   const endD = isWishlist ? null : safeParseDate(trip.endDate);

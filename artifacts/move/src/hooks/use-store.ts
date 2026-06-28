@@ -48,10 +48,19 @@ export function useTrips() {
 const memberTripIds = memberships?.map(m => m.trip_id) || [];
 
 const { data, error } = await supabase
-  .from('trips')
-  .select('*')
+  .from("trips")
+  .select(`
+    *,
+    trip_members (
+      id
+    )
+  `)
   .or(
-    `owner_id.eq.${user.id},id.in.(${memberTripIds.length ? memberTripIds.join(',') : '00000000-0000-0000-0000-000000000000'})`
+    `owner_id.eq.${user.id},id.in(${
+      memberTripIds.length
+        ? memberTripIds.join(",")
+        : "00000000-0000-0000-0000-000000000000"
+    })`
   );
 
 
@@ -65,7 +74,7 @@ const { data, error } = await supabase
   startDate: trip.start_date || '',
   endDate: trip.end_date || '',
   inviteCode: trip.invite_code,
-  guests: trip.members || [],
+  guests: trip.trip_members || [],
   status: trip.status || 'active',
   dayCities: trip.day_cities || {},
   budget: trip.budget || undefined,
