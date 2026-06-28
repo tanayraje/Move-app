@@ -293,7 +293,7 @@ function TripCard({
   const { mutate: updateTrip } = useUpdateTrip();
   const status = getTripStatus(trip);
   const isWishlist = status === "wishlist";
-  const hasMembers = (trip.guests?.length ?? 0) > 1;
+  const hasMembers = (trip.guests?.length ?? 0) > 0;
 
   const startD = isWishlist ? null : safeParseDate(trip.startDate);
   const endD = isWishlist ? null : safeParseDate(trip.endDate);
@@ -349,7 +349,7 @@ function TripCard({
 >
   {/* Hero image */}
   <div
-    className="relative h-24"
+    className="relative h-32"
     style={
       trip.heroImage
         ? {
@@ -364,12 +364,12 @@ function TripCard({
     }
   >
     <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
-    <div className="absolute top-4 left-4">
+    <div className="absolute top-3 left-4 z-20">
   {statusBadge}
 </div>
 
-    <div className="absolute inset-x-0 bottom-0 px-5 pb-5 pt-16">
-      <h3 className="text-2xl font-bold text-white leading-tight">
+    <div className="absolute inset-x-0 bottom-0 px-5 pb-4">
+      <h3 className="mt-8 text-2xl font-bold text-white leading-tight">
         {trip.name}
       </h3>
 
