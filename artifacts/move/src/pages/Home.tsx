@@ -365,7 +365,7 @@ const hasMembers = memberCount > 1;
 >
   {/* Hero image */}
   <div
-    className="relative h-32"
+    className="relative h-48"
     style={
       trip.heroImage
         ? {
