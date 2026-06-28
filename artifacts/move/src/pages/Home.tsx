@@ -327,7 +327,76 @@ function TripCard({
 
   return (
     <div className="relative group">
-      <Link href={`/trip/${trip.id}/overview`} className="block bg-card rounded-[2rem] p-5 shadow-lg shadow-black/5 border border-border/50 hover:shadow-xl hover:border-primary/20 transition-all duration-300 active:scale-[0.98]">
+      <Link
+  href={`/trip/${trip.id}/overview`}
+  className="block overflow-hidden rounded-[2rem] bg-card shadow-lg shadow-black/5 border border-border/50 hover:shadow-xl hover:border-primary/20 transition-all duration-300 active:scale-[0.98]"
+>
+  {/* Hero image */}
+  <div
+    className="relative h-28"
+    style={
+      trip.heroImage
+        ? {
+            backgroundImage: `url(${trip.heroImage})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+          }
+        : {
+            background:
+              "linear-gradient(135deg,#2563eb 0%,#3b82f6 100%)",
+          }
+    }
+  >
+    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+
+    <div className="absolute inset-x-0 bottom-0 p-4">
+      <h3 className="text-2xl font-bold text-white leading-tight">
+        {trip.name}
+      </h3>
+
+      <div className="flex items-center text-white/90 text-sm mt-1">
+        <MapPin className="w-3.5 h-3.5 mr-1 shrink-0" />
+        <span className="truncate">
+          {trip.heroLocation || trip.destination}
+        </span>
+      </div>
+    </div>
+  </div>
+
+  {/* Content */}
+  <div className="p-5">
+    <div className="flex items-center justify-between">
+      {statusBadge}
+
+      {trip.guests && trip.guests.length > 0 && (
+        <span className="inline-flex bg-blue-50 text-blue-600 px-2.5 py-0.5 rounded-full text-xs font-semibold">
+          {trip.guests.length} member{trip.guests.length !== 1 ? "s" : ""}
+        </span>
+      )}
+    </div>
+
+    <div className="flex items-center justify-between mt-5">
+      {isWishlist ? (
+        <div className="flex items-center text-sm font-medium text-foreground/80 bg-muted/50 px-3 py-1.5 rounded-lg">
+          <Heart className="w-4 h-4 mr-2 text-pink-500" />
+          Saved for later
+        </div>
+      ) : (
+        <div className="flex items-center text-sm font-medium text-foreground/80 bg-muted/50 px-3 py-1.5 rounded-lg">
+          <Calendar className="w-4 h-4 mr-2 opacity-70" />
+          {safeFormatDate(trip.startDate, d => format(d, "MMM d"), "")} –{" "}
+          {safeFormatDate(trip.endDate, d => format(d, "MMM d, yyyy"), "")}
+        </div>
+      )}
+
+      {days !== null && (
+        <div className="text-sm font-semibold text-muted-foreground">
+          {days}d
+        </div>
+      )}
+    </div>
+  </div>
+</Link>
         <div className="pr-14">
           <h3 className="text-xl font-bold text-foreground">{trip.name}</h3>
           <div className="flex items-center text-muted-foreground mt-0.5 text-sm">
