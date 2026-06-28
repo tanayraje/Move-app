@@ -15,6 +15,8 @@ import { useSupabaseAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/hooks/use-profile";
 import { joinTripByCode } from "@/hooks/use-store";
 import { useQueryClient } from '@tanstack/react-query';
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
 
 
 export default function Home() {
@@ -292,8 +294,22 @@ function TripCard({
   const { mutate: deleteTrip } = useDeleteTrip();
   const { mutate: updateTrip } = useUpdateTrip();
   const status = getTripStatus(trip);
-  const isWishlist = status === "wishlist";
-  const hasMembers = (trip.guests?.length ?? 0) > 1;
+const isWishlist = status === "wishlist";
+
+const { data: memberRows = [] } = useQuery({
+  queryKey: ["trip-members", trip.id],
+  queryFn: async () => {
+    const { data } = await supabase.rpc(
+      "get_trip_members",
+      { p_trip_id: trip.id }
+    );
+
+    return data || [];
+  },
+});
+
+const memberCount = memberRows.length;
+const hasMembers = memberCount > 1;
 
   const startD = isWishlist ? null : safeParseDate(trip.startDate);
   const endD = isWishlist ? null : safeParseDate(trip.endDate);
