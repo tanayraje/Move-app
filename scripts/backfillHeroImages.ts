@@ -23,7 +23,6 @@ async function run() {
     });
   }
 
-  console.log("Done!");
 }
 
 run();
