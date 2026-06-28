@@ -226,18 +226,22 @@ export default function ItineraryTab({ trip }: { trip: Trip }) {
                 key={day}
                 onClick={() => setSelectedDate(day)}
                 className={cn(
-                  "flex flex-col items-center justify-center px-2 py-2 min-w-[56px] rounded-2xl transition-all font-medium border-2 relative",
-                  city ? "h-20" : "h-16",
-                  isSelected
-                    ? "bg-primary border-primary text-primary-foreground shadow-md shadow-primary/20"
-                    : "bg-card border-border text-foreground/70 hover:border-primary/30"
-                )}
+                "flex flex-col items-center justify-center px-3 py-2 rounded-2xl transition-all font-medium border-2 relative",
+                city ? "min-w-[84px] h-20" : "min-w-[56px] h-16",
+                isSelected
+                  ? "bg-primary border-primary text-primary-foreground shadow-md shadow-primary/20"
+                  : "bg-card border-border text-foreground/70 hover:border-primary/30"
+              )}
               >
                 {city && (
-                  <span className={cn(
-                    "text-[10px] font-bold truncate max-w-[52px] leading-none mb-0.5",
-                    isSelected ? "text-primary-foreground/80" : "text-primary"
-                  )}>{city}</span>
+                  <span
+                    className={cn(
+                      "text-[10px] font-bold leading-none mb-0.5 whitespace-nowrap",
+                      isSelected ? "text-primary-foreground/80" : "text-primary"
+                    )}
+                  >
+                    {city}
+                  </span>
                 )}
                 <span className="text-xs uppercase opacity-80">
                   {isDayLabel(day) ? day : safeFormatDate(day, d => format(d, 'EEE'), '')}
