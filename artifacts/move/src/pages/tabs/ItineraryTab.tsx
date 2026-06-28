@@ -408,7 +408,7 @@ function AccommodationBanner({ item, trip, onEdit }: { item: ItineraryItem; trip
           <Building2 className="w-4 h-4" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-[10px] font-bold text-violet-500 uppercase tracking-wider leading-none mb-0.5">Staying At</p>
+          <p className="text-[9px] font-bold leading-none mb-0.5 px-1 text-center break-words line-clamp-2">Staying At</p>
           <h4 className="font-bold text-foreground text-base leading-tight truncate">{item.title}</h4>
           <p className="text-xs text-muted-foreground mt-0.5">
             {safeFormatDate(item.date, d => format(d, 'MMM d'), item.date)}
