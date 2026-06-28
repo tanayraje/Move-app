@@ -396,38 +396,7 @@ function TripCard({
       )}
     </div>
   </div>
-</Link>
-        <div className="pr-14">
-          <h3 className="text-xl font-bold text-foreground">{trip.name}</h3>
-          <div className="flex items-center text-muted-foreground mt-0.5 text-sm">
-            <MapPin className="w-3.5 h-3.5 mr-1 shrink-0" />
-            <span className="truncate">{trip.destination}</span>
-          </div>
-          <div className="mt-2 flex items-center gap-2 flex-wrap">
-            {statusBadge}
-            {trip.guests && trip.guests.length > 0 && (
-  <span className="inline-flex bg-blue-50 text-blue-600 px-2.5 py-0.5 rounded-full text-xs font-semibold w-fit">
-    {trip.guests.length} member{trip.guests.length !== 1 ? 's' : ''}
-  </span>
-)}
-          </div>
-        </div>
-
-        <div className="flex items-center justify-between mt-5">
-          {isWishlist ? (
-            <div className="flex items-center text-sm font-medium text-foreground/80 bg-muted/50 px-3 py-1.5 rounded-lg">
-              <Heart className="w-4 h-4 mr-2 opacity-70 text-pink-500" />
-              Saved for later
-            </div>
-          ) : (
-            <div className="flex items-center text-sm font-medium text-foreground/80 bg-muted/50 px-3 py-1.5 rounded-lg">
-              <Calendar className="w-4 h-4 mr-2 opacity-70" />
-              {safeFormatDate(trip.startDate, d => format(d, 'MMM d'), '')} – {safeFormatDate(trip.endDate, d => format(d, 'MMM d, yyyy'), '')}
-            </div>
-          )}
-          {days !== null && <div className="text-sm font-semibold text-muted-foreground">{days}d</div>}
-        </div>
-      </Link>
+  </Link>
 
       {/* Actions */}
       <div className="absolute top-4 right-4 flex gap-1">
