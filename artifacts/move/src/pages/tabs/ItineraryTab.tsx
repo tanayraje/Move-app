@@ -1154,49 +1154,63 @@ const isDragging = false;
           {travelLabel(item.travelType)}
         </p>
 
-        <div className="mt-1 flex min-w-0 items-center gap-3">
+        {/* Route */}
 
-  {/* From */}
+        {!expanded ? (
 
-  <div className="min-w-0 flex-1">
-    <p
-      className={cn(
-        "text-[18px] font-semibold leading-[1.35]",
-        expanded ? "break-words" : "truncate"
-      )}
-      title={item.fromLocation}
-    >
-      {item.fromLocation || "—"}
-    </p>
-  </div>
+          <div className="mt-1 flex min-w-0 items-center gap-2">
 
-  {/* Flight connector */}
+            <span
+              className="min-w-0 flex-1 truncate text-[18px] font-semibold leading-[1.35]"
+              title={item.fromLocation}
+            >
+              {item.fromLocation || "—"}
+            </span>
 
-  <div className="flex w-[90px] shrink-0 items-center">
+            <div className="flex shrink-0 items-center">
 
-    <div className="flex-1 border-t border-dashed border-blue-300" />
+              <div className="w-2 border-t border-dashed border-blue-300" />
 
-    <Icon className="mx-2 h-4 w-4 shrink-0 text-blue-500" />
+              <Icon className="mx-1 h-4 w-4 shrink-0 text-blue-500" />
 
-    <div className="flex-1 border-t border-dashed border-blue-300" />
+              <div className="w-2 border-t border-dashed border-blue-300" />
 
-  </div>
+            </div>
 
-  {/* To */}
+            <span
+              className="min-w-0 flex-1 truncate text-right text-[18px] font-semibold leading-[1.35]"
+              title={item.toLocation}
+            >
+              {item.toLocation || "—"}
+            </span>
 
-  <div className="min-w-0 flex-1 text-right">
-    <p
-      className={cn(
-        "text-[18px] font-semibold leading-[1.35]",
-        expanded ? "break-words text-right" : "truncate text-right"
-      )}
-      title={item.toLocation}
-    >
-      {item.toLocation || "—"}
-    </p>
-  </div>
+          </div>
 
-</div>
+        ) : (
+
+          <div className="mt-2">
+
+            <p className="break-words text-[18px] font-semibold leading-[1.35]">
+              {item.fromLocation || "—"}
+            </p>
+
+            <div className="my-3 flex items-center justify-center">
+
+              <div className="h-px w-10 bg-border/60" />
+
+              <Icon className="mx-3 h-4 w-4 text-blue-500" />
+
+              <div className="h-px w-10 bg-border/60" />
+
+            </div>
+
+            <p className="break-words text-[18px] font-semibold leading-[1.35]">
+              {item.toLocation || "—"}
+            </p>
+
+          </div>
+
+        )}
 
       </div>
 
@@ -1211,11 +1225,11 @@ const isDragging = false;
 
     {/* Journey */}
 
-    <div className="mt-5 grid grid-cols-[1fr_90px_1fr] items-end gap-4">
+    <div className="mt-5 grid grid-cols-[1fr_70px_1fr] items-end gap-3">
 
       {/* Departure */}
 
-      <div>
+      <div className="min-w-0">
 
         <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
           Departure
@@ -1231,15 +1245,15 @@ const isDragging = false;
 
       <div className="flex items-end justify-center">
 
-  <p className="text-[11px] italic text-blue-600">
-    {duration || "—"}
-  </p>
+        <p className="whitespace-nowrap text-[11px] italic text-blue-600">
+          {duration || "—"}
+        </p>
 
-</div>
+      </div>
 
       {/* Arrival */}
 
-      <div className="text-right">
+      <div className="min-w-0 text-right">
 
         <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
           Arrival
