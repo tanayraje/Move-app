@@ -541,15 +541,18 @@ function AccommodationCard({
 >
   <div className="flex">
 
-    {/* LEFT STRIP */}
+    {/* Left Strip */}
 
-    <div
-      className="w-[46px] shrink-0 self-stretch bg-gradient-to-b from-violet-500 to-violet-700"
-    >
-      <div className="flex h-full min-h-[118px] items-center justify-center text-white">
-        <Building2 className="h-5 w-5 stroke-[1.8]" />
-      </div>
-    </div>
+        <div
+          className={cn(
+            "w-[48px] shrink-0 self-stretch",
+            panelGradient(item.elementType)
+          )}
+        >
+          <div className="flex h-[96px] items-center justify-center text-white">
+            <Icon className="h-4 w-4 stroke-[1.8]" />
+          </div>
+        </div>
 
     {/* CONTENT */}
 
@@ -600,7 +603,7 @@ function AccommodationCard({
         )}
       </p>
 
-      <p className="text-[12px] font-medium italic text-violet-600 dark:text-violet-400">
+      <p className="mt-1 text-[15px] font-semibold">
         {item.startTime || "—"}
       </p>
 
@@ -610,7 +613,7 @@ function AccommodationCard({
 
   <div className="mb-2 h-px w-8 bg-border/60" />
 
-  <p className="whitespace-nowrap text-[12px] italic text-muted-foreground">
+  <p className="text-[12px] font-medium italic text-violet-600 dark:text-violet-400">
     {nights} night{nights > 1 ? "s" : ""}
   </p>
 
