@@ -844,17 +844,11 @@ const isDragging = false;
 
 <div
   className={cn(
-    "w-[60px] shrink-0 flex flex-col items-center justify-center text-white",
+    "w-[52px] shrink-0 flex flex-col items-center justify-center text-white",
     panelGradient(item.elementType)
   )}
 >
-  <Icon className="h-6 w-6 stroke-[1.8]" />
-
-  <span className="mt-4 text-[8px] font-semibold uppercase tracking-[0.16em] text-center leading-none px-1">
-    {item.elementType === "travel"
-      ? travelLabel(item.travelType)
-      : categoryLabel(item)}
-  </span>
+  <Icon className="h-5 w-5 stroke-[1.8]" />
 </div>
 
     {/* Card Content */}
@@ -867,22 +861,28 @@ const isDragging = false;
   <div className="relative flex h-full flex-col justify-between">
 
     <div className="flex items-center justify-between">
-      <ChevronDown
-        className={cn(
-          "ml-auto h-4 w-4 opacity-60 text-muted-foreground transition-transform",
-          expanded && "rotate-180"
-        )}
-      />
-    </div>
 
-    <div className="mt-1 flex items-start">
+  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-blue-500">
+    {travelLabel(item.travelType)}
+  </p>
+
+  <ChevronDown
+    className={cn(
+      "h-4 w-4 opacity-60 text-muted-foreground transition-transform",
+      expanded && "rotate-180"
+    )}
+  />
+
+</div>
+
+<div className="mt-2 grid grid-cols-[1fr_auto_1fr] items-center gap-2">
 
       {/* From */}
 
-      <div className="min-w-0 flex-[1.7]">
+      <div className="min-w-0">
 
         <h3
-          className="truncate text-[16px] font-semibold tracking-[-0.01em] leading-tight"
+          className="truncate text-[13px] font-semibold leading-tight"
           title={item.fromLocation}
         >
           {item.fromLocation || "—"}
@@ -893,15 +893,15 @@ const isDragging = false;
 
       {/* Centre */}
 
-      <div className="mx-2 flex w-[84px] shrink-0 flex-col items-center">
+      <div className="flex w-[36px] flex-col items-center">
 
         <div className="flex w-full items-center">
 
-          <div className="h-px flex-1 border-t border-dashed border-muted-foreground/40" />
+          <div className="h-px w-2 border-t border-dashed border-muted-foreground/40" />
 
-          <Icon className="mx-2 h-5 w-5 text-blue-500" />
+          <Icon className="h-3.5 w-3.5 text-blue-500" />
 
-          <div className="h-px flex-1 border-t border-dashed border-muted-foreground/40" />
+          <div className="h-px w-2 border-t border-dashed border-muted-foreground/40" />
 
         </div>
 
@@ -913,10 +913,10 @@ const isDragging = false;
 
       {/* To */}
 
-      <div className="min-w-0 flex-[1.7] text-right">
+      <div className="min-w-0 text-right">
 
         <h3
-          className="truncate text-[17px] font-medium leading-tight"
+          className="truncate text-[13px] font-semibold leading-tight"
           title={item.toLocation}
         >
           {item.toLocation || "—"}
@@ -931,7 +931,7 @@ const isDragging = false;
 
       <div>
 
-        <p className="text-[15px] font-semibold">
+        <p className="text-[13px] font-semibold">
           {item.startTime || "—"}
         </p>
 
@@ -943,7 +943,7 @@ const isDragging = false;
 
       <div className="text-right">
 
-        <p className="text-[15px] font-semibold">
+        <p className="text-[13px] font-semibold">
           {item.endTime || "—"}
         </p>
 
@@ -961,35 +961,43 @@ const isDragging = false;
         {item.elementType === "accommodation" && (
   <div className="relative flex h-full flex-col justify-between">
 
-    <div className="flex items-center justify-between gap-3">
+    <div>
 
-      <h3
-  className="min-w-0 flex-1 text-[16px] font-semibold tracking-[-0.01em] leading-tight"
->
-        {item.title}
-      </h3>
+  <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-violet-500">
+    Stay
+  </p>
 
-      <span
-        className={cn(
-  "shrink-0 self-center rounded-full px-3 py-1 text-[10px] font-medium whitespace-nowrap",
-          ELEMENT_BADGES.accommodation
-        )}
-      >
-        {item.endDate
-          ? `${stayNights(item.date, item.endDate)} Night${
-              stayNights(item.date, item.endDate) > 1 ? "s" : ""
-            }`
-          : "1 Night"}
-      </span>
+  <div className="flex items-center gap-3">
 
-      <ChevronDown
-        className={cn(
-          "h-4 w-4 opacity-60 shrink-0 text-muted-foreground transition-transform",
-          expanded && "rotate-180"
-        )}
-      />
+    <h3
+      className="min-w-0 flex-1 text-[13px] font-semibold leading-tight"
+    >
+      {item.title}
+    </h3>
 
-    </div>
+    <span
+      className={cn(
+        "shrink-0 rounded-full px-3 py-1 text-[10px] font-medium whitespace-nowrap",
+        ELEMENT_BADGES.accommodation
+      )}
+    >
+      {item.endDate
+        ? `${stayNights(item.date, item.endDate)} Night${
+            stayNights(item.date, item.endDate) > 1 ? "s" : ""
+          }`
+        : "1 Night"}
+    </span>
+
+    <ChevronDown
+      className={cn(
+        "h-4 w-4 opacity-60 shrink-0 text-muted-foreground transition-transform",
+        expanded && "rotate-180"
+      )}
+    />
+
+  </div>
+
+</div>
 
     <div className="mt-5 grid grid-cols-2 gap-8">
 
@@ -1043,26 +1051,34 @@ const isDragging = false;
         {item.elementType === "meal" && (
   <div className="relative flex h-full flex-col justify-between">
 
-    <div className="flex items-start justify-between gap-4">
+    <div>
 
-      <h3 className="min-w-0 flex-1 line-clamp-2 text-[16px] font-semibold tracking-[-0.01em] leading-snug">
-        {item.title}
-      </h3>
+  <div className="mb-2 flex items-center justify-between">
 
-      <ChevronDown
-        className={cn(
-          "h-4 w-4 opacity-60 shrink-0 text-muted-foreground transition-transform",
-          expanded && "rotate-180"
-        )}
-      />
+    <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-500">
+      {categoryLabel(item)}
+    </p>
 
-    </div>
+    <ChevronDown
+      className={cn(
+        "h-4 w-4 opacity-60 text-muted-foreground transition-transform",
+        expanded && "rotate-180"
+      )}
+    />
 
-    <div className="mt-6 flex items-end justify-between">
+  </div>
+
+  <h3 className="truncate text-[13px] font-semibold leading-tight">
+    {item.title}
+  </h3>
+
+</div>
+
+    <div className="mt-4">
 
       <div>
 
-        <p className="text-[15px] font-semibold">
+        <p className="text-[13px] font-semibold">
           {item.startTime || "—"}
         </p>
 
@@ -1080,26 +1096,34 @@ const isDragging = false;
         {item.elementType === "activity" && (
   <div className="relative flex h-full flex-col justify-between">
 
-    <div className="flex items-start justify-between gap-4">
+    <div>
 
-      <h3 className="min-w-0 flex-1 line-clamp-2 text-[16px] font-semibold tracking-[-0.01em] leading-snug">
-        {item.title}
-      </h3>
+  <div className="mb-2 flex items-center justify-between">
 
-      <ChevronDown
-        className={cn(
-          "h-4 w-4 opacity-60 shrink-0 text-muted-foreground transition-transform",
-          expanded && "rotate-180"
-        )}
-      />
+    <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-orange-500">
+      Activity
+    </p>
 
-    </div>
+    <ChevronDown
+      className={cn(
+        "h-4 w-4 opacity-60 text-muted-foreground transition-transform",
+        expanded && "rotate-180"
+      )}
+    />
 
-    <div className="mt-6 flex items-end justify-between">
+  </div>
+
+  <h3 className="truncate text-[13px] font-semibold leading-tight">
+    {item.title}
+  </h3>
+
+</div>
+
+    <div className="mt-4 flex items-end justify-between">
 
       <div>
 
-        <p className="text-[15px] font-semibold">
+        <p className="text-[13px] font-semibold">
           {item.startTime || "—"}
         </p>
 
@@ -1111,11 +1135,11 @@ const isDragging = false;
 
       <div className="text-right">
 
-        <p className="text-[15px] font-semibold">
+        <p className="text-[13px] font-semibold">
           {duration || "—"}
         </p>
 
-        <p className="mt-1 text-[11px] uppercase tracking-[0.14em] font-medium text-muted-foreground">
+        <p className="mt-1 text-[10px] uppercase tracking-[0.16em] font-medium text-muted-foreground">
           Duration
         </p>
 
