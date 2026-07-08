@@ -1630,7 +1630,7 @@ function SortableItem({
         onClick={() => openDoc(doc)}
         className="block w-full text-left"
       >
-        <p className="break-all text-[14px] font-medium leading-5">
+        <p className="overflow-hidden break-words text-[14px] font-medium leading-5">
           {doc.name}
         </p>
 
@@ -1652,9 +1652,7 @@ function SortableItem({
 
   </div>
 
-</div>git add .
-git commit -m "Improve attachment card layout"
-git push origin master
+</div>
 
       ))}
 
