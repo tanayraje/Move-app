@@ -963,16 +963,16 @@ const toggleChecklistItem = (checkId: string) => {
     <button
       type="button"
       onClick={onEdit}
-      className="inline-flex h-10 min-w-0 flex-1 items-center justify-center gap-2 rounded-2xl border border-border bg-background px-4 text-sm font-medium transition-colors hover:bg-muted sm:flex-none sm:px-5"
+      className="inline-flex h-10 flex-1 items-center justify-center gap-2 rounded-2xl border border-border bg-background px-3 text-sm font-medium transition-colors hover:bg-muted [&>svg]:shrink-0"
     >
-      <Pencil className="h-4 w-4" />
+      <Pencil className="h-4 w-4 shrink-0" />
       Edit
     </button>
 
     <button
       type="button"
       onClick={handleDelete}
-      className="inline-flex h-10 min-w-0 flex-1 items-center justify-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 text-sm font-medium text-red-600 transition-colors hover:bg-red-100 sm:flex-none sm:px-5"
+      className="inline-flex h-10 flex-1 items-center justify-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-3 text-sm font-medium text-red-600 transition-colors hover:bg-red-100 [&>svg]:shrink-0"
     >
       <Trash2 className="h-4 w-4" />
       Delete
@@ -1352,37 +1352,33 @@ function SortableItem({
 
     {/* Activity Timeline */}
 
-<div className="mt-4 rounded-2xl border border-border/50 bg-muted/20 px-4 py-3">
+<div className="mt-4 flex items-end justify-between gap-6">
 
-  <div className="flex items-end justify-between gap-6">
+  {/* Time */}
 
-    {/* Time */}
+  <div className="min-w-0 flex-1">
 
-    <div className="min-w-0 flex-1">
+    <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+      Time
+    </p>
 
-      <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-        Time
-      </p>
+    <p className="mt-1 text-[15px] font-semibold">
+      {item.startTime || "—"}
+    </p>
 
-      <p className="mt-1 text-[15px] font-semibold">
-        {item.startTime || "—"}
-      </p>
+  </div>
 
-    </div>
+  {/* Duration */}
 
-    {/* Duration */}
+  <div className="text-right">
 
-    <div className="text-right">
+    <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+      Duration
+    </p>
 
-      <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-        Duration
-      </p>
-
-      <p className="mt-1 text-[15px] font-semibold">
-        {duration || "—"}
-      </p>
-
-    </div>
+    <p className="mt-1 text-[15px] font-semibold">
+      {duration || "—"}
+    </p>
 
   </div>
 
@@ -1675,16 +1671,16 @@ function SortableItem({
       <button
         type="button"
         onClick={onEdit}
-        className="inline-flex h-10 min-w-0 flex-1 items-center justify-center gap-2 rounded-2xl border border-border bg-background px-4 text-sm font-medium transition-colors hover:bg-muted sm:flex-none sm:px-5"
+        className="inline-flex h-10 flex-1 items-center justify-center gap-2 rounded-2xl border border-border bg-background px-3 text-sm font-medium transition-colors hover:bg-muted [&>svg]:shrink-0"
       >
-        <Pencil className="h-4 w-4" />
+        <Pencil className="h-4 w-4 shrink-0" />
         Edit
       </button>
 
       <button
         type="button"
         onClick={handleDelete}
-        className="inline-flex h-10 min-w-0 flex-1 items-center justify-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 text-sm font-medium text-red-600 transition-colors hover:bg-red-100 sm:flex-none sm:px-5"
+        className="inline-flex h-10 flex-1 items-center justify-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-3 text-sm font-medium text-red-600 transition-colors hover:bg-red-100 [&>svg]:shrink-0"
       >
         <Trash2 className="h-4 w-4" />
         Delete
