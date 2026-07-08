@@ -844,11 +844,11 @@ const isDragging = false;
 
 <div
   className={cn(
-    "w-[52px] shrink-0 flex flex-col items-center justify-center text-white",
+    "w-[48px] shrink-0 flex flex-col items-center justify-center text-white",
     panelGradient(item.elementType)
   )}
 >
-  <Icon className="h-5 w-5 stroke-[1.8]" />
+  <Icon className="h-4 w-4 stroke-[1.8]" />
 </div>
 
     {/* Card Content */}
@@ -882,7 +882,7 @@ const isDragging = false;
       <div className="min-w-0">
 
         <h3
-          className="truncate text-[13px] font-semibold leading-tight"
+          className="truncate text-[15px] font-semibold leading-tight"
           title={item.fromLocation}
         >
           {item.fromLocation || "—"}
@@ -895,13 +895,13 @@ const isDragging = false;
 
       <div className="flex w-[36px] flex-col items-center">
 
-        <div className="flex w-full items-center">
+        <div className="flex h-4 w-full items-center justify-center">
 
-          <div className="h-px w-2 border-t border-dashed border-muted-foreground/40" />
+          <div className="h-px flex-1 border-t border-dashed border-muted-foreground/40" />
 
-          <Icon className="h-3.5 w-3.5 text-blue-500" />
+          <Icon className="mx-1 h-4 w-4 self-center text-blue-500" />
 
-          <div className="h-px w-2 border-t border-dashed border-muted-foreground/40" />
+          <div className="h-px flex-1 border-t border-dashed border-muted-foreground/40" />
 
         </div>
 
@@ -916,7 +916,7 @@ const isDragging = false;
       <div className="min-w-0 text-right">
 
         <h3
-          className="truncate text-[13px] font-semibold leading-tight"
+          className="truncate text-[15px] font-semibold leading-tight"
           title={item.toLocation}
         >
           {item.toLocation || "—"}
@@ -967,35 +967,35 @@ const isDragging = false;
     Stay
   </p>
 
-  <div className="flex items-center gap-3">
+  <div className="grid grid-cols-[1fr_auto_auto] items-center gap-2">
 
-    <h3
-      className="min-w-0 flex-1 text-[13px] font-semibold leading-tight"
-    >
-      {item.title}
-    </h3>
+  <h3
+    className="min-w-0 text-[15px] font-semibold leading-tight truncate"
+  >
+    {item.title}
+  </h3>
 
-    <span
-      className={cn(
-        "shrink-0 rounded-full px-3 py-1 text-[10px] font-medium whitespace-nowrap",
-        ELEMENT_BADGES.accommodation
-      )}
-    >
-      {item.endDate
-        ? `${stayNights(item.date, item.endDate)} Night${
-            stayNights(item.date, item.endDate) > 1 ? "s" : ""
-          }`
-        : "1 Night"}
-    </span>
+  <span
+    className={cn(
+      "rounded-full px-3 py-1 text-[10px] font-medium whitespace-nowrap",
+      ELEMENT_BADGES.accommodation
+    )}
+  >
+    {item.endDate
+      ? `${stayNights(item.date, item.endDate)} Night${
+          stayNights(item.date, item.endDate) > 1 ? "s" : ""
+        }`
+      : "1 Night"}
+  </span>
 
-    <ChevronDown
-      className={cn(
-        "h-4 w-4 opacity-60 shrink-0 text-muted-foreground transition-transform",
-        expanded && "rotate-180"
-      )}
-    />
+  <ChevronDown
+    className={cn(
+      "h-4 w-4 opacity-60 text-muted-foreground transition-transform",
+      expanded && "rotate-180"
+    )}
+  />
 
-  </div>
+</div>
 
 </div>
 
@@ -1015,7 +1015,7 @@ const isDragging = false;
           )}
         </p>
 
-        <p className="mt-1 text-[12px] italic text-muted-foreground">
+        <p className="mt-0.5 text-[11px] italic text-muted-foreground/70">
            {item.startTime || "—"}
           </p>
 
@@ -1037,7 +1037,7 @@ const isDragging = false;
             : "—"}
         </p>
 
-        <p className="mt-1 text-[12px] italic text-muted-foreground">
+        <p className="mt-0.5 text-[11px] italic text-muted-foreground/70">
            {item.endTime || "—"}
           </p>
 
@@ -1068,7 +1068,7 @@ const isDragging = false;
 
   </div>
 
-  <h3 className="truncate text-[13px] font-semibold leading-tight">
+  <h3 className="truncate text-[15px] font-semibold leading-tight">
     {item.title}
   </h3>
 
@@ -1113,7 +1113,7 @@ const isDragging = false;
 
   </div>
 
-  <h3 className="truncate text-[13px] font-semibold leading-tight">
+  <h3 className="truncate text-[15px] font-semibold leading-tight">
     {item.title}
   </h3>
 
@@ -1139,7 +1139,7 @@ const isDragging = false;
           {duration || "—"}
         </p>
 
-        <p className="mt-1 text-[10px] uppercase tracking-[0.16em] font-medium text-muted-foreground">
+        <p className="mt-0.5 text-[9px] uppercase tracking-[0.14em] font-medium text-muted-foreground/70">
           Duration
         </p>
 
