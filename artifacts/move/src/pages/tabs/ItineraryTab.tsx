@@ -1263,13 +1263,13 @@ const isDragging = false;
 
     {/* Time */}
 
-    <div className="mt-4">
+    <div className="mt-4 rounded-2xl border border-border/50 bg-muted/20 px-4 py-3">
 
-      <p className="whitespace-nowrap text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+      <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
         Time
       </p>
 
-      <p className="mt-0.5 text-[15px] font-semibold">
+      <p className="mt-1 text-[15px] font-semibold">
         {item.startTime || "—"}
       </p>
 
@@ -1278,7 +1278,11 @@ const isDragging = false;
     {/* Meal Type */}
 
     {mealInfo && (
-      <div className="mt-4">
+      <div className="mt-3 rounded-2xl border border-border/50 bg-muted/20 px-4 py-3">
+
+        <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+          Meal
+        </p>
 
         <span
           className={cn(
@@ -1294,7 +1298,6 @@ const isDragging = false;
 
   </div>
 )}
-
         {item.elementType === "activity" && (
   <div className="relative flex h-full flex-col">
 
@@ -1325,37 +1328,41 @@ const isDragging = false;
 
     {/* Activity Timeline */}
 
-    <div className="mt-4 flex items-end justify-between gap-4">
+<div className="mt-4 rounded-2xl border border-border/50 bg-muted/20 px-4 py-3">
 
-      {/* Time */}
+  <div className="flex items-end justify-between gap-6">
 
-      <div className="min-w-0 flex-1">
+    {/* Time */}
 
-        <p className="whitespace-nowrap text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-          Time
-        </p>
+    <div className="min-w-0 flex-1">
 
-        <p className="mt-0.5 text-[15px] font-semibold">
-          {item.startTime || "—"}
-        </p>
+      <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+        Time
+      </p>
 
-      </div>
-
-      {/* Duration */}
-
-      <div className="text-right">
-
-        <p className="whitespace-nowrap text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-          Duration
-        </p>
-
-        <p className="mt-0.5 text-[15px] font-semibold">
-          {duration || "—"}
-        </p>
-
-      </div>
+      <p className="mt-1 text-[15px] font-semibold">
+        {item.startTime || "—"}
+      </p>
 
     </div>
+
+    {/* Duration */}
+
+    <div className="text-right">
+
+      <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+        Duration
+      </p>
+
+      <p className="mt-1 text-[15px] font-semibold">
+        {duration || "—"}
+      </p>
+
+    </div>
+
+  </div>
+
+</div>
 
   </div>
 )}
