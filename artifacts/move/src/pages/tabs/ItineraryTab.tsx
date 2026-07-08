@@ -642,66 +642,101 @@ function AccommodationBanner({
 
       {expanded && (
 
-        <div className="border-t border-border/40 bg-muted/20 px-5 py-4">
+  <div className="border-t border-border/30 bg-background">
 
-          {item.cost != null && item.cost > 0 && (
+    <div className="flex">
 
-            <div className="mb-4">
+      {/* Continue coloured strip */}
 
-              <span className="inline-flex rounded-full border border-violet-100 bg-violet-50 px-3 py-1 text-xs font-semibold text-violet-700">
+      <div
+        className={cn(
+          "w-[48px] shrink-0",
+          panelGradient(item.elementType)
+        )}
+      />
 
-                ₹{Math.round(item.cost).toLocaleString("en-IN")}
+      {/* Expanded content */}
 
-                {destCurrency !== "INR" && (
-                  <span className="ml-2 font-normal text-violet-500">
-                    {formatCurrency(
-                      convertFromINR(item.cost, destCurrency),
-                      destCurrency
-                    )}
-                  </span>
+      <div className="flex-1 space-y-4 px-5 py-5">
+
+        {/* Cost */}
+
+        {item.cost != null && item.cost > 0 && (
+
+          <div className="rounded-3xl border border-border/40 bg-background p-5">
+
+            <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+              Cost
+            </p>
+
+            <p className="text-[18px] font-semibold">
+              ₹{Math.round(item.cost).toLocaleString("en-IN")}
+            </p>
+
+            {destCurrency !== "INR" && (
+
+              <p className="mt-1 text-sm text-muted-foreground">
+
+                {formatCurrency(
+                  convertFromINR(item.cost, destCurrency),
+                  destCurrency
                 )}
 
-              </span>
-
-            </div>
-
-          )}
-
-          {item.notes && (
-
-            <div className="rounded-3xl border border-border/40 bg-background p-5 mb-4">
-
-              <p className="text-sm leading-relaxed text-foreground/80">
-                {item.notes}
               </p>
 
-            </div>
-
-          )}
-
-          <div className="flex items-center justify-end gap-5 border-t border-border pt-3">
-
-            <button
-              onClick={onEdit}
-              className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
-            >
-              <Pencil className="w-4 h-4" />
-              Edit
-            </button>
-
-            <button
-              onClick={handleDelete}
-              className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-red-500 transition-colors"
-            >
-              <Trash2 className="w-4 h-4" />
-              Delete
-            </button>
+            )}
 
           </div>
 
+        )}
+
+        {/* Notes */}
+
+        {item.notes && (
+
+          <div className="rounded-3xl border border-border/40 bg-background p-5">
+
+            <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+              Notes
+            </p>
+
+            <p className="text-[14px] leading-6 text-foreground/80">
+              {item.notes}
+            </p>
+
+          </div>
+
+        )}
+
+        {/* Actions */}
+
+        <div className="flex items-center justify-end gap-6 border-t border-border/40 pt-2">
+
+          <button
+            onClick={onEdit}
+            className="flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+          >
+            <Pencil className="h-4 w-4" />
+            Edit
+          </button>
+
+          <button
+            onClick={handleDelete}
+            className="flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-red-500"
+          >
+            <Trash2 className="h-4 w-4" />
+            Delete
+          </button>
+
         </div>
 
-      )}
+      </div>
+
+    </div>
+
+  </div>
+
+)}
 
     </div>
   );
@@ -838,7 +873,7 @@ const isDragging = false;
   onClick={() => setExpanded((v) => !v)}
   className="w-full text-left"
 >
-  <div className="flex min-h-[110px]">
+  <div className="flex min-h-[96px]">
 
 {/* Left Strip */}
 
@@ -853,7 +888,7 @@ const isDragging = false;
 
     {/* Card Content */}
 
-    <div className="flex-1 px-5 py-4 min-w-0">
+    <div className="flex-1 px-5 py-3 min-w-0">
 
       {/* Individual cards go here */}
 
@@ -882,7 +917,7 @@ const isDragging = false;
       <div className="min-w-0">
 
         <h3
-          className="truncate text-[15px] font-semibold leading-tight"
+          className="truncate text-[16px] font-semibold leading-tight"
           title={item.fromLocation}
         >
           {item.fromLocation || "—"}
@@ -893,19 +928,19 @@ const isDragging = false;
 
       {/* Centre */}
 
-      <div className="flex w-[36px] flex-col items-center">
+      <div className="flex w-[58px] shrink-0 flex-col items-center">
 
-        <div className="flex h-4 w-full items-center justify-center">
+        <div className="flex h-5 w-full items-center">
 
-          <div className="h-px flex-1 border-t border-dashed border-muted-foreground/40" />
+          <div className="h-px w-[18px] border-t border-dashed border-muted-foreground/40" />
 
-          <Icon className="mx-1 h-4 w-4 self-center text-blue-500" />
+          <Icon className="mx-1.5 h-4 w-4 shrink-0 text-blue-500" />
 
-          <div className="h-px flex-1 border-t border-dashed border-muted-foreground/40" />
+          <div className="h-px w-[18px] border-t border-dashed border-muted-foreground/40" />
 
         </div>
 
-        <span className="mt-1 text-[11px] italic tracking-[0.02em] text-muted-foreground">
+        <span className="mt-0.5 whitespace-nowrap text-[10px] italic leading-none tracking-[0.01em] text-muted-foreground">
           {duration || "—"}
         </span>
 
@@ -916,7 +951,7 @@ const isDragging = false;
       <div className="min-w-0 text-right">
 
         <h3
-          className="truncate text-[15px] font-semibold leading-tight"
+          className="truncate text-[16px] font-semibold leading-tight"
           title={item.toLocation}
         >
           {item.toLocation || "—"}
@@ -927,7 +962,7 @@ const isDragging = false;
 
     </div>
 
-    <div className="mt-5 flex justify-between">
+    <div className="mt-3.5 flex justify-between">
 
       <div>
 
@@ -963,43 +998,61 @@ const isDragging = false;
 
     <div>
 
-  <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-violet-500">
-    Stay
-  </p>
+  <div className="mb-1 flex items-center justify-between">
 
-  <div className="grid grid-cols-[1fr_auto_auto] items-center gap-2">
+    <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-violet-500">
+      Stay
+    </p>
 
-  <h3
-    className="min-w-0 text-[15px] font-semibold leading-tight truncate"
-  >
-    {item.title}
-  </h3>
+    <ChevronDown
+      className={cn(
+        "h-4 w-4 opacity-60 text-muted-foreground transition-transform",
+        expanded && "rotate-180"
+      )}
+    />
 
-  <span
-    className={cn(
-      "rounded-full px-3 py-1 text-[10px] font-medium whitespace-nowrap",
-      ELEMENT_BADGES.accommodation
-    )}
-  >
-    {item.endDate
-      ? `${stayNights(item.date, item.endDate)} Night${
-          stayNights(item.date, item.endDate) > 1 ? "s" : ""
-        }`
-      : "1 Night"}
-  </span>
+  </div>
 
-  <ChevronDown
-    className={cn(
-      "h-4 w-4 opacity-60 text-muted-foreground transition-transform",
-      expanded && "rotate-180"
-    )}
-  />
+  <div className="flex items-start gap-3">
+
+    <div className="min-w-0 flex-1">
+
+      <div className="flex items-center gap-2">
+
+        <h3
+          className="min-w-0 flex-1 truncate text-[16px] font-semibold leading-tight"
+        >
+          {item.title}
+        </h3>
+
+        <span
+          className={cn(
+            "shrink-0 rounded-full px-3 py-1 text-[10px] font-medium whitespace-nowrap",
+            ELEMENT_BADGES.accommodation
+          )}
+        >
+          {item.endDate
+            ? `${stayNights(item.date, item.endDate)} Night${
+                stayNights(item.date, item.endDate) > 1 ? "s" : ""
+              }`
+            : "1 Night"}
+        </span>
+
+      </div>
+
+      {item.location && (
+        <p className="mt-1 line-clamp-2 break-words text-[13px] text-muted-foreground">
+          {item.location}
+        </p>
+      )}
+
+    </div>
+
+  </div>
 
 </div>
 
-</div>
-
-    <div className="mt-5 grid grid-cols-2 gap-8">
+<div className="mt-3 grid grid-cols-2 gap-6">
 
       <div>
 
@@ -1053,7 +1106,7 @@ const isDragging = false;
 
     <div>
 
-  <div className="mb-2 flex items-center justify-between">
+  <div className="mb-1 flex items-center justify-between">
 
     <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-500">
       {categoryLabel(item)}
@@ -1068,13 +1121,13 @@ const isDragging = false;
 
   </div>
 
-  <h3 className="truncate text-[15px] font-semibold leading-tight">
+  <h3 className="truncate text-[16px] font-semibold leading-tight">
     {item.title}
   </h3>
 
 </div>
 
-    <div className="mt-4">
+    <div className="mt-3">
 
       <div>
 
@@ -1113,13 +1166,13 @@ const isDragging = false;
 
   </div>
 
-  <h3 className="truncate text-[15px] font-semibold leading-tight">
+  <h3 className="truncate text-[16px] font-semibold leading-tight">
     {item.title}
   </h3>
 
 </div>
 
-    <div className="mt-4 flex items-end justify-between">
+    <div className="mt-3 flex items-end justify-between">
 
       <div>
 
@@ -1155,22 +1208,22 @@ const isDragging = false;
           </button>
 
         {expanded && (
-          <div className="border-t border-border/30 bg-muted/10 px-6 py-6 space-y-5">
+          <div className="border-t border-border/20 bg-background">
 
-            {/* Location */}
+          {/* Location */}
 
-{item.location && (
+{item.location && item.elementType !== "accommodation" && (
   <div className="rounded-3xl border border-border/40 bg-background p-5">
 
-    <p className="text-[11px] uppercase tracking-[0.16em] font-semibold text-muted-foreground mb-2">
+    <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
       Location
     </p>
 
     <div className="flex items-start gap-3">
 
-      <MapPin className="w-4 h-4 mt-0.5 shrink-0 text-muted-foreground" />
+      <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
 
-      <p className="text-sm leading-6 break-words">
+      <p className="break-words text-[14px] leading-6 text-foreground/90">
         {item.location}
       </p>
 
@@ -1178,30 +1231,30 @@ const isDragging = false;
 
   </div>
 )}
+          {/* Cost */}
 
-            {/* Cost */}
+{item.cost != null && item.cost > 0 && (
+  <div className="rounded-3xl border border-border/40 bg-background p-5">
 
-            {item.cost != null && item.cost > 0 && (
-              <div>
-                <span
-                  className={cn(
-                    "inline-flex items-center rounded-full px-3.5 py-1.5 text-xs font-semibold",
-                    ELEMENT_BADGES[item.elementType]
-                  )}
-                >
-                  ₹{Math.round(item.cost).toLocaleString("en-IN")}
+    <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+      Cost
+    </p>
 
-                  {destCurrency !== "INR" && (
-                    <span className="ml-2 font-normal opacity-70">
-                      {formatCurrency(
-                        convertFromINR(item.cost, destCurrency),
-                        destCurrency
-                      )}
-                    </span>
-                  )}
-                </span>
-              </div>
-            )}
+    <p className="text-[18px] font-semibold">
+      ₹{Math.round(item.cost).toLocaleString("en-IN")}
+    </p>
+
+    {destCurrency !== "INR" && (
+      <p className="mt-1 text-sm text-muted-foreground">
+        {formatCurrency(
+          convertFromINR(item.cost, destCurrency),
+          destCurrency
+        )}
+      </p>
+    )}
+
+  </div>
+)}
 
             {/* Notes */}
 
