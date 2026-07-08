@@ -1154,25 +1154,49 @@ const isDragging = false;
           {travelLabel(item.travelType)}
         </p>
 
-        <div className="flex min-w-0 items-center gap-3">
+        <div className="mt-1 flex min-w-0 items-center gap-3">
 
-          <span
-            className="min-w-0 flex-1 truncate text-[18px] font-semibold leading-[1.35]"
-            title={item.fromLocation}
-          >
-            {item.fromLocation || "—"}
-          </span>
+  {/* From */}
 
-          <Icon className="h-4 w-4 shrink-0 text-blue-500" />
+  <div className="min-w-0 flex-1">
+    <p
+      className={cn(
+        "text-[18px] font-semibold leading-[1.35]",
+        expanded ? "break-words" : "truncate"
+      )}
+      title={item.fromLocation}
+    >
+      {item.fromLocation || "—"}
+    </p>
+  </div>
 
-          <span
-            className="min-w-0 flex-1 truncate text-right text-[18px] font-semibold leading-[1.35]"
-            title={item.toLocation}
-          >
-            {item.toLocation || "—"}
-          </span>
+  {/* Flight connector */}
 
-        </div>
+  <div className="flex w-[90px] shrink-0 items-center">
+
+    <div className="flex-1 border-t border-dashed border-blue-300" />
+
+    <Icon className="mx-2 h-4 w-4 shrink-0 text-blue-500" />
+
+    <div className="flex-1 border-t border-dashed border-blue-300" />
+
+  </div>
+
+  {/* To */}
+
+  <div className="min-w-0 flex-1 text-right">
+    <p
+      className={cn(
+        "text-[18px] font-semibold leading-[1.35]",
+        expanded ? "break-words text-right" : "truncate text-right"
+      )}
+      title={item.toLocation}
+    >
+      {item.toLocation || "—"}
+    </p>
+  </div>
+
+</div>
 
       </div>
 
@@ -1187,7 +1211,7 @@ const isDragging = false;
 
     {/* Journey */}
 
-    <div className="mt-5 grid grid-cols-[1fr_80px_1fr] items-end gap-4">
+    <div className="mt-5 grid grid-cols-[1fr_90px_1fr] items-end gap-4">
 
       {/* Departure */}
 
@@ -1205,13 +1229,13 @@ const isDragging = false;
 
       {/* Duration */}
 
-      <div className="text-center">
+      <div className="flex items-end justify-center">
 
-        <p className="text-[11px] italic text-blue-600">
-          {duration || "—"}
-        </p>
+  <p className="text-[11px] italic text-blue-600">
+    {duration || "—"}
+  </p>
 
-      </div>
+</div>
 
       {/* Arrival */}
 
