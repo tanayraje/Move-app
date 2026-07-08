@@ -564,7 +564,11 @@ function AccommodationCard({
 
         <div className="flex min-w-0 flex-1 items-start gap-3">
 
-          <h3 className="min-w-0 flex-1 line-clamp-2 text-[16px] font-semibold leading-[1.35] tracking-[-0.01em]">
+          <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-violet-600 dark:text-violet-400">
+              Stay
+            </p>
+
+          <h3 className="min-w-0 flex-1 line-clamp-2 text-[16px] font-bold leading-[1.35] tracking-[-0.01em]">
             {item.title}
           </h3>
 
@@ -599,7 +603,7 @@ function AccommodationCard({
         )}
       </p>
 
-      <p className="mt-1 text-[12px] italic text-muted-foreground">
+      <p className="text-[12px] font-medium italic text-violet-600 dark:text-violet-400">
         {item.startTime || "—"}
       </p>
 
@@ -619,9 +623,9 @@ function AccommodationCard({
 
     <div className="text-right">
 
-      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-        Check-out
-      </p>
+      <p className="whitespace-nowrap text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+          Check-out
+        </p>
 
       <p className="mt-1 text-[15px] font-semibold">
         {item.endDate
@@ -652,7 +656,7 @@ function AccommodationCard({
 
 {expanded && (
 
-  <div className="border-t border-border/20 bg-background">
+  <div className="bg-background">
 
     <div className="flex">
 
@@ -665,7 +669,7 @@ function AccommodationCard({
         )}
       />
 
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0 flex-1 border-t border-border/20">
 
         {/* Location */}
 
