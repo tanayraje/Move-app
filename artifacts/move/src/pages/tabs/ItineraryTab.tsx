@@ -585,7 +585,7 @@ const toggleChecklistItem = (checkId: string) => {
 
         <div
           className={cn(
-            "flex w-[48px] shrink-0 flex-col",
+            "w-[48px] shrink-0 self-start rounded-bl-[28px]",
             panelGradient(item.elementType)
           )}
         >
@@ -707,7 +707,7 @@ const toggleChecklistItem = (checkId: string) => {
     {/* Location */}
 
     {item.location && (
-      <div className="border-b border-border/20 px-6 py-5">
+      <div className="border-b border-border/20 px-5 py-5">
 
         <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
           Location
@@ -729,13 +729,13 @@ const toggleChecklistItem = (checkId: string) => {
     {/* Cost */}
 
     {item.cost != null && item.cost > 0 && (
-      <div className="border-b border-border/20 px-6 py-5">
+      <div className="border-b border-border/20 px-5 py-5">
 
         <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
           Cost
         </p>
 
-        <div className="-mx-2 rounded-3xl border border-border/60 bg-muted/20 px-6 py-5">
+        className="w-full rounded-3xl border border-border/60 bg-muted/2a<div className="w-full rounded-3xl border border-border/60 bg-muted/20 px-6 py-5">0 px-6 py-4"
 
           <p className="text-[24px] font-semibold tracking-[-0.02em]">
             ₹{Math.round(item.cost).toLocaleString("en-IN")}
@@ -759,13 +759,13 @@ const toggleChecklistItem = (checkId: string) => {
     {/* Notes */}
 
     {item.notes && (
-      <div className="border-b border-border/20 px-6 py-5">
+      <div className="border-b border-border/20 px-5 py-5">
 
         <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
           Notes
         </p>
 
-        <div className="rounded-3xl border border-border/60 bg-muted/20 px-5 py-4">
+        <div className="w-full rounded-3xl border border-border/60 bg-muted/20 px-6 py-4">
 
           <p className="text-[14px] leading-6 text-foreground/80">
             {item.notes}
@@ -779,7 +779,7 @@ const toggleChecklistItem = (checkId: string) => {
     {/* Checklist */}
 
 {item.checklist && item.checklist.length > 0 && (
-  <div className="border-b border-border/20 px-6 py-5">
+  <div className="border-b border-border/20 px-5 py-5">
 
     <div className="mb-4 flex items-center justify-between">
 
@@ -824,7 +824,7 @@ const toggleChecklistItem = (checkId: string) => {
 
     </div>
 
-    <div className="space-y-2">
+    <div className="w-full space-y-2 rounded-3xl border border-border/60 bg-muted/20 p-5">
 
       {item.checklist.map((ci) => (
 
@@ -873,7 +873,7 @@ const toggleChecklistItem = (checkId: string) => {
 
 {attachedDocs.length > 0 && (
 
-  <div className="border-b border-border/20 px-6 py-5">
+  <div className="border-b border-border/20 px-5 py-5">
 
     <div className="mb-4 flex items-center justify-between">
 
@@ -894,7 +894,7 @@ const toggleChecklistItem = (checkId: string) => {
 
         <div
           key={doc.id}
-          className="-mx-2 flex min-w-0 items-center gap-4 rounded-3xl border border-border bg-muted/20 px-6 py-4"
+          className="flex w-full min-w-0 items-center gap-4 rounded-3xl border border-border bg-muted/20 px-6 py-4"
         >
 
           <div
@@ -1111,7 +1111,6 @@ const isDragging = false;
     <Icon className="h-4 w-4 stroke-[1.8]" />
   </div>
 
-  {expanded && <div className="flex-1" />}
 </div>
 
   {/* Right Side */}
@@ -1407,12 +1406,12 @@ const isDragging = false;
 
 
 {expanded && (
-      <div className="border-t border-border/20 bg-background px-5 py-2">
+      <div className="border-t border-border/20 bg-background px-0 py-2">
 
       {/* Location */}
 
 {item.location && (
-  <div className="border-b border-border/20 px-6 py-5">
+  <div className="border-b border-border/20 px-5 py-5">
 
     <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
       Location
@@ -1435,13 +1434,13 @@ const isDragging = false;
 {/* Cost */}
 
 {item.cost != null && item.cost > 0 && (
-  <div className="border-b border-border/20 px-6 py-5">
+  <div className="border-b border-border/20 px-5 py-5">
 
     <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
       Cost
     </p>
 
-    <div className="-mx-2 rounded-3xl border border-border/60 bg-muted/20 px-6 py-5">
+    className="w-full rounded-3xl border border-border/60 bg-muted/2a<div className="w-full rounded-3xl border border-border/60 bg-muted/20 px-6 py-5">0 px-6 py-4"
 
       <p className="text-[24px] font-semibold tracking-[-0.02em]">
         ₹{Math.round(item.cost).toLocaleString("en-IN")}
@@ -1465,13 +1464,13 @@ const isDragging = false;
  {/* Notes */}
 
 {item.notes && (
-  <div className="border-b border-border/20 px-6 py-5">
+  <div className="border-b border-border/20 px-5 py-5">
 
     <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
       Notes
     </p>
 
-    <div className="rounded-3xl border border-border/60 bg-muted/20 px-5 py-4">
+    <div className="w-full rounded-3xl border border-border/60 bg-muted/20 px-6 py-4">
 
       <p className="text-[14px] leading-6 text-foreground/80">
         {item.notes}
@@ -1484,7 +1483,7 @@ const isDragging = false;
                         {/* Checklist */}
 
             {item.checklist && item.checklist.length > 0 && (
-              <div className="border-t border-border/20 px-5 py-4">
+              <div className="border-b border-border/20 px-5 py-5">
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
@@ -1531,7 +1530,7 @@ const isDragging = false;
                   />
                 </div>
 
-                <div className="space-y-2">
+                <div className="w-full space-y-2 rounded-3xl border border-border/60 bg-muted/20 p-5">
                   {item.checklist.map((ci) => (
                     <button
                       key={ci.id}
@@ -1576,7 +1575,7 @@ const isDragging = false;
   {/* Attachments */}
 
 {attachedDocs.length > 0 && (
-  <div className="border-b border-border/20 px-6 py-5">
+  <div className="border-b border-border/20 px-5 py-5">
 
     <div className="mb-4 flex items-center justify-between">
 
@@ -1597,7 +1596,7 @@ const isDragging = false;
 
         <div
           key={doc.id}
-          className="-mx-2 flex min-w-0 items-center gap-4 rounded-3xl border border-border bg-muted/20 px-6 py-4"
+          className="flex w-full min-w-0 items-center gap-4 rounded-3xl border border-border bg-muted/20 px-6 py-4"
         >
 
           <div
