@@ -504,11 +504,64 @@ function AccommodationCard({
 }) {
   const { mutate: deleteItem } = useDeleteItineraryItem();
   const { mutate: deleteExpense } = useDeleteExpense();
+  const { mutate: saveItem } = useSaveItineraryItem();
+  const { mutate: deleteDoc } = useDeleteDocument();
 
   const [expanded, setExpanded] = useState(false);
 
+  const documents = useDocuments(item.tripId).data || [];
+
+const attachedDocs = documents.filter((d) =>
+  (item.attachedDocIds || []).includes(d.id)
+);
+
+const totalChecklist = item.checklist?.length ?? 0;
+
+const doneChecklist =
+  item.checklist?.filter((c) => c.done).length ?? 0;
+
   const nights = item.endDate ? stayNights(item.date, item.endDate) : 1;
   const destCurrency = trip.destinationCurrency || "INR";
+
+  const openDoc = (doc: TripDocument) => {
+  if (!doc.blob) {
+    alert("Document file not found");
+    return;
+  }
+
+  const url = URL.createObjectURL(doc.blob);
+  window.open(url, "_blank");
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+};
+
+const detachDoc = (docId: string) => {
+  if (!confirm("Remove this file from the item?")) return;
+
+  saveItem({
+    ...item,
+    attachedDocIds: (item.attachedDocIds || []).filter(
+      (id) => id !== docId
+    ),
+  });
+
+  deleteDoc({
+    id: docId,
+    tripId: item.tripId,
+  });
+};
+
+const toggleChecklistItem = (checkId: string) => {
+  if (!item.checklist) return;
+
+  saveItem({
+    ...item,
+    checklist: item.checklist.map((c) =>
+      c.id === checkId
+        ? { ...c, done: !c.done }
+        : c
+    ),
+  });
+};
 
   const handleDelete = () => {
     if (!confirm("Remove this accommodation?")) return;
@@ -527,232 +580,383 @@ function AccommodationCard({
   };
 
   return (
-    <div className={cn(
-  "mb-4 overflow-hidden rounded-[28px] border bg-card shadow-[0_2px_10px_rgba(0,0,0,0.05)] transition-all duration-300 hover:shadow-[0_8px_28px_rgba(0,0,0,0.08)]",
-  ELEMENT_BORDER.accommodation
-)}>
+    <div
+      className={cn(
+        "mb-4 overflow-hidden rounded-[28px] border bg-card shadow-[0_2px_10px_rgba(0,0,0,0.05)] transition-all duration-300 hover:shadow-[0_8px_28px_rgba(0,0,0,0.08)]",
+        ELEMENT_BORDER.accommodation
+      )}
+    >
+      <div className="flex items-stretch">
 
-    {/* HEADER */}
+        {/* Left Sidebar */}
 
-<button
-  type="button"
-  onClick={() => setExpanded(v => !v)}
-  className="w-full text-left"
->
-  <div className="flex items-stretch">
+        <div
+          className={cn(
+            "flex w-[48px] shrink-0 flex-col",
+            panelGradient(item.elementType)
+          )}
+        >
+          <div className="flex h-[96px] items-center justify-center text-white">
+            <Building2 className="h-4 w-4 stroke-[1.8]" />
+          </div>
 
-  {/* Left Strip */}
-
-  <div
-    className={cn(
-      "w-[48px] shrink-0",
-      panelGradient(item.elementType)
-    )}
-  >
-    <div className="sticky top-0 flex h-[96px] items-center justify-center text-white">
-      <Building2 className="h-4 w-4 stroke-[1.8]" />
-    </div>
-  </div>
-
-  {/* CONTENT */}
-
-  <div className="min-w-0 flex-1">
-
-      {/* Title */}
-
-      <div className="flex items-start justify-between gap-3">
-
-        <div className="px-6 py-5">
-
-          <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-violet-600 dark:text-violet-400">
-            Stay
-          </p>
-
-          <h3 className="line-clamp-2 text-[16px] font-semibold leading-[1.35] tracking-[-0.01em]">
-            {item.title}
-          </h3>
-
+          <div className="flex-1" />
         </div>
 
-        <ChevronDown
-          className={cn(
-            "mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-300",
-            expanded && "rotate-180"
-          )}
-        />
+        {/* Right Panel */}
+
+        <div className="min-w-0 flex-1">
+
+          <button
+  type="button"
+  onClick={() => setExpanded((v) => !v)}
+  className="w-full text-left"
+>
+  <div className="px-6 py-5">
+
+    {/* Header */}
+
+    <div className="flex items-start justify-between gap-4">
+
+      <div className="min-w-0 flex-1">
+
+        <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-violet-600">
+          Stay
+        </p>
+
+        <h3 className="line-clamp-2 text-[16px] font-semibold leading-[1.35]">
+          {item.title}
+        </h3>
 
       </div>
 
-      {/* Stay */}
-
-<div className="mt-6">
-
-  <div className="grid grid-cols-[1fr_72px_1fr] items-end gap-3">
-
-    <div>
-
-      <p className="whitespace-nowrap text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-        Check-in
-      </p>
-
-      <p className="mt-1 text-[15px] font-semibold">
-        {safeFormatDate(
-          item.date,
-          d => format(d, "MMM d"),
-          item.date
+      <ChevronDown
+        className={cn(
+           "mt-6 h-4 w-4 shrink-0 text-muted-foreground/70 transition-transform duration-300",
+          expanded && "rotate-180"
         )}
-      </p>
-
-      <p className="mt-1 text-[12px] italic text-muted-foreground">
-        {item.startTime || "—"}
-      </p>
+      />
 
     </div>
 
-    <div className="flex flex-col items-center justify-center px-2">
+    {/* Stay Timeline */}
 
-  <div className="mb-2 h-px w-8 bg-border/60" />
+    <div className="mt-6 flex items-end justify-between gap-4">
 
-  <p className="whitespace-nowrap text-[11px] font-medium italic text-violet-600 dark:text-violet-400">
-    {nights} night{nights > 1 ? "s" : ""}
-  </p>
+      {/* Check In */}
 
-  <div className="mt-2 h-px w-8 bg-border/60" />
+      <div className="min-w-[84px] flex-1">
 
-</div>
+        <p className="whitespace-nowrap text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+          Check-in
+        </p>
 
-    <div className="text-right">
+        <p className="mt-1 text-[15px] font-semibold">
+          {safeFormatDate(
+            item.date,
+            d => format(d, "MMM d"),
+            item.date
+          )}
+        </p>
 
-      <p className="whitespace-nowrap text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+        <p className="mt-1 text-[12px] italic text-muted-foreground">
+          {item.startTime || "—"}
+        </p>
+
+      </div>
+
+      {/* Nights */}
+
+      <div className="shrink-0 px-2 text-center">
+
+        <div className="mb-2 h-px w-8 bg-border/60" />
+
+        <p className="whitespace-nowrap text-[12px] font-semibold italic text-violet-700 dark:text-violet-300">
+          {nights} night{nights > 1 ? "s" : ""}
+        </p>
+
+        <div className="mt-2 h-px w-8 bg-border/60" />
+
+      </div>
+
+      {/* Check Out */}
+
+      <div className="min-w-[84px] flex-1 text-right">
+
+        <p className="whitespace-nowrap text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
           Check-out
         </p>
 
-      <p className="mt-1 text-[15px] font-semibold">
-        {item.endDate
-          ? safeFormatDate(
-              item.endDate,
-              d => format(d, "MMM d"),
-              item.endDate
-            )
-          : "—"}
-      </p>
+        <p className="mt-1 text-[15px] font-semibold">
+          {item.endDate
+            ? safeFormatDate(
+                item.endDate,
+                d => format(d, "MMM d"),
+                item.endDate
+              )
+            : "—"}
+        </p>
 
-      <p className="mt-1 text-[12px] italic text-muted-foreground">
-        {item.endTime || "—"}
-      </p>
+        <p className="mt-1 text-[12px] italic text-muted-foreground">
+          {item.endTime || "—"}
+        </p>
 
-    </div>
-
-  </div>
-
-</div>
+      </div>
 
     </div>
 
   </div>
 </button>
 
-{/* EXPANDED */}
-
 {expanded && (
+  <div className="border-t border-border/20">
 
-  <div className="bg-background">
+    {/* Location */}
 
-    <div className="flex">
+    {item.location && (
+      <div className="border-b border-border/20 px-6 py-5">
 
-      <div className="min-w-0 flex-1 border-t border-border/20">
+        <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+          Location
+        </p>
 
-        {/* Location */}
+        <div className="flex items-start gap-3">
 
-        {item.location && (
+          <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
 
-          <div className="border-b border-border/20 px-6 py-6">
+          <p className="text-[14px] leading-6 text-foreground/90">
+            {item.location}
+          </p>
 
-            <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/60">
-              Location
-            </p>
+        </div>
 
-            <div className="flex items-start gap-3">
+      </div>
+    )}
 
-              <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground/60" />
+    {/* Cost */}
 
-              <p className="text-[14px] leading-6 text-foreground/90">
-                {item.location}
-              </p>
+    {item.cost != null && item.cost > 0 && (
+      <div className="border-b border-border/20 px-6 py-5">
 
-            </div>
+        <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+          Cost
+        </p>
 
-          </div>
+        <div className="rounded-3xl border border-border/60 bg-muted/20 px-5 py-5">
 
-        )}
+          <p className="text-[24px] font-semibold tracking-[-0.02em]">
+            ₹{Math.round(item.cost).toLocaleString("en-IN")}
+          </p>
 
-        {/* Cost */}
-
-        {item.cost != null && item.cost > 0 && (
-
-          <div className="border-b border-border/20 px-6 py-5">
-
-            <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-              Cost
-            </p>
-
-            <div className="rounded-2xl border border-border bg-muted/20 px-5 py-4">
-
-              <p className="text-[24px] font-semibold tracking-[-0.02em]">
-                ₹{Math.round(item.cost).toLocaleString("en-IN")}
-              </p>
-
-              {destCurrency !== "INR" && (
-
-                <p className="mt-1 text-sm text-muted-foreground">
-
-                  ≈ {formatCurrency(
-                    convertFromINR(item.cost, destCurrency),
-                    destCurrency
-                  )}
-
-                </p>
-
+          {destCurrency !== "INR" && (
+            <p className="mt-1 text-sm text-muted-foreground">
+              ≈{" "}
+              {formatCurrency(
+                convertFromINR(item.cost, destCurrency),
+                destCurrency
               )}
+            </p>
+          )}
+
+        </div>
+
+      </div>
+    )}
+
+    {/* Notes */}
+
+    {item.notes && (
+      <div className="border-b border-border/20 px-6 py-5">
+
+        <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+          Notes
+        </p>
+
+        <div className="rounded-3xl border border-border/60 bg-muted/20 px-5 py-4">
+
+          <p className="text-[14px] leading-6 text-foreground/80">
+            {item.notes}
+          </p>
+
+        </div>
+
+      </div>
+    )}
+
+    {/* Checklist */}
+
+{item.checklist && item.checklist.length > 0 && (
+  <div className="border-b border-border/20 px-6 py-5">
+
+    <div className="mb-4 flex items-center justify-between">
+
+      <div>
+
+        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+          Checklist
+        </p>
+
+        <p className="mt-1 text-xs text-muted-foreground">
+          {doneChecklist} of {totalChecklist} completed
+        </p>
+
+      </div>
+
+      <span
+        className={cn(
+          "rounded-full px-3 py-1 text-xs font-semibold",
+          ELEMENT_BADGES.accommodation
+        )}
+      >
+        {totalChecklist
+          ? Math.round((doneChecklist / totalChecklist) * 100)
+          : 0}
+        %
+      </span>
+
+    </div>
+
+    <div className="mb-5 h-2 overflow-hidden rounded-full bg-muted">
+
+      <div
+        className="h-full rounded-full bg-violet-500 transition-all"
+        style={{
+          width: `${
+            totalChecklist
+              ? (doneChecklist / totalChecklist) * 100
+              : 0
+          }%`,
+        }}
+      />
+
+    </div>
+
+    <div className="space-y-2">
+
+      {item.checklist.map((ci) => (
+
+        <button
+          key={ci.id}
+          type="button"
+          onClick={() => toggleChecklistItem(ci.id)}
+          className="flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left transition-colors hover:bg-muted/40"
+        >
+
+          {ci.done ? (
+
+            <div className="flex h-5 w-5 items-center justify-center rounded-full bg-violet-500">
+
+              <Check className="h-3 w-3 text-white" />
 
             </div>
 
+          ) : (
+
+            <div className="h-5 w-5 rounded-full border-2 border-muted-foreground/30" />
+
+          )}
+
+          <span
+            className={cn(
+              "text-[14px]",
+              ci.done
+                ? "text-muted-foreground line-through"
+                : "text-foreground"
+            )}
+          >
+            {ci.text}
+          </span>
+
+        </button>
+
+      ))}
+
+    </div>
+
+  </div>
+)}
+
+{/* Attachments */}
+
+{attachedDocs.length > 0 && (
+
+  <div className="border-b border-border/20 px-6 py-5">
+
+    <div className="mb-4 flex items-center justify-between">
+
+      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+        Attachments
+      </p>
+
+      <span className="text-xs text-muted-foreground">
+        {attachedDocs.length} file
+        {attachedDocs.length !== 1 ? "s" : ""}
+      </span>
+
+    </div>
+
+    <div className="space-y-3">
+
+      {attachedDocs.map((doc) => (
+
+        <div
+          key={doc.id}
+          className="flex items-center gap-3 rounded-3xl border border-border bg-muted/20 px-4 py-3"
+        >
+
+          <div
+            className={cn(
+              "flex h-10 w-10 items-center justify-center rounded-xl",
+              tintSurface(item.elementType)
+            )}
+          >
+            <Paperclip className="h-4 w-4" />
           </div>
 
-        )}
+          <button
+            type="button"
+            onClick={() => openDoc(doc)}
+            className="min-w-0 flex-1 text-left"
+          >
 
-        {/* Notes */}
-
-        {item.notes && (
-
-          <div className="border-b border-border/20 px-6 py-5">
-
-            <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-              Notes
+            <p className="truncate text-[14px] font-medium">
+              {doc.name}
             </p>
 
-            <div className="rounded-3xl border border-border/60 bg-muted/15 px-5 py-4">
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              Tap to open
+            </p>
 
-  <p className="text-[14px] leading-6 text-foreground/80">
-    {item.notes}
-  </p>
+          </button>
 
-</div>
+          <button
+            type="button"
+            onClick={() => detachDoc(doc.id)}
+            className="rounded-lg p-2 transition-colors hover:bg-red-50 hover:text-red-500"
+          >
+            <X className="h-4 w-4" />
+          </button>
 
-          </div>
+        </div>
 
-        )}
+      ))}
 
-        {/* Actions */}
+    </div>
 
-<div className="border-t border-border/20 px-6 py-5">
+  </div>
+
+)}
+
+{/* Actions */}
+
+<div className="px-6 py-5">
 
   <div className="flex justify-end gap-3">
 
     <button
       type="button"
       onClick={onEdit}
-      className="inline-flex items-center gap-2 rounded-xl border border-border bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-muted"
+      className="inline-flex items-center gap-2 rounded-2xl border border-border bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-muted"
     >
       <Pencil className="h-4 w-4" />
       Edit
@@ -761,7 +965,7 @@ function AccommodationCard({
     <button
       type="button"
       onClick={handleDelete}
-      className="inline-flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-100"
+      className="inline-flex items-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-100"
     >
       <Trash2 className="h-4 w-4" />
       Delete
@@ -771,17 +975,16 @@ function AccommodationCard({
 
 </div>
 
-      </div>
-
-    </div>
-
   </div>
-
 )}
 
+        </div>
+
+      </div>
     </div>
   );
 }
+
 
 // ─── Sortable Item ────────────────────────────────────────────────────────────
 function SortableItem({
