@@ -1036,13 +1036,13 @@ const isDragging = false;
 
     </div>
 
-    <div className="mt-2">
+    <div className="mt-1.5">
 
       <div className="flex items-start gap-3">
 
         <h3
           className={cn(
-            "min-w-0 flex-1 text-[16px] font-semibold leading-snug",
+            "min-w-0 flex-1 text-[17px] font-semibold leading-snug",
             expanded ? "break-words" : "line-clamp-2"
           )}
         >
@@ -1051,7 +1051,7 @@ const isDragging = false;
 
         <span
           className={cn(
-            "self-center shrink-0 rounded-full px-3 py-1 text-[10px] font-medium whitespace-nowrap",
+            "self-center shrink-0 rounded-full px-3 py-1 text-[10px] font-semibold whitespace-nowrap",
             ELEMENT_BADGES.accommodation
           )}
         >
@@ -1067,7 +1067,7 @@ const isDragging = false;
       {item.location && (
         <p
           className={cn(
-            "mt-2 text-[13px] leading-5 text-muted-foreground",
+            "mt-1.5 text-[13px] leading-5 text-muted-foreground",
             expanded ? "break-words" : "line-clamp-2"
           )}
         >
@@ -1077,7 +1077,9 @@ const isDragging = false;
 
     </div>
 
-    <div className="mt-5 grid grid-cols-2 gap-10">
+    <div className="mt-4 grid grid-cols-[1fr_auto_1fr] items-start">
+
+      {/* Check In */}
 
       <div>
 
@@ -1085,19 +1087,25 @@ const isDragging = false;
           Check In
         </p>
 
-        <p className="mt-1.5 text-[15px] font-semibold">
+        <p className="mt-1 text-[15px] font-semibold">
           {safeFormatDate(
             item.date,
-            d => format(d, "MMM d"),
+            (d) => format(d, "MMM d"),
             item.date
           )}
         </p>
 
-        <p className="mt-0 text-[11px] italic text-muted-foreground">
+        <p className="text-[11px] italic text-muted-foreground/70">
           {item.startTime || "—"}
         </p>
 
       </div>
+
+      {/* Divider */}
+
+      <div className="mx-5 h-full w-px bg-border/60" />
+
+      {/* Check Out */}
 
       <div className="text-right">
 
@@ -1105,17 +1113,17 @@ const isDragging = false;
           Check Out
         </p>
 
-        <p className="mt-1.5 text-[15px] font-semibold">
+        <p className="mt-1 text-[15px] font-semibold">
           {item.endDate
             ? safeFormatDate(
                 item.endDate,
-                d => format(d, "MMM d"),
+                (d) => format(d, "MMM d"),
                 item.endDate
               )
             : "—"}
         </p>
 
-        <p className="mt-0 text-[11px] italic text-muted-foreground">
+        <p className="text-[11px] italic text-muted-foreground/70">
           {item.endTime || "—"}
         </p>
 
