@@ -550,7 +550,7 @@ function AccommodationCard({
           )}
         >
           <div className="flex h-[96px] items-center justify-center text-white">
-            <Icon className="h-4 w-4 stroke-[1.8]" />
+            <Building2 className="h-4 w-4 stroke-[1.8]" />
           </div>
         </div>
 
@@ -663,7 +663,10 @@ function AccommodationCard({
       {/* Continue left strip */}
 
       <div
-        className="w-[46px] shrink-0 self-stretch bg-gradient-to-b from-violet-500 to-violet-700"
+        className={cn(
+          "w-[48px] shrink-0 self-stretch",
+          panelGradient(item.elementType)
+        )}
       />
 
       <div className="min-w-0 flex-1 border-t border-border/20">
