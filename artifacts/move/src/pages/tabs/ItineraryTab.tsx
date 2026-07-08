@@ -7,9 +7,6 @@ import {
   ArrowLeftRight, Pencil, X, ChevronDown, ChevronRight,
   Coffee, Wine, Sun, Sunset
 } from "lucide-react";
-import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
-import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
 
 import {
   useItinerary, useSaveItineraryItem, useDeleteItineraryItem,
@@ -23,6 +20,22 @@ import {
 import { generateId, cn, safeFormatDate, safeParseDate, isDayLabel, getTripStatus } from "@/lib/utils";
 import { Button, Input, Label, Select, BottomSheet, FAB } from "@/components/ui";
 import { formatCurrency, convertFromINR, RATES_PER_INR } from "@/lib/countries";
+
+import {
+  DndContext,
+  PointerSensor,
+  KeyboardSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+
+import {
+  SortableContext,
+  arrayMove,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 type MealSubType = 'breakfast' | 'lunch' | 'dinner' | 'drinks';
@@ -707,7 +720,7 @@ const toggleChecklistItem = (checkId: string) => {
     {/* Location */}
 
     {item.location && (
-      <div className="border-b border-border/20 px-5 py-5">
+      <div className="border-b border-border/20 px-4 py-5">
 
         <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
           Location
@@ -729,13 +742,13 @@ const toggleChecklistItem = (checkId: string) => {
     {/* Cost */}
 
     {item.cost != null && item.cost > 0 && (
-      <div className="border-b border-border/20 px-5 py-5">
+      <div className="border-b border-border/20 px-4 py-5">
 
         <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
           Cost
         </p>
 
-        className="w-full rounded-3xl border border-border/60 bg-muted/2a<div className="w-full rounded-3xl border border-border/60 bg-muted/20 px-6 py-5">0 px-6 py-4"
+        <div className="w-full rounded-3xl border border-border/60 bg-muted/20 px-6 py-5">
 
           <p className="text-[24px] font-semibold tracking-[-0.02em]">
             ₹{Math.round(item.cost).toLocaleString("en-IN")}
@@ -759,7 +772,7 @@ const toggleChecklistItem = (checkId: string) => {
     {/* Notes */}
 
     {item.notes && (
-      <div className="border-b border-border/20 px-5 py-5">
+      <div className="border-b border-border/20 px-4 py-5">
 
         <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
           Notes
@@ -779,7 +792,7 @@ const toggleChecklistItem = (checkId: string) => {
     {/* Checklist */}
 
 {item.checklist && item.checklist.length > 0 && (
-  <div className="border-b border-border/20 px-5 py-5">
+  <div className="border-b border-border/20 px-4 py-5">
 
     <div className="mb-4 flex items-center justify-between">
 
@@ -873,7 +886,7 @@ const toggleChecklistItem = (checkId: string) => {
 
 {attachedDocs.length > 0 && (
 
-  <div className="border-b border-border/20 px-5 py-5">
+  <div className="border-b border-border/20 px-4 py-5">
 
     <div className="mb-4 flex items-center justify-between">
 
@@ -942,14 +955,14 @@ const toggleChecklistItem = (checkId: string) => {
 
 {/* Actions */}
 
-<div className="pl-8 pr-5 py-5">
+<div className="border-t border-border/20 px-5 py-5">
 
   <div className="flex justify-end gap-3">
 
     <button
       type="button"
       onClick={onEdit}
-      className="inline-flex items-center gap-2 rounded-2xl border border-border bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-muted"
+      className="inline-flex h-10 items-center gap-2 rounded-2xl border border-border bg-background px-5 text-sm font-medium transition-colors hover:bg-muted"
     >
       <Pencil className="h-4 w-4" />
       Edit
@@ -958,7 +971,7 @@ const toggleChecklistItem = (checkId: string) => {
     <button
       type="button"
       onClick={handleDelete}
-      className="inline-flex items-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-100"
+      className="inline-flex h-10 items-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-5 text-sm font-medium text-red-600 transition-colors hover:bg-red-100"
     >
       <Trash2 className="h-4 w-4" />
       Delete
@@ -972,7 +985,6 @@ const toggleChecklistItem = (checkId: string) => {
 )}
 
         </div>
-
       </div>
     </div>
   );
@@ -991,8 +1003,6 @@ function SortableItem({
   trip: Trip;
   onEdit: () => void;
 }) {
-const setNodeRef = undefined;
-const isDragging = false;
 
   const { mutate: deleteItem } = useDeleteItineraryItem();
   const { mutate: deleteExpense } = useDeleteExpense();
@@ -1097,21 +1107,23 @@ const isDragging = false;
         ELEMENT_BORDER[item.elementType]
       )}
     >
-      <div className="flex">
+      <div className="flex items-stretch">
 
   {/* Left Strip */}
 
   <div
-  className={cn(
-    "flex w-[48px] shrink-0 flex-col",
-    panelGradient(item.elementType)
-  )}
->
-  <div className="flex h-[96px] items-center justify-center text-white">
-    <Icon className="h-4 w-4 stroke-[1.8]" />
-  </div>
+    className={cn(
+      "flex w-[48px] shrink-0 flex-col",
+      panelGradient(item.elementType)
+    )}
+  >
+    <div className="flex h-[96px] items-center justify-center text-white">
+      <Icon className="h-4 w-4 stroke-[1.8]" />
+    </div>
 
-</div>
+    <div className="flex-1" />
+
+  </div>
 
   {/* Right Side */}
 
@@ -1264,7 +1276,6 @@ const isDragging = false;
 
   </div>
 )}
-        {item.elementType === "accommodation" && null}
 
         {item.elementType === "meal" && (
   <div className="relative flex h-full flex-col">
@@ -1296,38 +1307,17 @@ const isDragging = false;
 
     {/* Time */}
 
-    <div className="mt-4 rounded-2xl border border-border/50 bg-muted/20 px-4 py-3">
+    <div className="mt-4">
 
-      <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-        Time
-      </p>
+  <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+    Time
+  </p>
 
-      <p className="mt-1 text-[15px] font-semibold">
-        {item.startTime || "—"}
-      </p>
+  <p className="mt-1 text-[15px] font-semibold">
+    {item.startTime || "—"}
+  </p>
 
-    </div>
-
-    {/* Meal Type */}
-
-    {mealInfo && (
-      <div className="mt-3 rounded-2xl border border-border/50 bg-muted/20 px-4 py-3">
-
-        <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-          Meal
-        </p>
-
-        <span
-          className={cn(
-            "inline-flex items-center rounded-full px-3 py-1 text-[11px] font-medium",
-            ELEMENT_BADGES.meal
-          )}
-        >
-          {mealInfo.label}
-        </span>
-
-      </div>
-    )}
+</div>
 
   </div>
 )}
@@ -1406,41 +1396,44 @@ const isDragging = false;
 
 
 {expanded && (
-      <div className="border-t border-border/20 bg-background px-0 py-2">
+  <div className="border-t border-border/20 bg-background py-2">
 
-      {/* Location */}
+  {/* Location */}
 
 {item.location && (
-  <div className="border-b border-border/20 px-5 py-5">
+  <div className="border-b border-border/20 px-4 py-5">
 
     <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
       Location
     </p>
 
-    <div className="flex min-w-0 items-start gap-3">
+    <div className="-mx-1 rounded-3xl border border-border/60 bg-muted/20 px-6 py-5">
 
-      <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+      <div className="flex items-start gap-3">
 
-      <p className="min-w-0 break-words text-[14px] leading-6 text-foreground/90">
-        {item.location}
-      </p>
+        <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+
+        <p className="break-words text-[14px] leading-6 text-foreground/90">
+          {item.location}
+        </p>
+
+      </div>
 
     </div>
 
   </div>
 )}
-          {/* Cost */}
 
 {/* Cost */}
 
 {item.cost != null && item.cost > 0 && (
-  <div className="border-b border-border/20 px-5 py-5">
+  <div className="border-b border-border/20 px-4 py-5">
 
     <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
       Cost
     </p>
 
-    className="w-full rounded-3xl border border-border/60 bg-muted/2a<div className="w-full rounded-3xl border border-border/60 bg-muted/20 px-6 py-5">0 px-6 py-4"
+    <div className="w-full rounded-3xl border border-border/60 bg-muted/20 px-6 py-6">
 
       <p className="text-[24px] font-semibold tracking-[-0.02em]">
         ₹{Math.round(item.cost).toLocaleString("en-IN")}
@@ -1461,16 +1454,16 @@ const isDragging = false;
   </div>
 )}
 
- {/* Notes */}
+{/* Notes */}
 
 {item.notes && (
-  <div className="border-b border-border/20 px-5 py-5">
+  <div className="border-b border-border/20 px-4 py-5">
 
     <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
       Notes
     </p>
 
-    <div className="w-full rounded-3xl border border-border/60 bg-muted/20 px-6 py-4">
+    <div className="-mx-1 rounded-3xl border border-border/60 bg-muted/20 px-6 py-5">
 
       <p className="text-[14px] leading-6 text-foreground/80">
         {item.notes}
@@ -1480,102 +1473,125 @@ const isDragging = false;
 
   </div>
 )}
-                        {/* Checklist */}
+  {/* Checklist */}
 
-            {item.checklist && item.checklist.length > 0 && (
-              <div className="border-b border-border/20 px-5 py-5">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                      Checklist
-                    </p>
+{item.checklist && item.checklist.length > 0 && (
+  <div className="border-b border-border/20 px-4 py-5">
 
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {doneChecklist} of {totalChecklist} completed
-                    </p>
-                  </div>
+    <div className="mb-4 flex items-center justify-between">
 
-                  <span
-                    className={cn(
-                      "rounded-full px-3.5 py-1.5 text-xs font-semibold",
-                      ELEMENT_BADGES[item.elementType]
-                    )}
-                  >
-                    {totalChecklist
-                      ? Math.round((doneChecklist / totalChecklist) * 100)
-                      : 0}
-                    %
-                  </span>
-                </div>
+      <div>
 
-                <div className="h-2 rounded-full bg-muted overflow-hidden mb-5">
-                  <div
-                    className={cn(
-                      "h-full rounded-full transition-all duration-300",
-                      item.elementType === "travel"
-                        ? "bg-blue-500"
-                        : item.elementType === "accommodation"
-                        ? "bg-violet-500"
-                        : item.elementType === "meal"
-                        ? "bg-amber-400"
-                        : "bg-orange-500"
-                    )}
-                    style={{
-                      width: `${
-                        totalChecklist
-                          ? (doneChecklist / totalChecklist) * 100
-                          : 0
-                      }%`,
-                    }}
-                  />
-                </div>
+        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+          Checklist
+        </p>
 
-                <div className="w-full space-y-2 rounded-3xl border border-border/60 bg-muted/20 p-5">
-                  {item.checklist.map((ci) => (
-                    <button
-                      key={ci.id}
-                      type="button"
-                      onClick={() => toggleChecklistItem(ci.id)}
-                      className="flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left transition-colors hover:bg-muted/40"
-                    >
-                      {ci.done ? (
-                        <div
-                          className={cn(
-                            "flex h-5 w-5 shrink-0 items-center justify-center rounded-full",
-                            item.elementType === "travel"
-                              ? "bg-blue-500"
-                              : item.elementType === "accommodation"
-                              ? "bg-violet-500"
-                              : item.elementType === "meal"
-                              ? "bg-amber-400"
-                              : "bg-orange-500"
-                          )}
-                        >
-                          <Check className="h-3 w-3 text-white" />
-                        </div>
-                      ) : (
-                        <div className="h-5 w-5 shrink-0 rounded-full border-2 border-muted-foreground/30" />
-                      )}
+        <p className="mt-1 text-xs text-muted-foreground">
+          {doneChecklist} of {totalChecklist} completed
+        </p>
 
-                      <span
-                        className={cn(
-                          "text-[14px]",
-                          ci.done
-                            ? "line-through text-muted-foreground"
-                            : "text-foreground"
-                        )}
-                      >
-                        {ci.text}
-                      </span>
-                    </button>
-                  ))}
-                </div>
+      </div>
+
+      <span
+        className={cn(
+          "rounded-full px-3.5 py-1.5 text-xs font-semibold",
+          ELEMENT_BADGES[item.elementType]
+        )}
+      >
+        {totalChecklist
+          ? Math.round((doneChecklist / totalChecklist) * 100)
+          : 0}
+        %
+      </span>
+
+    </div>
+
+    <div className="mb-5 h-2 overflow-hidden rounded-full bg-muted">
+
+      <div
+        className={cn(
+          "h-full rounded-full transition-all duration-300",
+          item.elementType === "travel"
+            ? "bg-blue-500"
+            : item.elementType === "accommodation"
+            ? "bg-violet-500"
+            : item.elementType === "meal"
+            ? "bg-amber-400"
+            : "bg-orange-500"
+        )}
+        style={{
+          width: `${
+            totalChecklist
+              ? (doneChecklist / totalChecklist) * 100
+              : 0
+          }%`,
+        }}
+      />
+
+    </div>
+
+    <div className="w-full rounded-3xl border border-border/60 bg-muted/20 p-6">
+
+      <div className="space-y-2">
+
+        {item.checklist.map((ci) => (
+
+          <button
+            key={ci.id}
+            type="button"
+            onClick={() => toggleChecklistItem(ci.id)}
+            className="flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left transition-colors hover:bg-background"
+          >
+
+            {ci.done ? (
+
+              <div
+                className={cn(
+                  "flex h-5 w-5 shrink-0 items-center justify-center rounded-full",
+                  item.elementType === "travel"
+                    ? "bg-blue-500"
+                    : item.elementType === "accommodation"
+                    ? "bg-violet-500"
+                    : item.elementType === "meal"
+                    ? "bg-amber-400"
+                    : "bg-orange-500"
+                )}
+              >
+                <Check className="h-3 w-3 text-white" />
               </div>
+
+            ) : (
+
+              <div className="h-5 w-5 shrink-0 rounded-full border-2 border-muted-foreground/30" />
+
             )}
-  {/* Attachments */}
+
+            <span
+              className={cn(
+                "text-[14px]",
+                ci.done
+                  ? "line-through text-muted-foreground"
+                  : "text-foreground"
+              )}
+            >
+              {ci.text}
+            </span>
+
+          </button>
+
+        ))}
+
+      </div>
+
+    </div>
+
+  </div>
+)}
+
+{/* Attachments */}
 
 {attachedDocs.length > 0 && (
-  <div className="border-b border-border/20 px-5 py-5">
+  <div className="border-b border-border/20 px-4 py-5">
 
     <div className="mb-4 flex items-center justify-between">
 
@@ -1596,41 +1612,45 @@ const isDragging = false;
 
         <div
           key={doc.id}
-          className="flex w-full min-w-0 items-center gap-4 rounded-3xl border border-border bg-muted/20 px-6 py-4"
+          className="w-full rounded-3xl border border-border/60 bg-muted/20 px-6 py-5"
         >
 
-          <div
-            className={cn(
-              "flex h-10 w-10 items-center justify-center rounded-xl",
-              tintSurface(item.elementType)
-            )}
-          >
-            <Paperclip className="h-4 w-4" />
+          <div className="flex items-center gap-4">
+
+            <div
+              className={cn(
+                "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl",
+                tintSurface(item.elementType)
+              )}
+            >
+              <Paperclip className="h-4 w-4" />
+            </div>
+
+            <button
+              type="button"
+              onClick={() => openDoc(doc)}
+              className="min-w-0 flex-1 text-left"
+            >
+
+              <p className="truncate text-[14px] font-medium">
+                {doc.name}
+              </p>
+
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                Tap to open
+              </p>
+
+            </button>
+
+            <button
+              type="button"
+              onClick={() => detachDoc(doc.id)}
+              className="rounded-lg p-2 transition-colors hover:bg-red-50 hover:text-red-500"
+            >
+              <X className="h-4 w-4" />
+            </button>
+
           </div>
-
-          <button
-            type="button"
-            onClick={() => openDoc(doc)}
-            className="min-w-0 flex-1 text-left"
-          >
-
-            <p className="truncate text-[14px] font-medium">
-              {doc.name}
-            </p>
-
-            <p className="mt-1 text-[11px] text-muted-foreground">
-              Tap to open
-            </p>
-
-          </button>
-
-          <button
-            type="button"
-            onClick={() => detachDoc(doc.id)}
-            className="rounded-lg p-2 transition-colors hover:bg-red-50 hover:text-red-500"
-          >
-            <X className="h-4 w-4" />
-          </button>
 
         </div>
 
@@ -1640,38 +1660,34 @@ const isDragging = false;
 
   </div>
 )}
-    {/* Actions */}
 
-<div className="pl-8 pr-5 py-5">
+{/* Actions */}
 
-  <div className="flex justify-end gap-3">
+<div className="border-t border-border/20 px-5 py-5">
 
-    <button
-      type="button"
-      onClick={onEdit}
-      className="inline-flex items-center gap-2 rounded-2xl border border-border bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-muted"
-    >
-      <Pencil className="h-4 w-4" />
-      Edit
-    </button>
+  <div className="flex w-full">
 
-    <button
-      type="button"
-      onClick={handleDelete}
-      className="inline-flex items-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-100"
-    >
-      <Trash2 className="h-4 w-4" />
-      Delete
-    </button>
+    <div className="w-12 shrink-0" />
 
-  </div>
+    <div className="ml-auto flex gap-3">
 
-</div>
+      <button
+        type="button"
+        onClick={onEdit}
+        className="inline-flex h-10 items-center gap-2 rounded-2xl border border-border bg-background px-5 text-sm font-medium transition-colors hover:bg-muted"
+      >
+        <Pencil className="h-4 w-4" />
+        Edit
+      </button>
 
-          </div>
-        )}
-
-      </div>
+      <button
+        type="button"
+        onClick={handleDelete}
+        className="inline-flex h-10 items-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-5 text-sm font-medium text-red-600 transition-colors hover:bg-red-100"
+      >
+        <Trash2 className="h-4 w-4" />
+        Delete
+      </button>
 
     </div>
 
@@ -1679,7 +1695,14 @@ const isDragging = false;
 
 </div>
 
-  );
+  </div>
+)}
+
+      </div>
+    </div>
+  </div>
+</div>
+);
 }
 
 // ─── Add / Edit Sheet ─────────────────────────────────────────────────────────
