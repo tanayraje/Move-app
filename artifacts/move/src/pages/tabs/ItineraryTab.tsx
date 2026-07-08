@@ -538,104 +538,120 @@ function AccommodationBanner({
       >
         <div className="flex">
 
-          {/* LEFT PANEL */}
+  {/* LEFT PANEL */}
 
-          <div className="w-16 shrink-0 bg-gradient-to-b from-violet-500 to-violet-600 flex flex-col items-center justify-center text-white">
+  <div
+    className={cn(
+      "w-[48px] shrink-0 flex flex-col items-center bg-gradient-to-b justify-start pt-5 text-white",
+      panelGradient(item.elementType)
+    )}
+  >
+    <Building2 className="h-5 w-5 stroke-[1.8]" />
+  </div>
 
-            <Building2 className="w-7 h-7 mb-2 stroke-[2]" />
+  {/* RIGHT */}
 
-            <span className="text-[9px] font-semibold uppercase tracking-[0.16em] opacity-80">
-              Stay
+  <div className="flex-1 min-w-0">
+
+    <button
+      type="button"
+      onClick={() => setExpanded((v) => !v)}
+      className="w-full px-5 py-4 text-left"
+    >
+
+      <div className="flex items-start justify-between gap-3">
+
+        <div className="min-w-0 flex-1">
+
+          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-violet-500">
+            Stay
+          </p>
+
+          <div className="mt-1 flex items-start gap-3">
+
+            <h3 className="min-w-0 flex-1 text-[16px] font-semibold leading-snug line-clamp-2">
+              {item.title}
+            </h3>
+
+            <span
+              className={cn(
+                "shrink-0 self-center rounded-full px-3 py-1 text-[10px] font-medium whitespace-nowrap",
+                ELEMENT_BADGES.accommodation
+              )}
+            >
+              {nights} Night{nights > 1 ? "s" : ""}
             </span>
 
           </div>
 
-          {/* RIGHT */}
-
-          <div className="flex-1 p-5">
-
-            <div className="flex items-start justify-between gap-3">
-
-              <div className="min-w-0">
-
-                <p className="text-[9px] font-semibold uppercase tracking-[0.16em] text-violet-500">
-                  STAY
-                </p>
-
-                <h3 className="mt-1 text-[19px] font-semibold text-foreground leading-tight truncate">
-                  {item.title}
-                </h3>
-
-                {item.location && (
-                  <p className="mt-1 text-[13px] text-muted-foreground truncate">
-                    {item.location}
-                  </p>
-                )}
-
-              </div>
-
-              <span className="rounded-full bg-violet-50 border border-violet-100 px-3 py-1 text-xs font-semibold text-violet-700 whitespace-nowrap">
-                {nights} Night{nights > 1 ? "s" : ""}
-              </span>
-
-            </div>
-
-            <div className="mt-5 grid grid-cols-2 gap-4">
-
-              <div>
-
-                <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
-                  Check In
-                </p>
-
-                <p className="mt-1 text-[15px] font-semibold">
-                  {safeFormatDate(
-                    item.date,
-                    d => format(d, "MMM d"),
-                    item.date
-                  )}
-
-                  {item.startTime && ` · ${item.startTime}`}
-                </p>
-
-              </div>
-
-              <div>
-
-                <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
-                  Check Out
-                </p>
-
-                <p className="mt-1 text-[15px] font-semibold">
-                  {item.endDate
-                    ? safeFormatDate(
-                        item.endDate,
-                        d => format(d, "MMM d"),
-                        item.endDate
-                      )
-                    : "—"}
-
-                  {item.endTime && ` · ${item.endTime}`}
-                </p>
-
-              </div>
-
-            </div>
-
-          </div>
-
-          <div className="pr-4 flex items-center">
-
-            <ChevronDown
-              className={cn(
-                "w-5 h-5 text-muted-foreground transition-transform duration-300",
-                expanded && "rotate-180"
-              )}
-            />
-
-          </div>
+          {item.location && (
+            <p className="mt-2 line-clamp-2 text-[13px] leading-5 text-muted-foreground">
+              {item.location}
+            </p>
+          )}
 
         </div>
+
+        <ChevronDown
+          className={cn(
+            "mt-0.5 h-4 w-4 shrink-0 text-muted-foreground transition-transform",
+            expanded && "rotate-180"
+          )}
+        />
+
+      </div>
+
+      <div className="mt-5 grid grid-cols-2 gap-10">
+
+        <div>
+
+          <p className="text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+            Check In
+          </p>
+
+          <p className="mt-1.5 text-[15px] font-semibold">
+            {safeFormatDate(
+              item.date,
+              d => format(d, "MMM d"),
+              item.date
+            )}
+          </p>
+
+          <p className="text-[11px] italic text-muted-foreground">
+            {item.startTime || "—"}
+          </p>
+
+        </div>
+
+        <div className="text-right">
+
+          <p className="text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+            Check Out
+          </p>
+
+          <p className="mt-1.5 text-[15px] font-semibold">
+            {item.endDate
+              ? safeFormatDate(
+                  item.endDate,
+                  d => format(d, "MMM d"),
+                  item.endDate
+                )
+              : "—"}
+          </p>
+
+          <p className="text-[11px] italic text-muted-foreground">
+            {item.endTime || "—"}
+          </p>
+
+        </div>
+
+      </div>
+
+    </button>
+
+  </div>
+
+</div>
       </button>
 
       {/* EXPANDED */}
@@ -663,13 +679,13 @@ function AccommodationBanner({
 
         {item.cost != null && item.cost > 0 && (
 
-          <div className="rounded-3xl border border-border/40 bg-background p-5">
+          <div className="border-t border-border/20 px-5 py-4">
 
             <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
               Cost
             </p>
 
-            <p className="text-[18px] font-semibold">
+            <p className="text-[16px] font-semibold">
               ₹{Math.round(item.cost).toLocaleString("en-IN")}
             </p>
 
@@ -694,7 +710,7 @@ function AccommodationBanner({
 
         {item.notes && (
 
-          <div className="rounded-3xl border border-border/40 bg-background p-5">
+          <div className="border-t border-border/20 px-5 py-4">
 
             <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
               Notes
@@ -847,122 +863,131 @@ const isDragging = false;
   };
 
   return (
-    <div className="relative">
-      <div
-        className={cn(
-           "absolute -left-[30px] top-9 h-3 w-3 rounded-full border-2 border-background z-20",
-          item.elementType === "travel"
-            ? "bg-blue-500"
-            : item.elementType === "accommodation"
-            ? "bg-violet-500"
-            : item.elementType === "meal"
-            ? "bg-amber-400"
-            : "bg-orange-500"
-        )}
-      />
+  <div className="relative">
+    <div
+      className={cn(
+        "absolute -left-[30px] top-9 z-20 h-3 w-3 rounded-full border-2 border-background",
+        item.elementType === "travel"
+          ? "bg-blue-500"
+          : item.elementType === "accommodation"
+          ? "bg-violet-500"
+          : item.elementType === "meal"
+          ? "bg-amber-400"
+          : "bg-orange-500"
+      )}
+    />
 
-      <div
-        className={cn(
-  "overflow-hidden rounded-[28px] bg-card border border-border/40 shadow-[0_2px_10px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_28px_rgba(0,0,0,0.08)] transition-all duration-300",
-  ELEMENT_BORDER[item.elementType]
-)}
-      >
+    <div
+      className={cn(
+        "overflow-hidden rounded-[28px] border border-border/40 bg-card shadow-[0_2px_10px_rgba(0,0,0,0.05)] transition-all duration-300 hover:shadow-[0_8px_28px_rgba(0,0,0,0.08)]",
+        ELEMENT_BORDER[item.elementType]
+      )}
+    >
+      <div className="flex">
 
-      <button
-  type="button"
-  onClick={() => setExpanded((v) => !v)}
-  className="w-full text-left"
->
-  <div className="flex min-h-[96px]">
+        {/* Left Strip */}
 
-{/* Left Strip */}
+        <div
+          className={cn(
+            "w-[48px] shrink-0 self-stretch",
+            panelGradient(item.elementType)
+          )}
+        >
+          <div className="flex h-[96px] items-center justify-center text-white">
+            <Icon className="h-4 w-4 stroke-[1.8]" />
+          </div>
+        </div>
 
-<div
-  className={cn(
-    "w-[48px] shrink-0 flex flex-col items-center justify-center text-white",
-    panelGradient(item.elementType)
-  )}
->
-  <Icon className="h-4 w-4 stroke-[1.8]" />
-</div>
+        {/* Right Side */}
 
-    {/* Card Content */}
+        <div className="min-w-0 flex-1">
 
-    <div className="flex-1 px-5 py-3 min-w-0">
+          <button
+            type="button"
+            onClick={() => setExpanded((v) => !v)}
+            className="w-full text-left"
+          >
+            <div className="px-5 py-3">
 
       {/* Individual cards go here */}
 
         {item.elementType === "travel" && (
-  <div className="relative flex h-full flex-col justify-between">
+  <div className="relative flex h-full flex-col">
 
     <div className="flex items-center justify-between">
 
-  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-blue-500">
-    {travelLabel(item.travelType)}
-  </p>
+      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-blue-500">
+        {travelLabel(item.travelType)}
+      </p>
 
-  <ChevronDown
-    className={cn(
-      "h-4 w-4 opacity-60 text-muted-foreground transition-transform",
-      expanded && "rotate-180"
-    )}
-  />
+      <ChevronDown
+        className={cn(
+          "h-4 w-4 text-muted-foreground opacity-60 transition-transform",
+          expanded && "rotate-180"
+        )}
+      />
 
-</div>
+    </div>
 
-<div className="mt-2 grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+    <div className="mt-2 grid grid-cols-[minmax(0,1fr)_88px_minmax(0,1fr)] items-center gap-2">
 
-      {/* From */}
+      {/* FROM */}
 
       <div className="min-w-0">
 
         <h3
-          className="truncate text-[16px] font-semibold leading-tight"
+          className={cn(
+            expanded
+              ? "text-[16px] font-semibold leading-snug break-words"
+              : "truncate text-[17px] font-semibold leading-tight"
+          )}
           title={item.fromLocation}
         >
           {item.fromLocation || "—"}
         </h3>
 
-
       </div>
 
-      {/* Centre */}
+      {/* CENTRE */}
 
-      <div className="flex w-[58px] shrink-0 flex-col items-center">
+      <div className="flex flex-col items-center">
 
-        <div className="flex h-5 w-full items-center">
+        <div className="flex w-full items-center">
 
-          <div className="h-px w-[18px] border-t border-dashed border-muted-foreground/40" />
+          <div className="h-px flex-1 border-t border-dashed border-muted-foreground/40" />
 
-          <Icon className="mx-1.5 h-4 w-4 shrink-0 text-blue-500" />
+          <Icon className="mx-2 h-4 w-4 shrink-0 text-blue-500" />
 
-          <div className="h-px w-[18px] border-t border-dashed border-muted-foreground/40" />
+          <div className="h-px flex-1 border-t border-dashed border-muted-foreground/40" />
 
         </div>
 
-        <span className="mt-0.5 whitespace-nowrap text-[10px] italic leading-none tracking-[0.01em] text-muted-foreground">
+        <span className="mt-1 whitespace-nowrap text-[10px] italic text-muted-foreground">
           {duration || "—"}
         </span>
 
       </div>
 
-      {/* To */}
+      {/* TO */}
 
       <div className="min-w-0 text-right">
 
         <h3
-          className="truncate text-[16px] font-semibold leading-tight"
+          className={cn(
+            expanded
+              ? "text-[16px] font-semibold leading-snug break-words"
+              : "truncate text-[17px] font-semibold leading-tight"
+          )}
           title={item.toLocation}
         >
           {item.toLocation || "—"}
         </h3>
 
-
       </div>
 
     </div>
 
-    <div className="mt-3.5 flex justify-between">
+    <div className="mt-4 flex justify-between">
 
       <div>
 
@@ -970,7 +995,7 @@ const isDragging = false;
           {item.startTime || "—"}
         </p>
 
-        <p className="mt-1 text-[11px] uppercase tracking-[0.14em] font-medium text-muted-foreground">
+        <p className="mt-0.5 text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
           Departure
         </p>
 
@@ -982,7 +1007,7 @@ const isDragging = false;
           {item.endTime || "—"}
         </p>
 
-        <p className="mt-1 text-[11px] uppercase tracking-[0.14em] font-medium text-muted-foreground">
+        <p className="mt-0.5 text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
           Arrival
         </p>
 
@@ -994,40 +1019,39 @@ const isDragging = false;
 )}
 
         {item.elementType === "accommodation" && (
-  <div className="relative flex h-full flex-col justify-between">
+  <div className="relative flex h-full flex-col">
 
-    <div>
+    <div className="flex items-center justify-between">
 
-  <div className="mb-1 flex items-center justify-between">
+      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-violet-500">
+        Stay
+      </p>
 
-    <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-violet-500">
-      Stay
-    </p>
+      <ChevronDown
+        className={cn(
+          "h-4 w-4 text-muted-foreground opacity-60 transition-transform",
+          expanded && "rotate-180"
+        )}
+      />
 
-    <ChevronDown
-      className={cn(
-        "h-4 w-4 opacity-60 text-muted-foreground transition-transform",
-        expanded && "rotate-180"
-      )}
-    />
+    </div>
 
-  </div>
+    <div className="mt-2">
 
-  <div className="flex items-start gap-3">
-
-    <div className="min-w-0 flex-1">
-
-      <div className="flex items-center gap-2">
+      <div className="flex items-start gap-3">
 
         <h3
-          className="min-w-0 flex-1 truncate text-[16px] font-semibold leading-tight"
+          className={cn(
+            "min-w-0 flex-1 text-[16px] font-semibold leading-snug",
+            expanded ? "break-words" : "line-clamp-2"
+          )}
         >
           {item.title}
         </h3>
 
         <span
           className={cn(
-            "shrink-0 rounded-full px-3 py-1 text-[10px] font-medium whitespace-nowrap",
+            "self-center shrink-0 rounded-full px-3 py-1 text-[10px] font-medium whitespace-nowrap",
             ELEMENT_BADGES.accommodation
           )}
         >
@@ -1041,58 +1065,59 @@ const isDragging = false;
       </div>
 
       {item.location && (
-        <p className="mt-1 line-clamp-2 break-words text-[13px] text-muted-foreground">
+        <p
+          className={cn(
+            "mt-2 text-[13px] leading-5 text-muted-foreground",
+            expanded ? "break-words" : "line-clamp-2"
+          )}
+        >
           {item.location}
         </p>
       )}
 
     </div>
 
-  </div>
-
-</div>
-
-<div className="mt-3 grid grid-cols-2 gap-6">
+    <div className="mt-5 grid grid-cols-2 gap-10">
 
       <div>
 
-        <p className="text-[11px] uppercase tracking-[0.14em] font-medium text-muted-foreground">
-          Check-in
+        <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+          Check In
         </p>
 
-        <p className="mt-3 text-[15px] font-semibold">
+        <p className="mt-1.5 text-[15px] font-semibold">
           {safeFormatDate(
             item.date,
-            (d) => format(d, "MMM d"),
+            d => format(d, "MMM d"),
             item.date
           )}
         </p>
 
-        <p className="mt-0.5 text-[11px] italic text-muted-foreground/70">
-           {item.startTime || "—"}
-          </p>
+        <p className="mt-0 text-[11px] italic text-muted-foreground">
+          {item.startTime || "—"}
+        </p>
 
       </div>
 
       <div className="text-right">
 
-        <p className="text-[11px] uppercase tracking-[0.14em] font-medium text-muted-foreground">
-          Check-out
+        <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+          Check Out
         </p>
 
-        <p className="mt-3 text-[15px] font-semibold">
+        <p className="mt-1.5 text-[15px] font-semibold">
           {item.endDate
             ? safeFormatDate(
                 item.endDate,
-                (d) => format(d, "MMM d"),
+                d => format(d, "MMM d"),
                 item.endDate
               )
             : "—"}
         </p>
 
-        <p className="mt-0.5 text-[11px] italic text-muted-foreground/70">
-           {item.endTime || "—"}
-          </p>
+        <p className="mt-0 text-[11px] italic text-muted-foreground">
+          {item.endTime || "—"}
+        </p>
 
       </div>
 
@@ -1102,44 +1127,45 @@ const isDragging = false;
 )}
 
         {item.elementType === "meal" && (
-  <div className="relative flex h-full flex-col justify-between">
+  <div className="relative flex h-full flex-col">
 
-    <div>
+    <div className="flex items-center justify-between">
 
-  <div className="mb-1 flex items-center justify-between">
+      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-500">
+        {categoryLabel(item)}
+      </p>
 
-    <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-500">
-      {categoryLabel(item)}
-    </p>
+      <ChevronDown
+        className={cn(
+          "h-4 w-4 text-muted-foreground opacity-60 transition-transform",
+          expanded && "rotate-180"
+        )}
+      />
 
-    <ChevronDown
-      className={cn(
-        "h-4 w-4 opacity-60 text-muted-foreground transition-transform",
-        expanded && "rotate-180"
-      )}
-    />
+    </div>
 
-  </div>
+    <div className="mt-2">
 
-  <h3 className="truncate text-[16px] font-semibold leading-tight">
-    {item.title}
-  </h3>
+      <h3
+        className={cn(
+          "text-[16px] font-semibold leading-snug",
+          expanded ? "break-words" : "line-clamp-2"
+        )}
+      >
+        {item.title}
+      </h3>
 
-</div>
+    </div>
 
-    <div className="mt-3">
+    <div className="mt-5">
 
-      <div>
+      <p className="text-[13px] font-semibold">
+        {item.startTime || "—"}
+      </p>
 
-        <p className="text-[13px] font-semibold">
-          {item.startTime || "—"}
-        </p>
-
-        <p className="mt-1 text-[11px] uppercase tracking-[0.14em] font-medium text-muted-foreground">
-          Time
-        </p>
-
-      </div>
+      <p className="mt-0.5 text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+        Time
+      </p>
 
     </div>
 
@@ -1147,32 +1173,37 @@ const isDragging = false;
 )}
 
         {item.elementType === "activity" && (
-  <div className="relative flex h-full flex-col justify-between">
+  <div className="relative flex h-full flex-col">
 
-    <div>
+    <div className="flex items-center justify-between">
 
-  <div className="mb-2 flex items-center justify-between">
+      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-orange-500">
+        Activity
+      </p>
 
-    <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-orange-500">
-      Activity
-    </p>
+      <ChevronDown
+        className={cn(
+          "h-4 w-4 text-muted-foreground opacity-60 transition-transform",
+          expanded && "rotate-180"
+        )}
+      />
 
-    <ChevronDown
-      className={cn(
-        "h-4 w-4 opacity-60 text-muted-foreground transition-transform",
-        expanded && "rotate-180"
-      )}
-    />
+    </div>
 
-  </div>
+    <div className="mt-2">
 
-  <h3 className="truncate text-[16px] font-semibold leading-tight">
-    {item.title}
-  </h3>
+      <h3
+        className={cn(
+          "text-[16px] font-semibold leading-snug",
+          expanded ? "break-words" : "line-clamp-2"
+        )}
+      >
+        {item.title}
+      </h3>
 
-</div>
+    </div>
 
-    <div className="mt-3 flex items-end justify-between">
+    <div className="mt-5 flex items-end justify-between">
 
       <div>
 
@@ -1180,7 +1211,7 @@ const isDragging = false;
           {item.startTime || "—"}
         </p>
 
-        <p className="mt-1 text-[11px] uppercase tracking-[0.14em] font-medium text-muted-foreground">
+        <p className="mt-0.5 text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
           Time
         </p>
 
@@ -1192,7 +1223,7 @@ const isDragging = false;
           {duration || "—"}
         </p>
 
-        <p className="mt-0.5 text-[9px] uppercase tracking-[0.14em] font-medium text-muted-foreground/70">
+        <p className="mt-0.5 text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
           Duration
         </p>
 
@@ -1202,18 +1233,20 @@ const isDragging = false;
 
   </div>
 )}
-            </div>
 
-            </div>
-          </button>
+    </div>
 
-        {expanded && (
-          <div className="border-t border-border/20 bg-background">
+  </button>
+
+</div>
+
+{expanded && (
+      <div className="border-t border-border/20 bg-background px-5 py-2">
 
           {/* Location */}
 
 {item.location && item.elementType !== "accommodation" && (
-  <div className="rounded-3xl border border-border/40 bg-background p-5">
+  <div className="relative border-t border-border/20 px-5 py-4">
 
     <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
       Location
@@ -1224,8 +1257,8 @@ const isDragging = false;
       <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
 
       <p className="break-words text-[14px] leading-6 text-foreground/90">
-        {item.location}
-      </p>
+  {item.location}
+</p>
 
     </div>
 
@@ -1234,7 +1267,7 @@ const isDragging = false;
           {/* Cost */}
 
 {item.cost != null && item.cost > 0 && (
-  <div className="rounded-3xl border border-border/40 bg-background p-5">
+  <div className="border-t border-border/20 px-5 py-4">
 
     <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
       Cost
@@ -1259,7 +1292,7 @@ const isDragging = false;
             {/* Notes */}
 
             {item.notes && (
-              <div className="rounded-3xl border border-border/40 bg-background p-5">
+              <div className="border-t border-border/20 px-5 py-4">
                 <p className="text-[11px] uppercase tracking-[0.16em] font-semibold text-muted-foreground mb-2">
                   Notes
                 </p>
@@ -1272,10 +1305,10 @@ const isDragging = false;
                         {/* Checklist */}
 
             {item.checklist && item.checklist.length > 0 && (
-              <div className="rounded-3xl border border-border/40 bg-background p-5">
+              <div className="border-t border-border/20 px-5 py-4">
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <p className="text-[11px] uppercase tracking-[0.16em] font-semibold text-muted-foreground">
+                    <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                       Checklist
                     </p>
 
@@ -1364,7 +1397,7 @@ const isDragging = false;
                         {/* Attachments */}
 
             {attachedDocs.length > 0 && (
-              <div className="rounded-3xl border border-border/40 bg-background p-5">
+              <div className="border-t border-border/20 px-5 py-4">
                 <div className="mb-4 flex items-center justify-between">
                   <p className="text-[11px] uppercase tracking-[0.16em] font-semibold text-muted-foreground">
                     Attachments
@@ -1420,7 +1453,7 @@ const isDragging = false;
             )}
                         {/* Actions */}
 
-            <div className="flex items-center justify-end gap-6 border-t border-border/50 pt-2">
+            <div className="flex items-center justify-end gap-6 border-t border-border/20 py-4">
               <button
                 type="button"
                 onClick={onEdit}
@@ -1440,10 +1473,14 @@ const isDragging = false;
               </button>
             </div>
           </div>
-        )}
+                )}
 
       </div>
+
     </div>
+
+  </div>
+
   );
 }
 
