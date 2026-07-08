@@ -1607,49 +1607,54 @@ function SortableItem({
 
       {attachedDocs.map((doc) => (
 
-        <div
-          key={doc.id}
-          className="w-full rounded-3xl border border-border/60 bg-muted/20 px-6 py-5"
-        >
+       <div
+  key={doc.id}
+  className="w-full rounded-3xl border border-border/60 bg-muted/20 px-6 py-5"
+>
 
-          <div className="flex items-center gap-4">
+  <div className="flex items-start gap-4">
 
-            <div
-              className={cn(
-                "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl",
-                tintSurface(item.elementType)
-              )}
-            >
-              <Paperclip className="h-4 w-4" />
-            </div>
+    <div
+      className={cn(
+        "mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl",
+        tintSurface(item.elementType)
+      )}
+    >
+      <Paperclip className="h-4 w-4" />
+    </div>
 
-            <button
-              type="button"
-              onClick={() => openDoc(doc)}
-              className="min-w-0 flex-1 text-left"
-            >
+    <div className="min-w-0 flex-1">
 
-              <p className="truncate text-[14px] font-medium">
-                {doc.name}
-              </p>
+      <button
+        type="button"
+        onClick={() => openDoc(doc)}
+        className="block w-full text-left"
+      >
+        <p className="break-all text-[14px] font-medium leading-5">
+          {doc.name}
+        </p>
 
-              <p className="mt-1 text-[11px] text-muted-foreground">
-                Tap to open
-              </p>
+        <p className="mt-1 text-[11px] text-muted-foreground">
+          Tap to open
+        </p>
+      </button>
 
-            </button>
+      <button
+        type="button"
+        onClick={() => detachDoc(doc.id)}
+        className="mt-3 inline-flex items-center gap-1 text-xs text-red-500 transition-colors hover:text-red-600"
+      >
+        <X className="h-3.5 w-3.5" />
+        Remove attachment
+      </button>
 
-            <button
-              type="button"
-              onClick={() => detachDoc(doc.id)}
-              className="rounded-lg p-2 transition-colors hover:bg-red-50 hover:text-red-500"
-            >
-              <X className="h-4 w-4" />
-            </button>
+    </div>
 
-          </div>
+  </div>
 
-        </div>
+</div>git add .
+git commit -m "Improve attachment card layout"
+git push origin master
 
       ))}
 
