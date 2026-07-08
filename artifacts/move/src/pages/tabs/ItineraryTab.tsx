@@ -860,107 +860,116 @@ function SortableItem({
         </div>
 
         <button
-          type="button"
-          onClick={() => setExpanded((v) => !v)}
-          className="w-full text-left"
-        >
-          <div className="flex min-h-[118px]">
-            <div
-              className={cn(
-                "w-14 shrink-0 flex flex-col items-center justify-center text-white",
-                panelGradient(item.elementType)
-              )}
-            >
-              <Icon className="w-6 h-6 mb-2 stroke-[2]" />
-              <span className="text-[9px] uppercase tracking-[0.15em] font-semibold opacity-80 text-center px-1">
-                {item.elementType === "travel"
-                  ? travelLabel(item.travelType)
-                  : categoryLabel(item)}
-              </span>
-            </div>
+  type="button"
+  onClick={() => setExpanded((v) => !v)}
+  className="w-full text-left"
+>
+  <div className="flex min-h-[108px]">
 
-            <div className="flex-1 px-5 py-4">
-              {item.elementType === "travel" && (
-  <div className="flex flex-col h-full relative">
+    {/* Left Strip */}
 
-    {/* Chevron */}
-    <ChevronDown
+    <div
       className={cn(
-        "absolute top-0 right-0 w-4 h-4 text-muted-foreground transition-transform duration-300",
-        expanded && "rotate-180"
+        "w-12 shrink-0 flex flex-col items-center justify-center text-white",
+        panelGradient(item.elementType)
       )}
-    />
+    >
+      <Icon className="w-5 h-5 mb-2 stroke-[2]" />
 
-    <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-blue-500">
-      TRAVEL
-    </p>
+      <span className="text-[8px] uppercase tracking-[0.14em] font-semibold opacity-80 text-center leading-tight px-1">
+        {item.elementType === "travel"
+          ? travelLabel(item.travelType)
+          : categoryLabel(item)}
+      </span>
+    </div>
+
+    {/* Card Content */}
+
+    <div className="flex-1 px-4 py-3">
+
+      {/* Individual cards go here */}
+
+        {item.elementType === "travel" && (
+  <div className="relative flex h-full flex-col">
+
+    {/* Header */}
+    <div className="flex items-start justify-between">
+
+      <p className="text-[8px] font-semibold uppercase tracking-[0.14em] text-blue-500">
+        TRAVEL
+      </p>
+
+      <ChevronDown
+        className={cn(
+          "h-4 w-4 text-muted-foreground transition-transform",
+          expanded && "rotate-180"
+        )}
+      />
+
+    </div>
 
     {/* Route */}
-    <div className="mt-2 flex items-start justify-between gap-3">
+    <div className="mt-3 flex items-center gap-2">
 
-      <div className="flex-1 text-left">
-        <h3 className="text-[19px] font-semibold leading-tight">
+      <div className="min-w-0 flex-1">
+        <h3 className="truncate text-[17px] font-semibold">
           {item.fromLocation}
         </h3>
       </div>
 
-      <div className="flex flex-col items-center shrink-0 px-2">
-        <Icon className="w-5 h-5 text-blue-500 rotate-0" />
+      <div className="flex shrink-0 flex-col items-center">
 
-        <span className="mt-1 text-[11px] italic text-muted-foreground">
+        <Icon className="h-4 w-4 text-blue-500" />
+
+        <span className="mt-1 text-[10px] italic text-muted-foreground">
           {duration || "—"}
         </span>
+
       </div>
 
-      <div className="flex-1 text-right">
-        <h3 className="text-[19px] font-semibold leading-tight">
+      <div className="min-w-0 flex-1 text-right">
+        <h3 className="truncate text-[17px] font-semibold">
           {item.toLocation}
         </h3>
       </div>
 
     </div>
 
-    {/* Time Row */}
-    <div className="grid grid-cols-3 gap-8 mt-6">
+    {/* Times */}
+    <div className="mt-5 flex justify-between">
 
-      <div className="text-center">
-        <p className="text-[16px] font-semibold">
+      <div>
+
+        <p className="text-[15px] font-semibold">
           {item.startTime || "—"}
         </p>
 
-        <p className="mt-1 text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+        <p className="mt-1 text-[9px] uppercase tracking-[0.12em] text-muted-foreground">
           Departure
         </p>
+
       </div>
 
-      <div className="text-center">
-        <p className="text-[16px] font-semibold">
-          {duration || "—"}
-        </p>
+      <div className="text-right">
 
-        <p className="mt-1 text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-          Duration
-        </p>
-      </div>
-
-      <div className="text-center">
-        <p className="text-[16px] font-semibold">
+        <p className="text-[15px] font-semibold">
           {item.endTime || "—"}
         </p>
 
-        <p className="mt-1 text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+        <p className="mt-1 text-[9px] uppercase tracking-[0.12em] text-muted-foreground">
           Arrival
         </p>
+
       </div>
 
     </div>
 
     {/* Cost */}
     {item.cost != null && item.cost > 0 && (
-      <div className="mt-5">
+      <div className="mt-4">
         <span
           className={cn(
-            "inline-flex items-center rounded-full px-3 py-1 text-[11px] font-semibold",
+            "inline-flex rounded-full px-2.5 py-1 text-[10px] font-medium",
             ELEMENT_BADGES.travel
           )}
         >
@@ -972,34 +981,58 @@ function SortableItem({
   </div>
 )}
 
-              {item.elementType === "accommodation" && (
-  <div className="flex flex-col h-full relative">
+        {item.elementType === "accommodation" && (
+  <div className="relative flex h-full flex-col">
 
-    {/* Chevron */}
-    <ChevronDown
-      className={cn(
-        "absolute top-0 right-0 w-4 h-4 text-muted-foreground transition-transform duration-300",
-        expanded && "rotate-180"
-      )}
-    />
+    {/* Header */}
+    <div className="flex items-start justify-between">
 
-    <div className="flex items-start justify-between gap-3 pr-6">
+      <p className="text-[8px] font-semibold uppercase tracking-[0.14em] text-violet-500">
+        STAY
+      </p>
 
-      <div className="min-w-0 flex-1">
+      <ChevronDown
+        className={cn(
+          "h-4 w-4 text-muted-foreground transition-transform",
+          expanded && "rotate-180"
+        )}
+      />
 
-        <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-violet-500">
-          STAY
+    </div>
+
+    {/* Hotel */}
+
+    <h3 className="mt-2 line-clamp-2 text-[17px] font-semibold leading-snug pr-10">
+      {item.title}
+    </h3>
+
+    {/* Dates */}
+
+    <div className="mt-5 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+
+      <div className="text-center">
+
+        <p className="text-[9px] uppercase tracking-[0.12em] text-muted-foreground">
+          CHECK-IN
         </p>
 
-        <h3 className="mt-2 text-[19px] font-semibold leading-snug line-clamp-2">
-          {item.title}
-        </h3>
+        <p className="mt-2 text-[16px] font-semibold">
+          {safeFormatDate(
+            item.date,
+            (d) => format(d, "MMM d"),
+            item.date
+          )}
+        </p>
+
+        <p className="mt-1 text-[12px] text-muted-foreground">
+          {item.startTime || "—"}
+        </p>
 
       </div>
 
       <span
         className={cn(
-          "inline-flex rounded-full px-3 py-1 text-[11px] font-medium whitespace-nowrap",
+          "inline-flex rounded-full px-2.5 py-1 text-[10px] font-medium whitespace-nowrap",
           ELEMENT_BADGES.accommodation
         )}
       >
@@ -1010,37 +1043,13 @@ function SortableItem({
           : "1 Night"}
       </span>
 
-    </div>
-
-    <div className="grid grid-cols-2 gap-8 mt-6">
-
       <div className="text-center">
 
-        <p className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-          CHECK-IN
-        </p>
-
-        <p className="mt-2 text-[17px] font-semibold">
-          {safeFormatDate(
-            item.date,
-            (d) => format(d, "MMM d"),
-            item.date
-          )}
-        </p>
-
-        <p className="text-[13px] text-muted-foreground mt-1">
-          {item.startTime || "—"}
-        </p>
-
-      </div>
-
-      <div className="text-center">
-
-        <p className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+        <p className="text-[9px] uppercase tracking-[0.12em] text-muted-foreground">
           CHECK-OUT
         </p>
 
-        <p className="mt-2 text-[17px] font-semibold">
+        <p className="mt-2 text-[16px] font-semibold">
           {item.endDate
             ? safeFormatDate(
                 item.endDate,
@@ -1050,7 +1059,7 @@ function SortableItem({
             : "—"}
         </p>
 
-        <p className="text-[13px] text-muted-foreground mt-1">
+        <p className="mt-1 text-[12px] text-muted-foreground">
           {item.endTime || "—"}
         </p>
 
@@ -1058,11 +1067,13 @@ function SortableItem({
 
     </div>
 
+    {/* Cost */}
+
     {item.cost != null && item.cost > 0 && (
-      <div className="mt-5">
+      <div className="mt-4">
         <span
           className={cn(
-            "inline-flex rounded-full px-3 py-1 text-[11px] font-semibold",
+            "inline-flex rounded-full px-2.5 py-1 text-[10px] font-medium",
             ELEMENT_BADGES.accommodation
           )}
         >
@@ -1074,36 +1085,40 @@ function SortableItem({
   </div>
 )}
 
-              {item.elementType === "meal" && (
-  <div className="flex flex-col h-full relative">
+        {item.elementType === "meal" && (
+  <div className="relative flex h-full flex-col">
 
-    {/* Chevron */}
-    <ChevronDown
-      className={cn(
-        "absolute top-0 right-0 w-4 h-4 text-muted-foreground transition-transform duration-300",
-        expanded && "rotate-180"
-      )}
-    />
+    {/* Header */}
+    <div className="flex items-start justify-between">
 
-    <div className="pr-6">
-
-      <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-amber-500">
+      <p className="text-[8px] font-semibold uppercase tracking-[0.14em] text-amber-500">
         {categoryLabel(item)}
       </p>
 
-      <h3 className="mt-2 text-[19px] font-semibold leading-snug line-clamp-2">
-        {item.title}
-      </h3>
-
-      {item.location && (
-        <p className="mt-1 text-[13px] text-muted-foreground truncate">
-          {item.location}
-        </p>
-      )}
+      <ChevronDown
+        className={cn(
+          "h-4 w-4 text-muted-foreground transition-transform",
+          expanded && "rotate-180"
+        )}
+      />
 
     </div>
 
-    <div className="grid grid-cols-2 gap-10 mt-5">
+    {/* Restaurant */}
+
+    <h3 className="mt-2 line-clamp-2 text-[17px] font-semibold leading-snug pr-10">
+      {item.title}
+    </h3>
+
+    {item.location && (
+      <p className="mt-1 truncate text-[12px] text-muted-foreground">
+        {item.location}
+      </p>
+    )}
+
+    {/* Time */}
+
+    <div className="mt-5 flex justify-between">
 
       <div>
 
@@ -1111,19 +1126,19 @@ function SortableItem({
           {item.startTime || "—"}
         </p>
 
-        <p className="mt-1 text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+        <p className="mt-1 text-[9px] uppercase tracking-[0.12em] text-muted-foreground">
           Time
         </p>
 
       </div>
 
-      <div>
+      <div className="text-right">
 
         <p className="text-[15px] font-semibold">
           {duration || "1h"}
         </p>
 
-        <p className="mt-1 text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+        <p className="mt-1 text-[9px] uppercase tracking-[0.12em] text-muted-foreground">
           Duration
         </p>
 
@@ -1131,11 +1146,13 @@ function SortableItem({
 
     </div>
 
-    <div className="flex items-center gap-2 mt-5 flex-wrap">
+    {/* Footer */}
+
+    <div className="mt-4 flex items-center gap-2 flex-wrap">
 
       <span
         className={cn(
-          "inline-flex items-center rounded-full px-3 py-1 text-[11px] font-semibold",
+          "inline-flex rounded-full px-2.5 py-1 text-[10px] font-medium",
           ELEMENT_BADGES.meal
         )}
       >
@@ -1145,7 +1162,7 @@ function SortableItem({
       {item.cost != null && item.cost > 0 && (
         <span
           className={cn(
-            "inline-flex items-center rounded-full px-3 py-1 text-[11px] font-semibold",
+            "inline-flex rounded-full px-2.5 py-1 text-[10px] font-medium",
             ELEMENT_BADGES.meal
           )}
         >
@@ -1158,36 +1175,40 @@ function SortableItem({
   </div>
 )}
 
-              {item.elementType === "activity" && (
-  <div className="flex flex-col h-full relative">
+        {item.elementType === "activity" && (
+  <div className="relative flex h-full flex-col">
 
-    {/* Chevron */}
-    <ChevronDown
-      className={cn(
-        "absolute top-0 right-0 w-4 h-4 text-muted-foreground transition-transform duration-300",
-        expanded && "rotate-180"
-      )}
-    />
+    {/* Header */}
+    <div className="flex items-start justify-between">
 
-    <div className="pr-6">
-
-      <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-orange-500">
+      <p className="text-[8px] font-semibold uppercase tracking-[0.14em] text-orange-500">
         ACTIVITY
       </p>
 
-      <h3 className="mt-2 text-[19px] font-semibold leading-snug line-clamp-2">
-        {item.title}
-      </h3>
-
-      {item.location && (
-        <p className="mt-1 text-[13px] text-muted-foreground truncate">
-          {item.location}
-        </p>
-      )}
+      <ChevronDown
+        className={cn(
+          "h-4 w-4 text-muted-foreground transition-transform",
+          expanded && "rotate-180"
+        )}
+      />
 
     </div>
 
-    <div className="grid grid-cols-2 gap-10 mt-5">
+    {/* Title */}
+
+    <h3 className="mt-2 line-clamp-2 text-[17px] font-semibold leading-snug pr-10">
+      {item.title}
+    </h3>
+
+    {item.location && (
+      <p className="mt-1 truncate text-[12px] text-muted-foreground">
+        {item.location}
+      </p>
+    )}
+
+    {/* Time */}
+
+    <div className="mt-5 flex justify-between">
 
       <div>
 
@@ -1195,19 +1216,19 @@ function SortableItem({
           {item.startTime || "—"}
         </p>
 
-        <p className="mt-1 text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+        <p className="mt-1 text-[9px] uppercase tracking-[0.12em] text-muted-foreground">
           Time
         </p>
 
       </div>
 
-      <div>
+      <div className="text-right">
 
         <p className="text-[15px] font-semibold">
           {duration || "—"}
         </p>
 
-        <p className="mt-1 text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+        <p className="mt-1 text-[9px] uppercase tracking-[0.12em] text-muted-foreground">
           Duration
         </p>
 
@@ -1215,11 +1236,13 @@ function SortableItem({
 
     </div>
 
+    {/* Cost */}
+
     {item.cost != null && item.cost > 0 && (
-      <div className="mt-5">
+      <div className="mt-4">
         <span
           className={cn(
-            "inline-flex items-center rounded-full px-3 py-1 text-[11px] font-semibold",
+            "inline-flex rounded-full px-2.5 py-1 text-[10px] font-medium",
             ELEMENT_BADGES.activity
           )}
         >
@@ -1232,9 +1255,8 @@ function SortableItem({
 )}
             </div>
 
-            
-          </div>
-        </button>
+            </div>
+          </button>
 
         {expanded && (
           <div className="border-t border-border/50 bg-muted/15 px-5 py-4 space-y-4">
