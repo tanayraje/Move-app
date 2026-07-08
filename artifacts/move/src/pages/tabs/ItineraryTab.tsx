@@ -349,7 +349,7 @@ const dur = Math.max(
                 {city && (
                   <span
                     className={cn(
-                      "text-[10px] font-bold leading-none mb-0.5 whitespace-nowrap",
+                      "text-[11px] font-bold leading-none mb-0.5 whitespace-nowrap",
                       isSelected ? "text-primary-foreground/80" : "text-primary"
                     )}
                   >
@@ -584,7 +584,7 @@ function AccommodationBanner({
 
               <div>
 
-                <p className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
                   Check In
                 </p>
 
@@ -602,7 +602,7 @@ function AccommodationBanner({
 
               <div>
 
-                <p className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
                   Check Out
                 </p>
 
@@ -834,7 +834,7 @@ function SortableItem({
     >
       <div
         className={cn(
-          "absolute -left-[31px] top-7 w-4 h-4 rounded-full border-4 border-background z-20",
+           "absolute -left-[30px] top-9 h-3 w-3 rounded-full border-2 border-background z-20",
           item.elementType === "travel"
             ? "bg-blue-500"
             : item.elementType === "accommodation"
@@ -847,104 +847,116 @@ function SortableItem({
 
       <div
         className={cn(
-          "overflow-hidden rounded-3xl border bg-card shadow-sm hover:shadow-md transition-all duration-300",
-          ELEMENT_BORDER[item.elementType]
-        )}
+  "overflow-hidden rounded-[28px] bg-card border border-border/40 shadow-[0_2px_10px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_28px_rgba(0,0,0,0.08)] transition-all duration-300",
+  ELEMENT_BORDER[item.elementType]
+)}
       >
-        <div
-          {...attributes}
-          {...listeners}
-          className="h-6 flex items-center justify-center border-b border-border/40 bg-muted/20 cursor-grab active:cursor-grabbing touch-none"
-        >
-          <GripVertical className="w-4 h-4 rotate-90 text-muted-foreground/40" />
-        </div>
 
-        <button
+      <button
+  {...attributes}
+  {...listeners}
   type="button"
   onClick={() => setExpanded((v) => !v)}
-  className="w-full text-left"
+  className="w-full text-left cursor-grab active:cursor-grabbing touch-none"
 >
-  <div className="flex min-h-[108px]">
+  <div className="flex min-h-[124px]">
 
-    {/* Left Strip */}
+{/* Left Strip */}
 
-    <div
-      className={cn(
-        "w-12 shrink-0 flex flex-col items-center justify-center text-white",
-        panelGradient(item.elementType)
-      )}
-    >
-      <Icon className="w-5 h-5 mb-2 stroke-[2]" />
+<div
+  className={cn(
+    "w-[86px] shrink-0 flex flex-col items-center justify-center text-white",
+    panelGradient(item.elementType)
+  )}
+>
+  <Icon className="h-8 w-8 stroke-[1.8]" />
 
-      <span className="text-[8px] uppercase tracking-[0.14em] font-semibold opacity-80 text-center leading-tight px-1">
-        {item.elementType === "travel"
-          ? travelLabel(item.travelType)
-          : categoryLabel(item)}
-      </span>
-    </div>
+  <span className="mt-5 text-[9px] font-semibold uppercase tracking-[0.18em] text-center leading-none">
+    {item.elementType === "travel"
+      ? travelLabel(item.travelType)
+      : categoryLabel(item)}
+  </span>
+</div>
 
     {/* Card Content */}
 
-    <div className="flex-1 px-4 py-3">
+    <div className="flex-1 px-6 py-5 min-w-0">
 
       {/* Individual cards go here */}
 
         {item.elementType === "travel" && (
-  <div className="relative flex h-full flex-col">
+  <div className="relative flex h-full flex-col justify-between">
 
-    {/* Header */}
-    <div className="flex items-start justify-between">
-
-      <p className="text-[8px] font-semibold uppercase tracking-[0.14em] text-blue-500">
-        TRAVEL
-      </p>
-
+    <div className="flex items-center justify-between">
       <ChevronDown
         className={cn(
-          "h-4 w-4 text-muted-foreground transition-transform",
+          "ml-auto h-4 w-4 opacity-60 text-muted-foreground transition-transform",
           expanded && "rotate-180"
         )}
       />
-
     </div>
 
-    {/* Route */}
-    <div className="mt-3 flex items-center gap-2">
+    <div className="mt-1 flex items-start">
 
-      <div className="min-w-0 flex-1">
-        <h3 className="truncate text-[17px] font-semibold">
-          {item.fromLocation}
+      {/* From */}
+
+      <div className="min-w-0 flex-[1.4]">
+
+        <h3
+          className="truncate text-[19px] font-semibold tracking-[-0.02em] leading-tight"
+          title={item.fromLocation}
+        >
+          {item.fromLocation || "—"}
         </h3>
+
+
       </div>
 
-      <div className="flex shrink-0 flex-col items-center">
+      {/* Centre */}
 
-        <Icon className="h-4 w-4 text-blue-500" />
+      <div className="mx-3 flex w-[84px] shrink-0 flex-col items-center">
 
-        <span className="mt-1 text-[10px] italic text-muted-foreground">
+        <div className="flex w-full items-center">
+
+          <div className="h-px flex-1 border-t border-dashed border-muted-foreground/40" />
+
+          <Icon className="mx-2 h-5 w-5 text-blue-500" />
+
+          <div className="h-px flex-1 border-t border-dashed border-muted-foreground/40" />
+
+        </div>
+
+        <span className="mt-2 text-[11px] italic tracking-[0.02em] text-muted-foreground">
           {duration || "—"}
         </span>
 
       </div>
 
-      <div className="min-w-0 flex-1 text-right">
-        <h3 className="truncate text-[17px] font-semibold">
-          {item.toLocation}
+      {/* To */}
+
+      <div className="min-w-0 flex-[1.4] text-right">
+
+        <h3
+          className="truncate text-[19px] font-semibold tracking-[-0.02em] leading-tight"
+          title={item.toLocation}
+        >
+          {item.toLocation || "—"}
         </h3>
+
+
       </div>
 
     </div>
 
-    {/* Times */}
-    <div className="mt-5 flex justify-between">
+    <div className="mt-7 flex justify-between">
 
       <div>
 
-        <p className="text-[15px] font-semibold">
+        <p className="text-[17px] font-semibold">
           {item.startTime || "—"}
         </p>
 
-        <p className="mt-1 text-[9px] uppercase tracking-[0.12em] text-muted-foreground">
+        <p className="mt-1 text-[11px] uppercase tracking-[0.14em] font-medium text-muted-foreground">
           Departure
         </p>
 
@@ -952,11 +964,11 @@ function SortableItem({
 
       <div className="text-right">
 
-        <p className="text-[15px] font-semibold">
+        <p className="text-[17px] font-semibold">
           {item.endTime || "—"}
         </p>
 
-        <p className="mt-1 text-[9px] uppercase tracking-[0.12em] text-muted-foreground">
+        <p className="mt-1 text-[11px] uppercase tracking-[0.14em] font-medium text-muted-foreground">
           Arrival
         </p>
 
@@ -964,75 +976,23 @@ function SortableItem({
 
     </div>
 
-    {/* Cost */}
-    {item.cost != null && item.cost > 0 && (
-      <div className="mt-4">
-        <span
-          className={cn(
-            "inline-flex rounded-full px-2.5 py-1 text-[10px] font-medium",
-            ELEMENT_BADGES.travel
-          )}
-        >
-          ₹{Math.round(item.cost).toLocaleString("en-IN")}
-        </span>
-      </div>
-    )}
-
   </div>
 )}
 
         {item.elementType === "accommodation" && (
-  <div className="relative flex h-full flex-col">
+  <div className="relative flex h-full flex-col justify-between">
 
-    {/* Header */}
-    <div className="flex items-start justify-between">
+    <div className="flex items-start justify-between gap-4">
 
-      <p className="text-[8px] font-semibold uppercase tracking-[0.14em] text-violet-500">
-        STAY
-      </p>
-
-      <ChevronDown
-        className={cn(
-          "h-4 w-4 text-muted-foreground transition-transform",
-          expanded && "rotate-180"
-        )}
-      />
-
-    </div>
-
-    {/* Hotel */}
-
-    <h3 className="mt-2 line-clamp-2 text-[17px] font-semibold leading-snug pr-10">
-      {item.title}
-    </h3>
-
-    {/* Dates */}
-
-    <div className="mt-5 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
-
-      <div className="text-center">
-
-        <p className="text-[9px] uppercase tracking-[0.12em] text-muted-foreground">
-          CHECK-IN
-        </p>
-
-        <p className="mt-2 text-[16px] font-semibold">
-          {safeFormatDate(
-            item.date,
-            (d) => format(d, "MMM d"),
-            item.date
-          )}
-        </p>
-
-        <p className="mt-1 text-[12px] text-muted-foreground">
-          {item.startTime || "—"}
-        </p>
-
-      </div>
+      <h3
+        className="min-w-0 flex-1 line-clamp-2 text-[19px] font-semibold tracking-[-0.02em] leading-snug"
+      >
+        {item.title}
+      </h3>
 
       <span
         className={cn(
-          "inline-flex rounded-full px-2.5 py-1 text-[10px] font-medium whitespace-nowrap",
+          "shrink-0 rounded-full px-3.5 py-1.5 text-[11px] font-medium whitespace-nowrap",
           ELEMENT_BADGES.accommodation
         )}
       >
@@ -1043,13 +1003,44 @@ function SortableItem({
           : "1 Night"}
       </span>
 
-      <div className="text-center">
+      <ChevronDown
+        className={cn(
+          "h-4 w-4 opacity-60 shrink-0 text-muted-foreground transition-transform",
+          expanded && "rotate-180"
+        )}
+      />
 
-        <p className="text-[9px] uppercase tracking-[0.12em] text-muted-foreground">
-          CHECK-OUT
+    </div>
+
+    <div className="mt-7 grid grid-cols-2 gap-8">
+
+      <div>
+
+        <p className="text-[11px] uppercase tracking-[0.14em] font-medium text-muted-foreground">
+          Check-in
         </p>
 
-        <p className="mt-2 text-[16px] font-semibold">
+        <p className="mt-3 text-[17px] font-semibold">
+          {safeFormatDate(
+            item.date,
+            (d) => format(d, "MMM d"),
+            item.date
+          )}
+        </p>
+
+        <p className="mt-1 text-[13px] text-muted-foreground">
+          {item.startTime || "—"}
+        </p>
+
+      </div>
+
+      <div className="text-right">
+
+        <p className="text-[11px] uppercase tracking-[0.14em] font-medium text-muted-foreground">
+          Check-out
+        </p>
+
+        <p className="mt-3 text-[17px] font-semibold">
           {item.endDate
             ? safeFormatDate(
                 item.endDate,
@@ -1059,7 +1050,7 @@ function SortableItem({
             : "—"}
         </p>
 
-        <p className="mt-1 text-[12px] text-muted-foreground">
+        <p className="mt-1 text-[13px] text-muted-foreground">
           {item.endTime || "—"}
         </p>
 
@@ -1067,66 +1058,36 @@ function SortableItem({
 
     </div>
 
-    {/* Cost */}
-
-    {item.cost != null && item.cost > 0 && (
-      <div className="mt-4">
-        <span
-          className={cn(
-            "inline-flex rounded-full px-2.5 py-1 text-[10px] font-medium",
-            ELEMENT_BADGES.accommodation
-          )}
-        >
-          ₹{Math.round(item.cost).toLocaleString("en-IN")}
-        </span>
-      </div>
-    )}
-
   </div>
 )}
 
         {item.elementType === "meal" && (
-  <div className="relative flex h-full flex-col">
+  <div className="relative flex h-full flex-col justify-between">
 
-    {/* Header */}
-    <div className="flex items-start justify-between">
+    <div className="flex items-start justify-between gap-4">
 
-      <p className="text-[8px] font-semibold uppercase tracking-[0.14em] text-amber-500">
-        {categoryLabel(item)}
-      </p>
+      <h3 className="min-w-0 flex-1 line-clamp-2 text-[19px] font-semibold tracking-[-0.02em] leading-snug">
+        {item.title}
+      </h3>
 
       <ChevronDown
         className={cn(
-          "h-4 w-4 text-muted-foreground transition-transform",
+          "h-4 w-4 opacity-60 shrink-0 text-muted-foreground transition-transform",
           expanded && "rotate-180"
         )}
       />
 
     </div>
 
-    {/* Restaurant */}
-
-    <h3 className="mt-2 line-clamp-2 text-[17px] font-semibold leading-snug pr-10">
-      {item.title}
-    </h3>
-
-    {item.location && (
-      <p className="mt-1 truncate text-[12px] text-muted-foreground">
-        {item.location}
-      </p>
-    )}
-
-    {/* Time */}
-
-    <div className="mt-5 flex justify-between">
+    <div className="mt-7 flex items-end justify-between">
 
       <div>
 
-        <p className="text-[15px] font-semibold">
+        <p className="text-[17px] font-semibold">
           {item.startTime || "—"}
         </p>
 
-        <p className="mt-1 text-[9px] uppercase tracking-[0.12em] text-muted-foreground">
+        <p className="mt-1 text-[11px] uppercase tracking-[0.14em] font-medium text-muted-foreground">
           Time
         </p>
 
@@ -1134,41 +1095,15 @@ function SortableItem({
 
       <div className="text-right">
 
-        <p className="text-[15px] font-semibold">
+        <p className="text-[17px] font-semibold">
           {duration || "1h"}
         </p>
 
-        <p className="mt-1 text-[9px] uppercase tracking-[0.12em] text-muted-foreground">
+        <p className="mt-1 text-[11px] uppercase tracking-[0.14em] font-medium text-muted-foreground">
           Duration
         </p>
 
       </div>
-
-    </div>
-
-    {/* Footer */}
-
-    <div className="mt-4 flex items-center gap-2 flex-wrap">
-
-      <span
-        className={cn(
-          "inline-flex rounded-full px-2.5 py-1 text-[10px] font-medium",
-          ELEMENT_BADGES.meal
-        )}
-      >
-        {categoryLabel(item)}
-      </span>
-
-      {item.cost != null && item.cost > 0 && (
-        <span
-          className={cn(
-            "inline-flex rounded-full px-2.5 py-1 text-[10px] font-medium",
-            ELEMENT_BADGES.meal
-          )}
-        >
-          ₹{Math.round(item.cost).toLocaleString("en-IN")}
-        </span>
-      )}
 
     </div>
 
@@ -1176,47 +1111,32 @@ function SortableItem({
 )}
 
         {item.elementType === "activity" && (
-  <div className="relative flex h-full flex-col">
+  <div className="relative flex h-full flex-col justify-between">
 
-    {/* Header */}
-    <div className="flex items-start justify-between">
+    <div className="flex items-start justify-between gap-4">
 
-      <p className="text-[8px] font-semibold uppercase tracking-[0.14em] text-orange-500">
-        ACTIVITY
-      </p>
+      <h3 className="min-w-0 flex-1 line-clamp-2 text-[19px] font-semibold tracking-[-0.02em] leading-snug">
+        {item.title}
+      </h3>
 
       <ChevronDown
         className={cn(
-          "h-4 w-4 text-muted-foreground transition-transform",
+          "h-4 w-4 opacity-60 shrink-0 text-muted-foreground transition-transform",
           expanded && "rotate-180"
         )}
       />
 
     </div>
 
-    {/* Title */}
-
-    <h3 className="mt-2 line-clamp-2 text-[17px] font-semibold leading-snug pr-10">
-      {item.title}
-    </h3>
-
-    {item.location && (
-      <p className="mt-1 truncate text-[12px] text-muted-foreground">
-        {item.location}
-      </p>
-    )}
-
-    {/* Time */}
-
-    <div className="mt-5 flex justify-between">
+    <div className="mt-7 flex items-end justify-between">
 
       <div>
 
-        <p className="text-[15px] font-semibold">
+        <p className="text-[17px] font-semibold">
           {item.startTime || "—"}
         </p>
 
-        <p className="mt-1 text-[9px] uppercase tracking-[0.12em] text-muted-foreground">
+        <p className="mt-1 text-[11px] uppercase tracking-[0.14em] font-medium text-muted-foreground">
           Time
         </p>
 
@@ -1224,32 +1144,17 @@ function SortableItem({
 
       <div className="text-right">
 
-        <p className="text-[15px] font-semibold">
+        <p className="text-[17px] font-semibold">
           {duration || "—"}
         </p>
 
-        <p className="mt-1 text-[9px] uppercase tracking-[0.12em] text-muted-foreground">
+        <p className="mt-1 text-[11px] uppercase tracking-[0.14em] font-medium text-muted-foreground">
           Duration
         </p>
 
       </div>
 
     </div>
-
-    {/* Cost */}
-
-    {item.cost != null && item.cost > 0 && (
-      <div className="mt-4">
-        <span
-          className={cn(
-            "inline-flex rounded-full px-2.5 py-1 text-[10px] font-medium",
-            ELEMENT_BADGES.activity
-          )}
-        >
-          ₹{Math.round(item.cost).toLocaleString("en-IN")}
-        </span>
-      </div>
-    )}
 
   </div>
 )}
@@ -1259,14 +1164,14 @@ function SortableItem({
           </button>
 
         {expanded && (
-          <div className="border-t border-border/50 bg-muted/15 px-5 py-4 space-y-4">
+          <div className="border-t border-border/30 bg-muted/10 px-6 py-6 space-y-5">
 
             {/* Location */}
 
 {item.location && (
-  <div className="rounded-2xl border border-border bg-background p-4">
+  <div className="rounded-3xl border border-border/40 bg-background p-5">
 
-    <p className="text-[10px] uppercase tracking-[0.16em] font-semibold text-muted-foreground mb-2">
+    <p className="text-[11px] uppercase tracking-[0.16em] font-semibold text-muted-foreground mb-2">
       Location
     </p>
 
@@ -1289,7 +1194,7 @@ function SortableItem({
               <div>
                 <span
                   className={cn(
-                    "inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold",
+                    "inline-flex items-center rounded-full px-3.5 py-1.5 text-xs font-semibold",
                     ELEMENT_BADGES[item.elementType]
                   )}
                 >
@@ -1311,7 +1216,7 @@ function SortableItem({
 
             {item.notes && (
               <div className="rounded-2xl border border-border bg-background p-4">
-                <p className="text-[10px] uppercase tracking-[0.16em] font-semibold text-muted-foreground mb-2">
+                <p className="text-[11px] uppercase tracking-[0.16em] font-semibold text-muted-foreground mb-2">
                   Notes
                 </p>
 
@@ -1326,7 +1231,7 @@ function SortableItem({
               <div className="rounded-2xl border border-border bg-background p-4">
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <p className="text-[10px] uppercase tracking-[0.16em] font-semibold text-muted-foreground">
+                    <p className="text-[11px] uppercase tracking-[0.16em] font-semibold text-muted-foreground">
                       Checklist
                     </p>
 
@@ -1337,7 +1242,7 @@ function SortableItem({
 
                   <span
                     className={cn(
-                      "rounded-full px-3 py-1 text-xs font-semibold",
+                      "rounded-full px-3.5 py-1.5 text-xs font-semibold",
                       ELEMENT_BADGES[item.elementType]
                     )}
                   >
@@ -1417,7 +1322,7 @@ function SortableItem({
             {attachedDocs.length > 0 && (
               <div className="rounded-2xl border border-border bg-background p-4">
                 <div className="mb-4 flex items-center justify-between">
-                  <p className="text-[10px] uppercase tracking-[0.16em] font-semibold text-muted-foreground">
+                  <p className="text-[11px] uppercase tracking-[0.16em] font-semibold text-muted-foreground">
                     Attachments
                   </p>
 
