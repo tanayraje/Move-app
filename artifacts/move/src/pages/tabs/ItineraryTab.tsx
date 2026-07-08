@@ -340,7 +340,7 @@ const dur = Math.max(
                 onClick={() => setSelectedDate(day)}
                 className={cn(
                 "flex flex-col items-center justify-center px-3 py-2 rounded-2xl transition-all font-medium border-2 relative",
-                city ? "min-w-[84px] h-20" : "min-w-[56px] h-16",
+                city ? "min-w-[60px] h-20" : "min-w-[56px] h-16",
                 isSelected
                   ? "bg-primary border-primary text-primary-foreground shadow-md shadow-primary/20"
                   : "bg-card border-border text-foreground/70 hover:border-primary/30"
@@ -669,7 +669,7 @@ function AccommodationBanner({
 
           {item.notes && (
 
-            <div className="rounded-2xl border border-border bg-background p-4 mb-4">
+            <div className="rounded-3xl border border-border/40 bg-background p-5 mb-4">
 
               <p className="text-sm leading-relaxed text-foreground/80">
                 {item.notes}
@@ -719,16 +719,8 @@ function SortableItem({
   trip: Trip;
   onEdit: () => void;
 }) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({
-    id: item.id,
-  });
+const setNodeRef = undefined;
+const isDragging = false;
 
   const { mutate: deleteItem } = useDeleteItineraryItem();
   const { mutate: deleteExpense } = useDeleteExpense();
@@ -737,10 +729,6 @@ function SortableItem({
 
   const [expanded, setExpanded] = useState(false);
 
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
 
   const attachedDocs = documents.filter((d) =>
     (item.attachedDocIds || []).includes(d.id)
@@ -758,7 +746,7 @@ function SortableItem({
       ? MEAL_SUBTYPES.find((m) => m.id === item.mealSubType)
       : null;
 
-  const MealIcon = mealInfo?.icon ?? UtensilsCrossed;
+  const MealIcon = UtensilsCrossed;
 
   const Icon =
     item.elementType === "travel"
@@ -824,14 +812,7 @@ function SortableItem({
   };
 
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className={cn(
-        "relative transition-all duration-200",
-        isDragging && "opacity-60 scale-[0.98]"
-      )}
-    >
+    <div className="relative">
       <div
         className={cn(
            "absolute -left-[30px] top-9 h-3 w-3 rounded-full border-2 border-background z-20",
@@ -853,25 +834,23 @@ function SortableItem({
       >
 
       <button
-  {...attributes}
-  {...listeners}
   type="button"
   onClick={() => setExpanded((v) => !v)}
-  className="w-full text-left cursor-grab active:cursor-grabbing touch-none"
+  className="w-full text-left"
 >
-  <div className="flex min-h-[124px]">
+  <div className="flex min-h-[110px]">
 
 {/* Left Strip */}
 
 <div
   className={cn(
-    "w-[86px] shrink-0 flex flex-col items-center justify-center text-white",
+    "w-[60px] shrink-0 flex flex-col items-center justify-center text-white",
     panelGradient(item.elementType)
   )}
 >
-  <Icon className="h-8 w-8 stroke-[1.8]" />
+  <Icon className="h-6 w-6 stroke-[1.8]" />
 
-  <span className="mt-5 text-[9px] font-semibold uppercase tracking-[0.18em] text-center leading-none">
+  <span className="mt-4 text-[8px] font-semibold uppercase tracking-[0.16em] text-center leading-none px-1">
     {item.elementType === "travel"
       ? travelLabel(item.travelType)
       : categoryLabel(item)}
@@ -880,7 +859,7 @@ function SortableItem({
 
     {/* Card Content */}
 
-    <div className="flex-1 px-6 py-5 min-w-0">
+    <div className="flex-1 px-5 py-4 min-w-0">
 
       {/* Individual cards go here */}
 
@@ -900,10 +879,10 @@ function SortableItem({
 
       {/* From */}
 
-      <div className="min-w-0 flex-[1.4]">
+      <div className="min-w-0 flex-[1.7]">
 
         <h3
-          className="truncate text-[19px] font-semibold tracking-[-0.02em] leading-tight"
+          className="truncate text-[16px] font-semibold tracking-[-0.01em] leading-tight"
           title={item.fromLocation}
         >
           {item.fromLocation || "—"}
@@ -914,7 +893,7 @@ function SortableItem({
 
       {/* Centre */}
 
-      <div className="mx-3 flex w-[84px] shrink-0 flex-col items-center">
+      <div className="mx-2 flex w-[84px] shrink-0 flex-col items-center">
 
         <div className="flex w-full items-center">
 
@@ -926,7 +905,7 @@ function SortableItem({
 
         </div>
 
-        <span className="mt-2 text-[11px] italic tracking-[0.02em] text-muted-foreground">
+        <span className="mt-1 text-[11px] italic tracking-[0.02em] text-muted-foreground">
           {duration || "—"}
         </span>
 
@@ -934,10 +913,10 @@ function SortableItem({
 
       {/* To */}
 
-      <div className="min-w-0 flex-[1.4] text-right">
+      <div className="min-w-0 flex-[1.7] text-right">
 
         <h3
-          className="truncate text-[19px] font-semibold tracking-[-0.02em] leading-tight"
+          className="truncate text-[17px] font-medium leading-tight"
           title={item.toLocation}
         >
           {item.toLocation || "—"}
@@ -948,11 +927,11 @@ function SortableItem({
 
     </div>
 
-    <div className="mt-7 flex justify-between">
+    <div className="mt-5 flex justify-between">
 
       <div>
 
-        <p className="text-[17px] font-semibold">
+        <p className="text-[15px] font-semibold">
           {item.startTime || "—"}
         </p>
 
@@ -964,7 +943,7 @@ function SortableItem({
 
       <div className="text-right">
 
-        <p className="text-[17px] font-semibold">
+        <p className="text-[15px] font-semibold">
           {item.endTime || "—"}
         </p>
 
@@ -982,17 +961,17 @@ function SortableItem({
         {item.elementType === "accommodation" && (
   <div className="relative flex h-full flex-col justify-between">
 
-    <div className="flex items-start justify-between gap-4">
+    <div className="flex items-center justify-between gap-3">
 
       <h3
-        className="min-w-0 flex-1 line-clamp-2 text-[19px] font-semibold tracking-[-0.02em] leading-snug"
-      >
+  className="min-w-0 flex-1 text-[16px] font-semibold tracking-[-0.01em] leading-tight"
+>
         {item.title}
       </h3>
 
       <span
         className={cn(
-          "shrink-0 rounded-full px-3.5 py-1.5 text-[11px] font-medium whitespace-nowrap",
+  "shrink-0 self-center rounded-full px-3 py-1 text-[10px] font-medium whitespace-nowrap",
           ELEMENT_BADGES.accommodation
         )}
       >
@@ -1012,7 +991,7 @@ function SortableItem({
 
     </div>
 
-    <div className="mt-7 grid grid-cols-2 gap-8">
+    <div className="mt-5 grid grid-cols-2 gap-8">
 
       <div>
 
@@ -1020,7 +999,7 @@ function SortableItem({
           Check-in
         </p>
 
-        <p className="mt-3 text-[17px] font-semibold">
+        <p className="mt-3 text-[15px] font-semibold">
           {safeFormatDate(
             item.date,
             (d) => format(d, "MMM d"),
@@ -1028,9 +1007,9 @@ function SortableItem({
           )}
         </p>
 
-        <p className="mt-1 text-[13px] text-muted-foreground">
-          {item.startTime || "—"}
-        </p>
+        <p className="mt-1 text-[12px] italic text-muted-foreground">
+           {item.startTime || "—"}
+          </p>
 
       </div>
 
@@ -1040,7 +1019,7 @@ function SortableItem({
           Check-out
         </p>
 
-        <p className="mt-3 text-[17px] font-semibold">
+        <p className="mt-3 text-[15px] font-semibold">
           {item.endDate
             ? safeFormatDate(
                 item.endDate,
@@ -1050,9 +1029,9 @@ function SortableItem({
             : "—"}
         </p>
 
-        <p className="mt-1 text-[13px] text-muted-foreground">
-          {item.endTime || "—"}
-        </p>
+        <p className="mt-1 text-[12px] italic text-muted-foreground">
+           {item.endTime || "—"}
+          </p>
 
       </div>
 
@@ -1066,7 +1045,7 @@ function SortableItem({
 
     <div className="flex items-start justify-between gap-4">
 
-      <h3 className="min-w-0 flex-1 line-clamp-2 text-[19px] font-semibold tracking-[-0.02em] leading-snug">
+      <h3 className="min-w-0 flex-1 line-clamp-2 text-[16px] font-semibold tracking-[-0.01em] leading-snug">
         {item.title}
       </h3>
 
@@ -1079,28 +1058,16 @@ function SortableItem({
 
     </div>
 
-    <div className="mt-7 flex items-end justify-between">
+    <div className="mt-6 flex items-end justify-between">
 
       <div>
 
-        <p className="text-[17px] font-semibold">
+        <p className="text-[15px] font-semibold">
           {item.startTime || "—"}
         </p>
 
         <p className="mt-1 text-[11px] uppercase tracking-[0.14em] font-medium text-muted-foreground">
           Time
-        </p>
-
-      </div>
-
-      <div className="text-right">
-
-        <p className="text-[17px] font-semibold">
-          {duration || "1h"}
-        </p>
-
-        <p className="mt-1 text-[11px] uppercase tracking-[0.14em] font-medium text-muted-foreground">
-          Duration
         </p>
 
       </div>
@@ -1115,7 +1082,7 @@ function SortableItem({
 
     <div className="flex items-start justify-between gap-4">
 
-      <h3 className="min-w-0 flex-1 line-clamp-2 text-[19px] font-semibold tracking-[-0.02em] leading-snug">
+      <h3 className="min-w-0 flex-1 line-clamp-2 text-[16px] font-semibold tracking-[-0.01em] leading-snug">
         {item.title}
       </h3>
 
@@ -1128,11 +1095,11 @@ function SortableItem({
 
     </div>
 
-    <div className="mt-7 flex items-end justify-between">
+    <div className="mt-6 flex items-end justify-between">
 
       <div>
 
-        <p className="text-[17px] font-semibold">
+        <p className="text-[15px] font-semibold">
           {item.startTime || "—"}
         </p>
 
@@ -1144,7 +1111,7 @@ function SortableItem({
 
       <div className="text-right">
 
-        <p className="text-[17px] font-semibold">
+        <p className="text-[15px] font-semibold">
           {duration || "—"}
         </p>
 
@@ -1215,7 +1182,7 @@ function SortableItem({
             {/* Notes */}
 
             {item.notes && (
-              <div className="rounded-2xl border border-border bg-background p-4">
+              <div className="rounded-3xl border border-border/40 bg-background p-5">
                 <p className="text-[11px] uppercase tracking-[0.16em] font-semibold text-muted-foreground mb-2">
                   Notes
                 </p>
@@ -1228,7 +1195,7 @@ function SortableItem({
                         {/* Checklist */}
 
             {item.checklist && item.checklist.length > 0 && (
-              <div className="rounded-2xl border border-border bg-background p-4">
+              <div className="rounded-3xl border border-border/40 bg-background p-5">
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <p className="text-[11px] uppercase tracking-[0.16em] font-semibold text-muted-foreground">
@@ -1320,7 +1287,7 @@ function SortableItem({
                         {/* Attachments */}
 
             {attachedDocs.length > 0 && (
-              <div className="rounded-2xl border border-border bg-background p-4">
+              <div className="rounded-3xl border border-border/40 bg-background p-5">
                 <div className="mb-4 flex items-center justify-between">
                   <p className="text-[11px] uppercase tracking-[0.16em] font-semibold text-muted-foreground">
                     Attachments
