@@ -1146,7 +1146,7 @@ const isDragging = false;
 
     {/* Header */}
 
-    <div className="flex min-w-0 items-start justify-between gap-4">
+    <div className="flex items-start justify-between gap-4">
 
       <div className="min-w-0 flex-1">
 
@@ -1154,9 +1154,25 @@ const isDragging = false;
           {travelLabel(item.travelType)}
         </p>
 
-        <h3 className="min-w-0 break-words line-clamp-2 text-[18px] font-semibold leading-[1.35]">
-          {item.title}
-        </h3>
+        <div className="flex min-w-0 items-center gap-3">
+
+          <span
+            className="min-w-0 flex-1 truncate text-[18px] font-semibold leading-[1.35]"
+            title={item.fromLocation}
+          >
+            {item.fromLocation || "—"}
+          </span>
+
+          <Icon className="h-4 w-4 shrink-0 text-blue-500" />
+
+          <span
+            className="min-w-0 flex-1 truncate text-right text-[18px] font-semibold leading-[1.35]"
+            title={item.toLocation}
+          >
+            {item.toLocation || "—"}
+          </span>
+
+        </div>
 
       </div>
 
@@ -1171,65 +1187,41 @@ const isDragging = false;
 
     {/* Journey */}
 
-    <div className="mt-4 grid grid-cols-[minmax(0,1fr)_80px_minmax(0,1fr)] items-end gap-4">
+    <div className="mt-5 grid grid-cols-[1fr_80px_1fr] items-end gap-4">
 
-      {/* From */}
+      {/* Departure */}
 
-      <div className="min-w-0">
+      <div>
 
-        <p className="whitespace-nowrap text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-          From
+        <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+          Departure
         </p>
 
-        <p
-          className="mt-0.5 truncate text-[15px] font-semibold"
-          title={item.fromLocation}
-        >
-          {item.fromLocation || "—"}
-        </p>
-
-        <p className="mt-0.5 text-[12px] italic text-muted-foreground">
+        <p className="mt-1 text-[15px] font-semibold">
           {item.startTime || "—"}
         </p>
 
       </div>
 
-      {/* Centre */}
+      {/* Duration */}
 
-      <div className="flex flex-col items-center">
+      <div className="text-center">
 
-        <div className="flex w-full items-center">
-
-          <div className="h-px flex-1 bg-border/60" />
-
-          <Icon className="mx-3 h-4 w-4 shrink-0 text-blue-500" />
-
-          <div className="h-px flex-1 bg-border/60" />
-
-        </div>
-
-        <p className="mt-1 whitespace-nowrap text-[11px] italic text-blue-600">
+        <p className="text-[11px] italic text-blue-600">
           {duration || "—"}
         </p>
 
       </div>
 
-      {/* To */}
+      {/* Arrival */}
 
-      <div className="min-w-0 text-right">
+      <div className="text-right">
 
-        <p className="whitespace-nowrap text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-          To
+        <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+          Arrival
         </p>
 
-        <p
-          className="mt-0.5 truncate text-[15px] font-semibold"
-          title={item.toLocation}
-        >
-          {item.toLocation || "—"}
-        </p>
-
-        <p className="mt-0.5 text-[12px] italic text-muted-foreground">
+        <p className="mt-1 text-[15px] font-semibold">
           {item.endTime || "—"}
         </p>
 
