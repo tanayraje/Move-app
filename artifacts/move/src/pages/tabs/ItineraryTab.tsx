@@ -35,18 +35,125 @@ const MEAL_SUBTYPES: { id: MealSubType; label: string; icon: React.ElementType; 
 ];
 
 const ELEMENT_COLORS: Record<ElementType, string> = {
-  travel: 'bg-blue-500',
-  accommodation: 'bg-violet-500',
-  meal: 'bg-amber-400',
-  activity: 'bg-orange-500',
+  travel: "from-blue-500 to-blue-600",
+  accommodation: "from-violet-500 to-violet-600",
+  meal: "from-amber-400 to-amber-500",
+  activity: "from-orange-500 to-orange-600",
+};
+const ELEMENT_BORDER: Record<ElementType, string> = {
+  travel: "border-blue-200",
+  accommodation: "border-violet-200",
+  meal: "border-amber-200",
+  activity: "border-orange-200",
 };
 
-const ELEMENT_BORDER: Record<ElementType, string> = {
-  travel: 'border-l-blue-500',
-  accommodation: 'border-l-violet-500',
-  meal: 'border-l-amber-400',
-  activity: 'border-l-orange-500',
+const ELEMENT_BADGES: Record<ElementType, string> = {
+  travel:
+    "bg-blue-50 text-blue-700 border border-blue-100 dark:bg-blue-500/10 dark:text-blue-300 dark:border-blue-500/20",
+
+  accommodation:
+    "bg-violet-50 text-violet-700 border border-violet-100 dark:bg-violet-500/10 dark:text-violet-300 dark:border-violet-500/20",
+
+  meal:
+    "bg-amber-50 text-amber-700 border border-amber-100 dark:bg-amber-500/10 dark:text-amber-300 dark:border-amber-500/20",
+
+  activity:
+    "bg-orange-50 text-orange-700 border border-orange-100 dark:bg-orange-500/10 dark:text-orange-300 dark:border-orange-500/20",
 };
+
+const ELEMENT_LABELS: Record<ElementType, string> = {
+  travel: "TRAVEL",
+  accommodation: "STAY",
+  meal: "MEAL",
+  activity: "ACTIVITY",
+};
+
+function categoryLabel(item: ItineraryItem) {
+  if (item.elementType !== "meal") {
+    return ELEMENT_LABELS[item.elementType];
+  }
+
+  switch (item.mealSubType) {
+    case "breakfast":
+      return "BREAKFAST";
+
+    case "lunch":
+      return "LUNCH";
+
+    case "dinner":
+      return "DINNER";
+
+    case "drinks":
+      return "DRINKS";
+
+    default:
+      return "MEAL";
+  }
+}
+
+function panelGradient(type: ElementType) {
+  switch (type) {
+    case "travel":
+      return "bg-gradient-to-b from-blue-500 to-blue-600";
+
+    case "accommodation":
+      return "bg-gradient-to-b from-violet-500 to-violet-600";
+
+    case "meal":
+      return "bg-gradient-to-b from-amber-400 to-amber-500";
+
+    default:
+      return "bg-gradient-to-b from-orange-500 to-orange-600";
+  }
+}
+
+function tintSurface(type: ElementType) {
+  switch (type) {
+    case "travel":
+      return "bg-blue-50/30";
+
+    case "accommodation":
+      return "bg-violet-50/30";
+
+    case "meal":
+      return "bg-amber-50/30";
+
+    default:
+      return "bg-orange-50/30";
+  }
+}
+
+function travelIcon(type?: TravelType) {
+  switch (type) {
+    case "train":
+      return Train;
+
+    case "bus":
+      return Bus;
+
+    case "car":
+      return Car;
+
+    default:
+      return Plane;
+  }
+}
+
+function travelLabel(type?: TravelType) {
+  switch (type) {
+    case "train":
+      return "TRAIN";
+
+    case "bus":
+      return "BUS";
+
+    case "car":
+      return "CAR";
+
+    default:
+      return "FLIGHT";
+  }
+}
 
 const ELEMENT_ICONS: Record<ElementType, React.ElementType> = {
   travel: Plane,
@@ -201,7 +308,13 @@ export default function ItineraryTab({ trip }: { trip: Trip }) {
     const repositioned = reordered.map((item, idx) => {
       if (idx === 0) return item;
       const prev = reordered[idx - 1];
-      const dur = Math.max(parseTime(item.endTime) - parseTime(item.startTime), 30);
+      const start = parseTime(item.startTime);
+const end = parseTime(item.endTime);
+
+const dur = Math.max(
+  end >= start ? end - start : 24 * 60 - start + end,
+  30
+);
       const newStart = prev.endTime;
       return { ...item, startTime: newStart, endTime: addMinutesToTime(newStart, dur) };
     });
@@ -380,88 +493,243 @@ export default function ItineraryTab({ trip }: { trip: Trip }) {
 }
 
 // ─── Accommodation Banner ─────────────────────────────────────────────────────
-function AccommodationBanner({ item, trip, onEdit }: { item: ItineraryItem; trip: Trip; onEdit: () => void }) {
+function AccommodationBanner({
+  item,
+  trip,
+  onEdit,
+}: {
+  item: ItineraryItem;
+  trip: Trip;
+  onEdit: () => void;
+}) {
   const { mutate: deleteItem } = useDeleteItineraryItem();
   const { mutate: deleteExpense } = useDeleteExpense();
+
   const [expanded, setExpanded] = useState(false);
+
   const nights = item.endDate ? stayNights(item.date, item.endDate) : 1;
-  const destCurrency = trip.destinationCurrency || 'INR';
+  const destCurrency = trip.destinationCurrency || "INR";
 
   const handleDelete = () => {
-    if (!confirm('Remove this accommodation?')) return;
-    if (item.expenseId) deleteExpense({ id: item.expenseId, tripId: item.tripId });
-    deleteItem({ tripId: item.tripId, id: item.id });
+    if (!confirm("Remove this accommodation?")) return;
+
+    if (item.expenseId) {
+      deleteExpense({
+        id: item.expenseId,
+        tripId: item.tripId,
+      });
+    }
+
+    deleteItem({
+      tripId: item.tripId,
+      id: item.id,
+    });
   };
 
   return (
-    <div className="bg-card border-2 border-violet-200 dark:border-violet-800 rounded-2xl mb-3 overflow-hidden shadow-sm">
-      {/* Always-visible header — click to expand */}
+    <div className="mb-4 overflow-hidden rounded-3xl border border-violet-100 bg-white shadow-sm transition-all dark:border-violet-900 dark:bg-card">
+
+      {/* HEADER */}
+
       <button
         type="button"
         onClick={() => setExpanded(v => !v)}
-        className="w-full flex items-center gap-3 p-4 text-left"
+        className="w-full text-left"
       >
-        <div className="w-8 h-8 rounded-xl bg-violet-500 text-white flex items-center justify-center shrink-0">
-          <Building2 className="w-4 h-4" />
+        <div className="flex">
+
+          {/* LEFT PANEL */}
+
+          <div className="w-16 shrink-0 bg-gradient-to-b from-violet-500 to-violet-600 flex flex-col items-center justify-center text-white">
+
+            <Building2 className="w-7 h-7 mb-2 stroke-[2]" />
+
+            <span className="text-[10px] font-bold uppercase tracking-[0.18em] opacity-80">
+              Stay
+            </span>
+
+          </div>
+
+          {/* RIGHT */}
+
+          <div className="flex-1 p-5">
+
+            <div className="flex items-start justify-between gap-3">
+
+              <div className="min-w-0">
+
+                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-violet-500">
+                  STAY
+                </p>
+
+                <h3 className="mt-1 text-lg font-bold text-foreground leading-tight truncate">
+                  {item.title}
+                </h3>
+
+                {item.location && (
+                  <p className="mt-1 text-sm text-muted-foreground truncate">
+                    {item.location}
+                  </p>
+                )}
+
+              </div>
+
+              <span className="rounded-full bg-violet-50 border border-violet-100 px-3 py-1 text-xs font-semibold text-violet-700 whitespace-nowrap">
+                {nights} Night{nights > 1 ? "s" : ""}
+              </span>
+
+            </div>
+
+            <div className="mt-5 grid grid-cols-2 gap-4">
+
+              <div>
+
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                  Check In
+                </p>
+
+                <p className="mt-1 text-sm font-semibold">
+                  {safeFormatDate(
+                    item.date,
+                    d => format(d, "MMM d"),
+                    item.date
+                  )}
+
+                  {item.startTime && ` · ${item.startTime}`}
+                </p>
+
+              </div>
+
+              <div>
+
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                  Check Out
+                </p>
+
+                <p className="mt-1 text-sm font-semibold">
+                  {item.endDate
+                    ? safeFormatDate(
+                        item.endDate,
+                        d => format(d, "MMM d"),
+                        item.endDate
+                      )
+                    : "—"}
+
+                  {item.endTime && ` · ${item.endTime}`}
+                </p>
+
+              </div>
+
+            </div>
+
+          </div>
+
+          <div className="pr-4 flex items-center">
+
+            <ChevronDown
+              className={cn(
+                "w-5 h-5 text-muted-foreground transition-transform duration-300",
+                expanded && "rotate-180"
+              )}
+            />
+
+          </div>
+
         </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-[9px] font-bold leading-none mb-0.5 px-1 text-center break-words line-clamp-2">Staying At</p>
-          <h4 className="font-bold text-foreground text-base leading-tight truncate">{item.title}</h4>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            {safeFormatDate(item.date, d => format(d, 'MMM d'), item.date)}
-            {item.startTime && ` ${item.startTime}`}
-            {' – '}
-            {item.endDate ? safeFormatDate(item.endDate, d => format(d, 'MMM d'), item.endDate) : '—'}
-            {item.endTime && ` ${item.endTime}`}
-            {' · '}{nights} night{nights !== 1 ? 's' : ''}
-          </p>
-        </div>
-        <ChevronDown className={cn("w-4 h-4 text-muted-foreground shrink-0 transition-transform", expanded && "rotate-180")} />
       </button>
 
-      {/* Expanded details */}
+      {/* EXPANDED */}
+
       {expanded && (
-        <div className="border-t border-border/50 px-4 pb-4 pt-3 space-y-2">
-          {item.location && (
-            <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-              <MapPin className="w-3.5 h-3.5 shrink-0" />
-              <span>{item.location}</span>
-            </div>
-          )}
+
+        <div className="border-t border-border/40 bg-muted/20 px-5 py-4">
+
           {item.cost != null && item.cost > 0 && (
-            <div className="inline-flex items-center gap-1 text-xs font-bold text-primary bg-primary/10 px-2.5 py-1 rounded-full">
-              <span>₹{Math.round(item.cost).toLocaleString('en-IN')}</span>
-              {destCurrency !== 'INR' && (
-                <span className="text-primary/60 font-normal">
-                  · {formatCurrency(convertFromINR(item.cost, destCurrency), destCurrency)}
-                </span>
-              )}
+
+            <div className="mb-4">
+
+              <span className="inline-flex rounded-full border border-violet-100 bg-violet-50 px-3 py-1 text-xs font-semibold text-violet-700">
+
+                ₹{Math.round(item.cost).toLocaleString("en-IN")}
+
+                {destCurrency !== "INR" && (
+                  <span className="ml-2 font-normal text-violet-500">
+                    {formatCurrency(
+                      convertFromINR(item.cost, destCurrency),
+                      destCurrency
+                    )}
+                  </span>
+                )}
+
+              </span>
+
             </div>
+
           )}
+
           {item.notes && (
-            <p className="text-sm text-foreground/70 bg-muted/40 px-3 py-2 rounded-xl border border-border/40">
-              {item.notes}
-            </p>
+
+            <div className="rounded-2xl border border-border bg-background p-4 mb-4">
+
+              <p className="text-sm leading-relaxed text-foreground/80">
+                {item.notes}
+              </p>
+
+            </div>
+
           )}
-          <div className="flex items-center justify-end gap-1 pt-1 border-t border-border/40">
-            <button onClick={onEdit} className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-primary transition-colors px-3 py-1.5 rounded-lg hover:bg-primary/5">
-              <Pencil className="w-3.5 h-3.5" /> Edit
+
+          <div className="flex items-center justify-end gap-5 border-t border-border pt-3">
+
+            <button
+              onClick={onEdit}
+              className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
+            >
+              <Pencil className="w-4 h-4" />
+              Edit
             </button>
-            <button onClick={handleDelete} className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-red-500 transition-colors px-3 py-1.5 rounded-lg hover:bg-red-50">
-              <Trash2 className="w-3.5 h-3.5" /> Delete
+
+            <button
+              onClick={handleDelete}
+              className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-red-500 transition-colors"
+            >
+              <Trash2 className="w-4 h-4" />
+              Delete
             </button>
+
           </div>
+
         </div>
+
       )}
+
     </div>
   );
 }
 
 // ─── Sortable Item ────────────────────────────────────────────────────────────
 function SortableItem({
-  item, documents, trip, onEdit
-}: { item: ItineraryItem; documents: TripDocument[]; trip: Trip; onEdit: () => void }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id });
+  item,
+  documents,
+  trip,
+  onEdit,
+}: {
+  item: ItineraryItem;
+  documents: TripDocument[];
+  trip: Trip;
+  onEdit: () => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: item.id,
+  });
+
   const { mutate: deleteItem } = useDeleteItineraryItem();
   const { mutate: deleteExpense } = useDeleteExpense();
   const { mutate: saveItem } = useSaveItineraryItem();
@@ -469,203 +737,678 @@ function SortableItem({
 
   const [expanded, setExpanded] = useState(false);
 
-  const style = { transform: CSS.Transform.toString(transform), transition };
-  const Icon = item.elementType ? ELEMENT_ICONS[item.elementType] : Plane;
-  const isMajor = item.elementType === 'travel';
-  const attachedDocs = documents.filter(d => (item.attachedDocIds || []).includes(d.id));
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  const attachedDocs = documents.filter((d) =>
+    (item.attachedDocIds || []).includes(d.id)
+  );
+
   const duration = getDuration(item.startTime, item.endTime);
-  const destCurrency = trip.destinationCurrency || 'INR';
+  const destCurrency = trip.destinationCurrency || "INR";
 
   const totalChecklist = item.checklist?.length ?? 0;
-  const doneChecklist = item.checklist?.filter(c => c.done).length ?? 0;
-  const mealInfo = item.mealSubType
-    ? MEAL_SUBTYPES.find(m => m.id === item.mealSubType)
-    : null;
+  const doneChecklist =
+    item.checklist?.filter((c) => c.done).length ?? 0;
+
+  const mealInfo =
+    item.elementType === "meal"
+      ? MEAL_SUBTYPES.find((m) => m.id === item.mealSubType)
+      : null;
+
   const MealIcon = mealInfo?.icon ?? UtensilsCrossed;
 
-  const openDoc = (doc: TripDocument) => {
-  if (!doc.blob) {
-    alert("Document file not found");
-    return;
-  }
+  const Icon =
+    item.elementType === "travel"
+      ? travelIcon(item.travelType)
+      : item.elementType === "meal"
+      ? MealIcon
+      : ELEMENT_ICONS[item.elementType];
 
-  const url = URL.createObjectURL(doc.blob);
-  window.open(url, '_blank');
-};
+  const openDoc = (doc: TripDocument) => {
+    if (!doc.blob) {
+      alert("Document file not found");
+      return;
+    }
+
+    const url = URL.createObjectURL(doc.blob);
+    window.open(url, "_blank");
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
 
   const detachDoc = (docId: string) => {
-    if (!confirm('Remove this file from the item?')) return;
-    // Detach from item
-    saveItem({ ...item, attachedDocIds: (item.attachedDocIds || []).filter(id => id !== docId) });
-    // Delete from IndexedDB
-    deleteDoc({ id: docId, tripId: item.tripId });
+    if (!confirm("Remove this file from the item?")) return;
+
+    saveItem({
+      ...item,
+      attachedDocIds: (item.attachedDocIds || []).filter(
+        (id) => id !== docId
+      ),
+    });
+
+    deleteDoc({
+      id: docId,
+      tripId: item.tripId,
+    });
   };
 
   const toggleChecklistItem = (checkId: string) => {
     if (!item.checklist) return;
-    saveItem({ ...item, checklist: item.checklist.map(c => c.id === checkId ? { ...c, done: !c.done } : c) });
+
+    saveItem({
+      ...item,
+      checklist: item.checklist.map((c) =>
+        c.id === checkId
+          ? { ...c, done: !c.done }
+          : c
+      ),
+    });
   };
 
   const handleDelete = () => {
-    if (!confirm('Delete this item?')) return;
-    if (item.expenseId) deleteExpense({ id: item.expenseId, tripId: item.tripId });
-    deleteItem({ tripId: item.tripId, id: item.id });
+    if (!confirm("Delete this item?")) return;
+
+    if (item.expenseId) {
+      deleteExpense({
+        id: item.expenseId,
+        tripId: item.tripId,
+      });
+    }
+
+    deleteItem({
+      tripId: item.tripId,
+      id: item.id,
+    });
   };
 
   return (
-    <div ref={setNodeRef} style={style} className={cn("relative transition-opacity", isDragging && "opacity-50")}>
-      {/* Timeline dot */}
-      <div className={cn(
-        "absolute -left-[31px] top-4 w-4 h-4 rounded-full border-4 border-background z-10",
-        item.elementType ? ELEMENT_COLORS[item.elementType] : 'bg-primary'
-      )} />
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        "relative transition-all duration-200",
+        isDragging && "opacity-60 scale-[0.98]"
+      )}
+    >
+      <div
+        className={cn(
+          "absolute -left-[31px] top-7 w-4 h-4 rounded-full border-4 border-background z-20",
+          item.elementType === "travel"
+            ? "bg-blue-500"
+            : item.elementType === "accommodation"
+            ? "bg-violet-500"
+            : item.elementType === "meal"
+            ? "bg-amber-400"
+            : "bg-orange-500"
+        )}
+      />
 
-      <div className={cn(
-        "bg-card rounded-2xl shadow-sm border border-border overflow-hidden",
-        isMajor ? `border-l-4 ${ELEMENT_BORDER[item.elementType]}` : ""
-      )}>
-        {/* Drag handle */}
+      <div
+        className={cn(
+          "overflow-hidden rounded-3xl border bg-card shadow-sm hover:shadow-md transition-all duration-300",
+          ELEMENT_BORDER[item.elementType]
+        )}
+      >
         <div
           {...attributes}
           {...listeners}
-          className="flex items-center justify-center w-full h-6 bg-muted/30 border-b border-border/30 cursor-grab active:cursor-grabbing touch-none"
+          className="h-6 flex items-center justify-center border-b border-border/40 bg-muted/20 cursor-grab active:cursor-grabbing touch-none"
         >
-          <GripVertical className="w-4 h-4 text-muted-foreground/40 rotate-90" />
+          <GripVertical className="w-4 h-4 rotate-90 text-muted-foreground/40" />
         </div>
 
-        {/* Collapsed header — always visible, tap to expand */}
         <button
           type="button"
-          onClick={() => setExpanded(v => !v)}
-          className="w-full flex items-center gap-3 px-4 py-3 text-left"
+          onClick={() => setExpanded((v) => !v)}
+          className="w-full text-left"
         >
-          <div className={cn("w-7 h-7 rounded-lg flex items-center justify-center shrink-0", item.elementType ? ELEMENT_COLORS[item.elementType] : 'bg-primary')}>
-            {item.elementType === 'meal' && mealInfo
-              ? <MealIcon className="w-3.5 h-3.5 text-white" />
-              : <Icon className="w-3.5 h-3.5 text-white" />}
+          <div className="flex min-h-[132px]">
+            <div
+              className={cn(
+                "w-16 shrink-0 flex flex-col items-center justify-center text-white",
+                panelGradient(item.elementType)
+              )}
+            >
+              <Icon className="w-7 h-7 mb-3 stroke-[2]" />
+
+              <span className="text-[10px] uppercase tracking-[0.18em] font-bold opacity-80 text-center px-1">
+                {item.elementType === "travel"
+                  ? travelLabel(item.travelType)
+                  : categoryLabel(item)}
+              </span>
+            </div>
+
+            <div className="flex-1 p-5">
+                            {item.elementType === "travel" && (
+                <div className="flex flex-col h-full">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-blue-500">
+                    TRAVEL
+                  </p>
+
+                  <h3 className="mt-1 text-lg font-bold leading-tight text-foreground">
+                    {item.fromLocation}
+                  </h3>
+
+                  <div className="flex items-center gap-3 my-4">
+                    <div className="flex-1 h-px bg-border" />
+                    <Icon className="w-5 h-5 text-blue-500 shrink-0" />
+                    <div className="flex-1 h-px bg-border" />
+                  </div>
+
+                  <h3 className="text-lg font-bold leading-tight text-foreground">
+                    {item.toLocation}
+                  </h3>
+
+                  <div className="grid grid-cols-3 gap-4 mt-5">
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                        Departure
+                      </p>
+                      <p className="mt-1 text-sm font-semibold">
+                        {item.startTime}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                        Duration
+                      </p>
+                      <p className="mt-1 text-sm font-semibold">
+                        {duration || "—"}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                        Arrival
+                      </p>
+                      <p className="mt-1 text-sm font-semibold">
+                        {item.endTime}
+                      </p>
+                    </div>
+                  </div>
+
+                  {item.cost != null && item.cost > 0 && (
+                    <div className="mt-4">
+                      <span
+                        className={cn(
+                          "inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold",
+                          ELEMENT_BADGES.travel
+                        )}
+                      >
+                        ₹{Math.round(item.cost).toLocaleString("en-IN")}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {item.elementType === "accommodation" && (
+                <div className="flex flex-col h-full">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-violet-500">
+                        STAY
+                      </p>
+
+                      <h3 className="mt-1 text-lg font-bold leading-tight text-foreground truncate">
+                        {item.title}
+                      </h3>
+
+                      {item.location && (
+                        <p className="mt-1 text-sm text-muted-foreground truncate">
+                          {item.location}
+                        </p>
+                      )}
+                    </div>
+
+                    <span
+                      className={cn(
+                        "inline-flex rounded-full px-3 py-1 text-xs font-semibold whitespace-nowrap",
+                        ELEMENT_BADGES.accommodation
+                      )}
+                    >
+                      {item.endDate
+                        ? `${stayNights(item.date, item.endDate)} Night${
+                            stayNights(item.date, item.endDate) > 1 ? "s" : ""
+                          }`
+                        : "1 Night"}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-5 mt-5">
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                        Check In
+                      </p>
+
+                      <p className="mt-1 text-sm font-semibold">
+                        {safeFormatDate(
+                          item.date,
+                          (d) => format(d, "MMM d"),
+                          item.date
+                        )}
+                        {item.startTime && ` · ${item.startTime}`}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                        Check Out
+                      </p>
+
+                      <p className="mt-1 text-sm font-semibold">
+                        {item.endDate
+                          ? safeFormatDate(
+                              item.endDate,
+                              (d) => format(d, "MMM d"),
+                              item.endDate
+                            )
+                          : "—"}
+                        {item.endTime && ` · ${item.endTime}`}
+                      </p>
+                    </div>
+                  </div>
+
+                  {item.cost != null && item.cost > 0 && (
+                    <div className="mt-4">
+                      <span
+                        className={cn(
+                          "inline-flex rounded-full px-3 py-1 text-xs font-semibold",
+                          ELEMENT_BADGES.accommodation
+                        )}
+                      >
+                        ₹{Math.round(item.cost).toLocaleString("en-IN")}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {item.elementType === "meal" && (
+                <div className="flex flex-col h-full">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-amber-500">
+                    {categoryLabel(item)}
+                  </p>
+
+                  <h3 className="mt-1 text-lg font-bold leading-tight text-foreground">
+                    {item.title}
+                  </h3>
+
+                  {item.location && (
+                    <p className="mt-1 text-sm text-muted-foreground truncate">
+                      {item.location}
+                    </p>
+                  )}
+
+                  <div className="flex items-center gap-8 mt-5">
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                        Time
+                      </p>
+
+                      <p className="mt-1 text-sm font-semibold">
+                        {item.startTime}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                        Duration
+                      </p>
+
+                      <p className="mt-1 text-sm font-semibold">
+                        {duration || "1h"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 mt-4 flex-wrap">
+                    <span
+                      className={cn(
+                        "inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold",
+                        ELEMENT_BADGES.meal
+                      )}
+                    >
+                      {categoryLabel(item)}
+                    </span>
+
+                    {item.cost != null && item.cost > 0 && (
+                      <span
+                        className={cn(
+                          "inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold",
+                          ELEMENT_BADGES.meal
+                        )}
+                      >
+                        ₹{Math.round(item.cost).toLocaleString("en-IN")}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {item.elementType === "activity" && (
+                <div className="flex flex-col h-full">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-orange-500">
+                    ACTIVITY
+                  </p>
+
+                  <h3 className="mt-1 text-lg font-bold leading-tight text-foreground">
+                    {item.title}
+                  </h3>
+
+                  {item.location && (
+                    <p className="mt-1 text-sm text-muted-foreground truncate">
+                      {item.location}
+                    </p>
+                  )}
+
+                  <div className="grid grid-cols-2 gap-5 mt-5">
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                        Time
+                      </p>
+
+                      <p className="mt-1 text-sm font-semibold">
+                        {item.startTime}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                        Duration
+                      </p>
+
+                      <p className="mt-1 text-sm font-semibold">
+                        {duration || "—"}
+                      </p>
+                    </div>
+                  </div>
+
+                  {item.cost != null && item.cost > 0 && (
+                    <div className="mt-4">
+                      <span
+                        className={cn(
+                          "inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold",
+                          ELEMENT_BADGES.activity
+                        )}
+                      >
+                        ₹{Math.round(item.cost).toLocaleString("en-IN")}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="pr-4 flex items-center">
+              <ChevronDown
+                className={cn(
+                  "w-5 h-5 text-muted-foreground transition-transform duration-300",
+                  expanded && "rotate-180"
+                )}
+              />
+            </div>
           </div>
-          <div className="flex-1 min-w-0">
-            <h4 className="font-bold text-foreground text-sm leading-tight truncate">{item.title}</h4>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              {item.startTime}–{item.endTime}
-              {duration && ` · ${duration}`}
-            </p>
-          </div>
-          <ChevronDown className={cn("w-4 h-4 text-muted-foreground shrink-0 transition-transform", expanded && "rotate-180")} />
         </button>
 
-        {/* Expanded content */}
         {expanded && (
-          <div className="border-t border-border/40 px-4 pb-4 pt-3 space-y-2">
-            {/* Meal sub-type tag */}
-            {mealInfo && (
-              <span className="inline-flex items-center gap-1 text-xs font-bold text-amber-600 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
-                <MealIcon className="w-3 h-3" />{mealInfo.label}
-              </span>
-            )}
+          <div className="border-t border-border/50 bg-muted/15 px-5 py-5 space-y-5">
+                        {/* Journey */}
 
-            {/* Travel from→to */}
             {item.fromLocation && item.toLocation && (
-              <div className="flex items-center text-sm text-muted-foreground gap-1 bg-muted/40 px-3 py-1.5 rounded-xl">
-                <span className="truncate font-medium">{item.fromLocation}</span>
-                <span className="font-bold text-foreground/40 shrink-0">→</span>
-                <span className="truncate font-medium">{item.toLocation}</span>
+              <div className="rounded-2xl border border-border bg-background p-4">
+                <p className="text-[10px] uppercase tracking-[0.16em] font-semibold text-muted-foreground mb-3">
+                  Journey
+                </p>
+
+                <div className="flex items-center">
+                  <div className="flex-1">
+                    <p className="text-xs text-muted-foreground">From</p>
+                    <p className="mt-1 font-semibold">
+                      {item.fromLocation}
+                    </p>
+                  </div>
+
+                  <Icon className="w-5 h-5 text-blue-500 mx-4 shrink-0" />
+
+                  <div className="flex-1 text-right">
+                    <p className="text-xs text-muted-foreground">To</p>
+                    <p className="mt-1 font-semibold">
+                      {item.toLocation}
+                    </p>
+                  </div>
+                </div>
               </div>
             )}
 
             {/* Location */}
+
             {item.location && !item.fromLocation && (
-              <div className="flex items-center text-sm text-muted-foreground">
-                <MapPin className="w-3.5 h-3.5 mr-1.5 shrink-0" />
-                <span className="truncate">{item.location}</span>
+              <div className="rounded-2xl border border-border bg-background p-4">
+                <p className="text-[10px] uppercase tracking-[0.16em] font-semibold text-muted-foreground mb-2">
+                  Location
+                </p>
+
+                <div className="flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-muted-foreground shrink-0" />
+                  <span className="text-sm">{item.location}</span>
+                </div>
               </div>
             )}
 
             {/* Cost */}
+
             {item.cost != null && item.cost > 0 && (
-              <div className="inline-flex items-center gap-1 text-xs font-bold text-primary bg-primary/10 px-2.5 py-1 rounded-full">
-                <span>₹{Math.round(item.cost).toLocaleString('en-IN')}</span>
-                {destCurrency !== 'INR' && (
-                  <span className="text-primary/60 font-normal">
-                    · {formatCurrency(convertFromINR(item.cost, destCurrency), destCurrency)}
-                  </span>
-                )}
+              <div>
+                <span
+                  className={cn(
+                    "inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold",
+                    ELEMENT_BADGES[item.elementType]
+                  )}
+                >
+                  ₹{Math.round(item.cost).toLocaleString("en-IN")}
+
+                  {destCurrency !== "INR" && (
+                    <span className="ml-2 font-normal opacity-70">
+                      {formatCurrency(
+                        convertFromINR(item.cost, destCurrency),
+                        destCurrency
+                      )}
+                    </span>
+                  )}
+                </span>
               </div>
             )}
 
             {/* Notes */}
-            {item.notes && (
-              <p className="text-sm text-foreground/70 bg-muted/40 px-3 py-2 rounded-xl border border-border/40">
-                {item.notes}
-              </p>
-            )}
 
-            {/* Checklist */}
+            {item.notes && (
+              <div className="rounded-2xl border border-border bg-background p-4">
+                <p className="text-[10px] uppercase tracking-[0.16em] font-semibold text-muted-foreground mb-2">
+                  Notes
+                </p>
+
+                <p className="text-sm leading-6 text-foreground/80">
+                  {item.notes}
+                </p>
+              </div>
+            )}
+                        {/* Checklist */}
+
             {item.checklist && item.checklist.length > 0 && (
-              <div className="bg-muted/30 rounded-xl p-3 border border-border/40">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Checklist</span>
-                  <span className="text-xs text-muted-foreground">{doneChecklist}/{totalChecklist}</span>
+              <div className="rounded-2xl border border-border bg-background p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.16em] font-semibold text-muted-foreground">
+                      Checklist
+                    </p>
+
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {doneChecklist} of {totalChecklist} completed
+                    </p>
+                  </div>
+
+                  <span
+                    className={cn(
+                      "rounded-full px-3 py-1 text-xs font-semibold",
+                      ELEMENT_BADGES[item.elementType]
+                    )}
+                  >
+                    {totalChecklist
+                      ? Math.round((doneChecklist / totalChecklist) * 100)
+                      : 0}
+                    %
+                  </span>
                 </div>
-                <div className="h-1.5 bg-muted rounded-full overflow-hidden mb-2">
+
+                <div className="h-2 rounded-full bg-muted overflow-hidden mb-5">
                   <div
-                    className="h-full bg-primary rounded-full transition-all"
-                    style={{ width: totalChecklist ? `${(doneChecklist / totalChecklist) * 100}%` : '0%' }}
+                    className={cn(
+                      "h-full rounded-full transition-all duration-300",
+                      item.elementType === "travel"
+                        ? "bg-blue-500"
+                        : item.elementType === "accommodation"
+                        ? "bg-violet-500"
+                        : item.elementType === "meal"
+                        ? "bg-amber-400"
+                        : "bg-orange-500"
+                    )}
+                    style={{
+                      width: `${
+                        totalChecklist
+                          ? (doneChecklist / totalChecklist) * 100
+                          : 0
+                      }%`,
+                    }}
                   />
                 </div>
-                {item.checklist.map(ci => (
-                  <button key={ci.id} onClick={() => toggleChecklistItem(ci.id)} className="flex items-center gap-2 w-full text-left py-1">
-                    {ci.done
-                      ? <Check className="w-4 h-4 text-primary shrink-0" />
-                      : <Square className="w-4 h-4 text-muted-foreground shrink-0" />}
-                    <span className={cn("text-sm", ci.done ? "line-through text-muted-foreground" : "text-foreground")}>{ci.text}</span>
-                  </button>
-                ))}
+
+                <div className="space-y-2">
+                  {item.checklist.map((ci) => (
+                    <button
+                      key={ci.id}
+                      type="button"
+                      onClick={() => toggleChecklistItem(ci.id)}
+                      className="flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left transition-colors hover:bg-muted/40"
+                    >
+                      {ci.done ? (
+                        <div
+                          className={cn(
+                            "flex h-5 w-5 shrink-0 items-center justify-center rounded-full",
+                            item.elementType === "travel"
+                              ? "bg-blue-500"
+                              : item.elementType === "accommodation"
+                              ? "bg-violet-500"
+                              : item.elementType === "meal"
+                              ? "bg-amber-400"
+                              : "bg-orange-500"
+                          )}
+                        >
+                          <Check className="h-3 w-3 text-white" />
+                        </div>
+                      ) : (
+                        <div className="h-5 w-5 shrink-0 rounded-full border-2 border-muted-foreground/30" />
+                      )}
+
+                      <span
+                        className={cn(
+                          "text-sm",
+                          ci.done
+                            ? "line-through text-muted-foreground"
+                            : "text-foreground"
+                        )}
+                      >
+                        {ci.text}
+                      </span>
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
+                        {/* Attachments */}
 
-            {/* Attached docs — with delete button */}
             {attachedDocs.length > 0 && (
-              <div className="space-y-1.5">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Files</p>
-                {attachedDocs.map(doc => (
-                  <div key={doc.id} className="flex items-center gap-2 bg-muted/40 rounded-xl px-3 py-2 border border-border/40">
-                    <Paperclip className="w-3.5 h-3.5 text-primary shrink-0" />
-                    <button
-                      onClick={() => openDoc(doc)}
-                      className="flex-1 text-xs font-medium text-primary truncate text-left"
+              <div className="rounded-2xl border border-border bg-background p-4">
+                <div className="mb-4 flex items-center justify-between">
+                  <p className="text-[10px] uppercase tracking-[0.16em] font-semibold text-muted-foreground">
+                    Attachments
+                  </p>
+
+                  <span className="text-xs text-muted-foreground">
+                    {attachedDocs.length} file
+                    {attachedDocs.length !== 1 ? "s" : ""}
+                  </span>
+                </div>
+
+                <div className="space-y-3">
+                  {attachedDocs.map((doc) => (
+                    <div
+                      key={doc.id}
+                      className="flex items-center gap-3 rounded-2xl border border-border bg-muted/20 px-4 py-3"
                     >
-                      {doc.name}
-                    </button>
-                    <button
-                      onClick={() => detachDoc(doc.id)}
-                      className="p-1 text-muted-foreground hover:text-red-500 transition-colors shrink-0"
-                      title="Remove file"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                ))}
+                      <div
+                        className={cn(
+                          "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl",
+                          tintSurface(item.elementType)
+                        )}
+                      >
+                        <Paperclip className="h-4 w-4 text-muted-foreground" />
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => openDoc(doc)}
+                        className="min-w-0 flex-1 text-left"
+                      >
+                        <p className="truncate text-sm font-medium text-foreground">
+                          {doc.name}
+                        </p>
+
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          Tap to open
+                        </p>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => detachDoc(doc.id)}
+                        title="Remove attachment"
+                        className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-red-50 hover:text-red-500"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
+                        {/* Actions */}
 
-            {/* Action row */}
-            <div className="flex items-center justify-end gap-1 pt-1 border-t border-border/40">
+            <div className="flex items-center justify-end gap-6 border-t border-border/50 pt-2">
               <button
+                type="button"
                 onClick={onEdit}
-                className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-primary transition-colors px-3 py-1.5 rounded-lg hover:bg-primary/5"
+                className="flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
               >
-                <Pencil className="w-3.5 h-3.5" /> Edit
+                <Pencil className="h-4 w-4" />
+                Edit
               </button>
+
               <button
+                type="button"
                 onClick={handleDelete}
-                className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-red-500 transition-colors px-3 py-1.5 rounded-lg hover:bg-red-50"
+                className="flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-red-500"
               >
-                <Trash2 className="w-3.5 h-3.5" /> Delete
+                <Trash2 className="h-4 w-4" />
+                Delete
               </button>
             </div>
           </div>
         )}
+
       </div>
     </div>
   );
@@ -695,7 +1438,11 @@ function AddEditSheet({ isOpen, onClose, trip, defaultDate, documents, allItems,
   const [travelType, setTravelType] = useState<TravelType>(existingItem?.travelType || 'flight');
   const [mealSubType, setMealSubType] = useState<MealSubType>(existingItem?.mealSubType || 'lunch');
   const [mealTime, setMealTime] = useState(existingItem?.startTime || '13:00');
-  const [duration, setDuration] = useState(60);
+  const [duration, setDuration] = useState(
+  existingItem
+    ? Math.max(parseTime(existingItem.endTime) - parseTime(existingItem.startTime), 30)
+    : 60
+);
   const [startTime, setStartTime] = useState(existingItem?.startTime || '09:00');
   const [selectedDocIds, setSelectedDocIds] = useState<string[]>(existingItem?.attachedDocIds || []);
   const [checklistText, setChecklistText] = useState('');
