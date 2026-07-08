@@ -564,17 +564,9 @@ function AccommodationCard({
 
         <div className="flex min-w-0 flex-1 items-start gap-3">
 
-          <h3 className="min-w-0 flex-1 line-clamp-2 text-[17px] font-semibold leading-[1.3]">
+          <h3 className="min-w-0 flex-1 line-clamp-2 text-[16px] font-semibold leading-[1.35] tracking-[-0.01em]">
             {item.title}
           </h3>
-
-          <span className={cn(
-            "mt-0.5 shrink-0 self-start rounded-full border px-3 py-1 text-[10px] font-semibold whitespace-nowrap",
-            ELEMENT_BADGES.accommodation
-          )}>
-
-            {nights} Night{nights > 1 ? "s" : ""}
-          </span>
 
         </div>
 
@@ -587,53 +579,69 @@ function AccommodationCard({
 
       </div>
 
-      {/* Dates */}
+      {/* Stay */}
 
-      <div className="mt-6 grid grid-cols-2 gap-10">
+<div className="mt-6">
 
-        <div>
+  <div className="grid grid-cols-[1fr_auto_1fr] items-end gap-5">
 
-          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-            Check-in
-          </p>
+    <div>
 
-          <p className="mt-1 text-[15px] font-semibold">
-            {safeFormatDate(
-              item.date,
+      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+        Check-in
+      </p>
+
+      <p className="mt-1 text-[15px] font-semibold">
+        {safeFormatDate(
+          item.date,
+          d => format(d, "MMM d"),
+          item.date
+        )}
+      </p>
+
+      <p className="mt-1 text-[12px] italic text-muted-foreground">
+        {item.startTime || "—"}
+      </p>
+
+    </div>
+
+    <div className="flex flex-col items-center justify-center px-2">
+
+  <div className="mb-2 h-px w-8 bg-border/60" />
+
+  <p className="whitespace-nowrap text-[12px] italic text-muted-foreground">
+    {nights} night{nights > 1 ? "s" : ""}
+  </p>
+
+  <div className="mt-2 h-px w-8 bg-border/60" />
+
+</div>
+
+    <div className="text-right">
+
+      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+        Check-out
+      </p>
+
+      <p className="mt-1 text-[15px] font-semibold">
+        {item.endDate
+          ? safeFormatDate(
+              item.endDate,
               d => format(d, "MMM d"),
-              item.date
-            )}
-          </p>
+              item.endDate
+            )
+          : "—"}
+      </p>
 
-          <p className="mt-1 text-[12px] italic text-muted-foreground">
-            {item.startTime || "—"}
-          </p>
+      <p className="mt-1 text-[12px] italic text-muted-foreground">
+        {item.endTime || "—"}
+      </p>
 
-        </div>
+    </div>
 
-        <div>
+  </div>
 
-          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-            Check-out
-          </p>
-
-          <p className="mt-1 text-[15px] font-semibold">
-            {item.endDate
-              ? safeFormatDate(
-                  item.endDate,
-                  d => format(d, "MMM d"),
-                  item.endDate
-                )
-              : "—"}
-          </p>
-
-          <p className="mt-1 text-[12px] italic text-muted-foreground">
-            {item.endTime || "—"}
-          </p>
-
-        </div>
-
-      </div>
+</div>
 
     </div>
 
@@ -683,62 +691,6 @@ function AccommodationCard({
 
         )}
 
-        {/* Stay Details */}
-
-        <div className="border-b border-border/20 px-6 py-5">
-
-          <p className="mb-4 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-            Stay Details
-          </p>
-
-          <div className="grid grid-cols-2 gap-8">
-
-            <div>
-
-              <p className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-                Check-in
-              </p>
-
-              <p className="mt-1 text-[15px] font-semibold">
-                {safeFormatDate(
-                  item.date,
-                  d => format(d, "MMM d"),
-                  item.date
-                )}
-              </p>
-
-              <p className="mt-1 text-[12px] italic text-muted-foreground">
-                {item.startTime || "—"}
-              </p>
-
-            </div>
-
-            <div>
-
-              <p className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-                Check-out
-              </p>
-
-              <p className="mt-1 text-[15px] font-semibold">
-                {item.endDate
-                  ? safeFormatDate(
-                      item.endDate,
-                      d => format(d, "MMM d"),
-                      item.endDate
-                    )
-                  : "—"}
-              </p>
-
-              <p className="mt-1 text-[12px] italic text-muted-foreground">
-                {item.endTime || "—"}
-              </p>
-
-            </div>
-
-          </div>
-
-        </div>
-
         {/* Cost */}
 
         {item.cost != null && item.cost > 0 && (
@@ -751,7 +703,7 @@ function AccommodationCard({
 
             <div className="rounded-2xl border border-border bg-muted/20 px-5 py-4">
 
-              <p className="text-[22px] font-semibold">
+              <p className="text-[24px] font-semibold tracking-[-0.02em]">
                 ₹{Math.round(item.cost).toLocaleString("en-IN")}
               </p>
 
@@ -759,7 +711,7 @@ function AccommodationCard({
 
                 <p className="mt-1 text-sm text-muted-foreground">
 
-                  {formatCurrency(
+                  ≈ {formatCurrency(
                     convertFromINR(item.cost, destCurrency),
                     destCurrency
                   )}
@@ -784,9 +736,13 @@ function AccommodationCard({
               Notes
             </p>
 
-            <p className="text-[14px] leading-6 text-foreground/80">
-              {item.notes}
-            </p>
+            <div className="rounded-3xl border border-border/60 bg-muted/15 px-5 py-4">
+
+  <p className="text-[14px] leading-6 text-foreground/80">
+    {item.notes}
+  </p>
+
+</div>
 
           </div>
 
