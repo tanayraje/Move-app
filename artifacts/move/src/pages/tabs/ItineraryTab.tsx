@@ -1116,17 +1116,17 @@ const isDragging = false;
   {/* Left Strip */}
 
   <div
-    className={cn(
-      "flex w-[48px] shrink-0 flex-col",
-      panelGradient(item.elementType)
-    )}
-  >
-    <div className="flex h-[96px] items-center justify-center text-white">
-      <Building2 className="h-4 w-4 stroke-[1.8]" />
-    </div>
-
-    {expanded && <div className="flex-1" />}
+  className={cn(
+    "flex w-[48px] shrink-0 flex-col",
+    panelGradient(item.elementType)
+  )}
+>
+  <div className="flex h-[96px] items-center justify-center text-white">
+    <Icon className="h-4 w-4 stroke-[1.8]" />
   </div>
+
+  {expanded && <div className="flex-1" />}
+</div>
 
   {/* Right Side */}
 
@@ -1144,101 +1144,93 @@ const isDragging = false;
         {item.elementType === "travel" && (
   <div className="relative flex h-full flex-col">
 
-    <div className="flex items-center justify-between">
+    {/* Header */}
 
-      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-blue-500">
-        {travelLabel(item.travelType)}
-      </p>
+    <div className="flex min-w-0 items-start justify-between gap-4">
+
+      <div className="min-w-0 flex-1">
+
+        <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-blue-600">
+          {travelLabel(item.travelType)}
+        </p>
+
+        <h3 className="min-w-0 break-words line-clamp-2 text-[18px] font-semibold leading-[1.35]">
+          {item.title}
+        </h3>
+
+      </div>
 
       <ChevronDown
         className={cn(
-          "h-4 w-4 text-muted-foreground opacity-60 transition-transform",
+          "mt-6 h-4 w-4 shrink-0 text-muted-foreground/70 transition-transform duration-300",
           expanded && "rotate-180"
         )}
       />
 
     </div>
 
-    <div className="mt-2 grid grid-cols-[minmax(0,1fr)_88px_minmax(0,1fr)] items-center gap-2">
+    {/* Journey */}
 
-      {/* FROM */}
+    <div className="mt-4 grid grid-cols-[minmax(0,1fr)_80px_minmax(0,1fr)] items-end gap-4">
+
+      {/* From */}
 
       <div className="min-w-0">
 
-        <h3
-          className={cn(
-            expanded
-              ? "text-[16px] font-semibold leading-snug break-words"
-              : "truncate text-[17px] font-semibold leading-tight"
-          )}
+        <p className="whitespace-nowrap text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+          From
+        </p>
+
+        <p
+          className="mt-0.5 truncate text-[15px] font-semibold"
           title={item.fromLocation}
         >
           {item.fromLocation || "—"}
-        </h3>
+        </p>
+
+        <p className="mt-0.5 text-[12px] italic text-muted-foreground">
+          {item.startTime || "—"}
+        </p>
 
       </div>
 
-      {/* CENTRE */}
+      {/* Centre */}
 
       <div className="flex flex-col items-center">
 
         <div className="flex w-full items-center">
 
-          <div className="h-px flex-1 border-t border-dashed border-muted-foreground/40" />
+          <div className="h-px flex-1 bg-border/60" />
 
-          <Icon className="mx-2 h-4 w-4 shrink-0 text-blue-500" />
+          <Icon className="mx-3 h-4 w-4 shrink-0 text-blue-500" />
 
-          <div className="h-px flex-1 border-t border-dashed border-muted-foreground/40" />
+          <div className="h-px flex-1 bg-border/60" />
 
         </div>
 
-        <span className="mt-1 whitespace-nowrap text-[10px] italic text-muted-foreground">
+        <p className="mt-1 whitespace-nowrap text-[11px] italic text-blue-600">
           {duration || "—"}
-        </span>
+        </p>
 
       </div>
 
-      {/* TO */}
+      {/* To */}
 
       <div className="min-w-0 text-right">
 
-        <h3
-          className={cn(
-            expanded
-              ? "text-[16px] font-semibold leading-snug break-words"
-              : "truncate text-[17px] font-semibold leading-tight"
-          )}
+        <p className="whitespace-nowrap text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+          To
+        </p>
+
+        <p
+          className="mt-0.5 truncate text-[15px] font-semibold"
           title={item.toLocation}
         >
           {item.toLocation || "—"}
-        </h3>
-
-      </div>
-
-    </div>
-
-    <div className="mt-4 flex justify-between">
-
-      <div>
-
-        <p className="text-[13px] font-semibold">
-          {item.startTime || "—"}
         </p>
 
-        <p className="mt-0.5 text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
-          Departure
-        </p>
-
-      </div>
-
-      <div className="text-right">
-
-        <p className="text-[13px] font-semibold">
+        <p className="mt-0.5 text-[12px] italic text-muted-foreground">
           {item.endTime || "—"}
-        </p>
-
-        <p className="mt-0.5 text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
-          Arrival
         </p>
 
       </div>
@@ -1247,51 +1239,66 @@ const isDragging = false;
 
   </div>
 )}
-
         {item.elementType === "accommodation" && null}
 
         {item.elementType === "meal" && (
   <div className="relative flex h-full flex-col">
 
-    <div className="flex items-center justify-between">
+    {/* Header */}
 
-      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-500">
-        {categoryLabel(item)}
-      </p>
+    <div className="flex min-w-0 items-start justify-between gap-4">
+
+      <div className="min-w-0 flex-1">
+
+        <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-500">
+          {categoryLabel(item)}
+        </p>
+
+        <h3 className="min-w-0 break-words line-clamp-2 text-[18px] font-semibold leading-[1.35]">
+          {item.title}
+        </h3>
+
+      </div>
 
       <ChevronDown
         className={cn(
-          "h-4 w-4 text-muted-foreground opacity-60 transition-transform",
+          "mt-6 h-4 w-4 shrink-0 text-muted-foreground/70 transition-transform duration-300",
           expanded && "rotate-180"
         )}
       />
 
     </div>
 
-    <div className="mt-2">
+    {/* Time */}
 
-      <h3
-        className={cn(
-          "text-[16px] font-semibold leading-snug",
-          expanded ? "break-words" : "line-clamp-2"
-        )}
-      >
-        {item.title}
-      </h3>
+    <div className="mt-4">
 
-    </div>
-
-    <div className="mt-5">
-
-      <p className="text-[13px] font-semibold">
-        {item.startTime || "—"}
-      </p>
-
-      <p className="mt-0.5 text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+      <p className="whitespace-nowrap text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
         Time
       </p>
 
+      <p className="mt-0.5 text-[15px] font-semibold">
+        {item.startTime || "—"}
+      </p>
+
     </div>
+
+    {/* Meal Type */}
+
+    {mealInfo && (
+      <div className="mt-4">
+
+        <span
+          className={cn(
+            "inline-flex items-center rounded-full px-3 py-1 text-[11px] font-medium",
+            ELEMENT_BADGES.meal
+          )}
+        >
+          {mealInfo.label}
+        </span>
+
+      </div>
+    )}
 
   </div>
 )}
@@ -1299,56 +1306,59 @@ const isDragging = false;
         {item.elementType === "activity" && (
   <div className="relative flex h-full flex-col">
 
-    <div className="flex items-center justify-between">
+    {/* Header */}
 
-      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-orange-500">
-        Activity
-      </p>
+    <div className="flex min-w-0 items-start justify-between gap-4">
+
+      <div className="min-w-0 flex-1">
+
+        <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-orange-500">
+          Activity
+        </p>
+
+        <h3 className="min-w-0 break-words line-clamp-2 text-[18px] font-semibold leading-[1.35]">
+          {item.title}
+        </h3>
+
+      </div>
 
       <ChevronDown
         className={cn(
-          "h-4 w-4 text-muted-foreground opacity-60 transition-transform",
+          "mt-6 h-4 w-4 shrink-0 text-muted-foreground/70 transition-transform duration-300",
           expanded && "rotate-180"
         )}
       />
 
     </div>
 
-    <div className="mt-2">
+    {/* Activity Timeline */}
 
-      <h3
-        className={cn(
-          "text-[16px] font-semibold leading-snug",
-          expanded ? "break-words" : "line-clamp-2"
-        )}
-      >
-        {item.title}
-      </h3>
+    <div className="mt-4 flex items-end justify-between gap-4">
 
-    </div>
+      {/* Time */}
 
-    <div className="mt-5 flex items-end justify-between">
+      <div className="min-w-0 flex-1">
 
-      <div>
-
-        <p className="text-[13px] font-semibold">
-          {item.startTime || "—"}
+        <p className="whitespace-nowrap text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+          Time
         </p>
 
-        <p className="mt-0.5 text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
-          Time
+        <p className="mt-0.5 text-[15px] font-semibold">
+          {item.startTime || "—"}
         </p>
 
       </div>
 
+      {/* Duration */}
+
       <div className="text-right">
 
-        <p className="text-[13px] font-semibold">
-          {duration || "—"}
+        <p className="whitespace-nowrap text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+          Duration
         </p>
 
-        <p className="mt-0.5 text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
-          Duration
+        <p className="mt-0.5 text-[15px] font-semibold">
+          {duration || "—"}
         </p>
 
       </div>
@@ -1366,22 +1376,22 @@ const isDragging = false;
 {expanded && (
       <div className="border-t border-border/20 bg-background px-5 py-2">
 
-          {/* Location */}
+      {/* Location */}
 
 {item.location && (
-  <div className="relative border-t border-border/20 px-5 py-4">
+  <div className="border-b border-border/20 px-6 py-5">
 
-    <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+    <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
       Location
     </p>
 
-    <div className="flex items-start gap-3">
+    <div className="flex min-w-0 items-start gap-3">
 
       <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
 
-      <p className="break-words text-[14px] leading-6 text-foreground/90">
-  {item.location}
-</p>
+      <p className="min-w-0 break-words text-[14px] leading-6 text-foreground/90">
+        {item.location}
+      </p>
 
     </div>
 
@@ -1389,42 +1399,55 @@ const isDragging = false;
 )}
           {/* Cost */}
 
-{item.cost != null && item.cost > 0 && (
-  <div className="border-t border-border/20 px-5 py-4">
+{/* Cost */}
 
-    <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+{item.cost != null && item.cost > 0 && (
+  <div className="border-b border-border/20 px-6 py-5">
+
+    <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
       Cost
     </p>
 
-    <p className="text-[18px] font-semibold">
-      ₹{Math.round(item.cost).toLocaleString("en-IN")}
-    </p>
+    <div className="rounded-3xl border border-border/60 bg-muted/20 px-5 py-5">
 
-    {destCurrency !== "INR" && (
-      <p className="mt-1 text-sm text-muted-foreground">
-        {formatCurrency(
-          convertFromINR(item.cost, destCurrency),
-          destCurrency
-        )}
+      <p className="text-[24px] font-semibold tracking-[-0.02em]">
+        ₹{Math.round(item.cost).toLocaleString("en-IN")}
       </p>
-    )}
+
+      {destCurrency !== "INR" && (
+        <p className="mt-1 text-sm text-muted-foreground">
+          ≈{" "}
+          {formatCurrency(
+            convertFromINR(item.cost, destCurrency),
+            destCurrency
+          )}
+        </p>
+      )}
+
+    </div>
 
   </div>
 )}
 
-            {/* Notes */}
+ {/* Notes */}
 
-            {item.notes && (
-              <div className="border-t border-border/20 px-5 py-4">
-                <p className="text-[11px] uppercase tracking-[0.16em] font-semibold text-muted-foreground mb-2">
-                  Notes
-                </p>
+{item.notes && (
+  <div className="border-b border-border/20 px-6 py-5">
 
-                <p className="text-[14px] leading-6 text-foreground/80">
-                  {item.notes}
-                </p>
-              </div>
-            )}
+    <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+      Notes
+    </p>
+
+    <div className="rounded-3xl border border-border/60 bg-muted/20 px-5 py-4">
+
+      <p className="text-[14px] leading-6 text-foreground/80">
+        {item.notes}
+      </p>
+
+    </div>
+
+  </div>
+)}
                         {/* Checklist */}
 
             {item.checklist && item.checklist.length > 0 && (
@@ -1517,84 +1540,101 @@ const isDragging = false;
                 </div>
               </div>
             )}
-                        {/* Attachments */}
+  {/* Attachments */}
 
-            {attachedDocs.length > 0 && (
-              <div className="border-t border-border/20 px-5 py-4">
-                <div className="mb-4 flex items-center justify-between">
-                  <p className="text-[11px] uppercase tracking-[0.16em] font-semibold text-muted-foreground">
-                    Attachments
-                  </p>
+{attachedDocs.length > 0 && (
+  <div className="border-b border-border/20 px-6 py-5">
 
-                  <span className="text-xs text-muted-foreground">
-                    {attachedDocs.length} file
-                    {attachedDocs.length !== 1 ? "s" : ""}
-                  </span>
-                </div>
+    <div className="mb-4 flex items-center justify-between">
 
-                <div className="space-y-3">
-                  {attachedDocs.map((doc) => (
-                    <div
-                      key={doc.id}
-                      className="flex items-center gap-3 rounded-3xl border border-border bg-muted/20 px-4 py-3"
-                    >
-                      <div
-                        className={cn(
-                          "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl",
-                          tintSurface(item.elementType)
-                        )}
-                      >
-                        <Paperclip className="h-4 w-4 text-muted-foreground" />
-                      </div>
+      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+        Attachments
+      </p>
 
-                      <button
-                        type="button"
-                        onClick={() => openDoc(doc)}
-                        className="min-w-0 flex-1 text-left"
-                      >
-                        <p className="truncate text-[14px] font-medium text-foreground">
-                          {doc.name}
-                        </p>
+      <span className="text-xs text-muted-foreground">
+        {attachedDocs.length} file
+        {attachedDocs.length !== 1 ? "s" : ""}
+      </span>
 
-                        <p className="mt-1 text-[11px] text-muted-foreground">
-                          Tap to open
-                        </p>
-                      </button>
+    </div>
 
-                      <button
-                        type="button"
-                        onClick={() => detachDoc(doc.id)}
-                        title="Remove attachment"
-                        className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-red-50 hover:text-red-500"
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
+    <div className="space-y-3">
+
+      {attachedDocs.map((doc) => (
+
+        <div
+          key={doc.id}
+          className="flex min-w-0 items-center gap-3 rounded-3xl border border-border bg-muted/20 px-4 py-3"
+        >
+
+          <div
+            className={cn(
+              "flex h-10 w-10 items-center justify-center rounded-xl",
+              tintSurface(item.elementType)
             )}
-                        {/* Actions */}
+          >
+            <Paperclip className="h-4 w-4" />
+          </div>
 
-                        <div className="flex items-center justify-end gap-6 border-t border-border/20 py-4">
-              <button
-                type="button"
-                onClick={onEdit}
-                className="flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
-              >
-                <Pencil className="h-4 w-4" />
-                Edit
-              </button>
+          <button
+            type="button"
+            onClick={() => openDoc(doc)}
+            className="min-w-0 flex-1 text-left"
+          >
 
-              <button
-                type="button"
-                onClick={handleDelete}
-                className="flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-red-500"
-              >
-                <Trash2 className="h-4 w-4" />
-                Delete
-              </button>
-            </div>
+            <p className="truncate text-[14px] font-medium">
+              {doc.name}
+            </p>
+
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              Tap to open
+            </p>
+
+          </button>
+
+          <button
+            type="button"
+            onClick={() => detachDoc(doc.id)}
+            className="rounded-lg p-2 transition-colors hover:bg-red-50 hover:text-red-500"
+          >
+            <X className="h-4 w-4" />
+          </button>
+
+        </div>
+
+      ))}
+
+    </div>
+
+  </div>
+)}
+    {/* Actions */}
+
+<div className="px-5 py-4">
+
+  <div className="flex justify-end gap-3">
+
+    <button
+      type="button"
+      onClick={onEdit}
+      className="inline-flex items-center gap-2 rounded-2xl border border-border bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-muted"
+    >
+      <Pencil className="h-4 w-4" />
+      Edit
+    </button>
+
+    <button
+      type="button"
+      onClick={handleDelete}
+      className="inline-flex items-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-100"
+    >
+      <Trash2 className="h-4 w-4" />
+      Delete
+    </button>
+
+  </div>
+
+</div>
 
           </div>
         )}
