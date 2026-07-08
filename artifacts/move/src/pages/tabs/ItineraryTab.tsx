@@ -616,7 +616,7 @@ const toggleChecklistItem = (checkId: string) => {
 
     {/* Header */}
 
-    <div className="flex items-start justify-between gap-4">
+    <div className="flex min-w-0 items-start justify-between gap-4">
 
       <div className="min-w-0 flex-1">
 
@@ -624,7 +624,7 @@ const toggleChecklistItem = (checkId: string) => {
           Stay
         </p>
 
-        <h3 className="line-clamp-2 text-[16px] font-semibold leading-[1.35]">
+        <h3 className="min-w-0 break-words line-clamp-2 text-[16px] font-semibold leading-[1.35]">
           {item.title}
         </h3>
 
@@ -671,7 +671,7 @@ const toggleChecklistItem = (checkId: string) => {
 
         <div className="mb-2 h-px w-8 bg-border/60" />
 
-        <p className="whitespace-nowrap text-[12px] font-semibold italic text-violet-700 dark:text-violet-300">
+        <p className="whitespace-nowrap text-[11px] font-medium italic text-violet-600">
           {nights} night{nights > 1 ? "s" : ""}
         </p>
 
@@ -720,11 +720,11 @@ const toggleChecklistItem = (checkId: string) => {
           Location
         </p>
 
-        <div className="flex items-start gap-3">
+        <div className="flex min-w-0 items-start gap-3">
 
           <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
 
-          <p className="text-[14px] leading-6 text-foreground/90">
+          <p className="min-w-0 break-words text-[14px] leading-6 text-foreground/90">
             {item.location}
           </p>
 
@@ -901,7 +901,7 @@ const toggleChecklistItem = (checkId: string) => {
 
         <div
           key={doc.id}
-          className="flex items-center gap-3 rounded-3xl border border-border bg-muted/20 px-4 py-3"
+          className="flex min-w-0 items-center gap-3 rounded-3xl border border-border bg-muted/20 px-4 py-3"
         >
 
           <div
