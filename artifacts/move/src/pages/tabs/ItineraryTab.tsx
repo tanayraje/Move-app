@@ -1104,7 +1104,7 @@ const isDragging = false;
 
       {/* Divider */}
 
-      <div className="bg-border/50 self-stretch" />
+      <div className="w-px self-stretch bg-border/50" />
 
       {/* Check Out */}
 
@@ -1247,7 +1247,6 @@ const isDragging = false;
 
   </button>
 
-</div>
 
 {expanded && (
       <div className="border-t border-border/20 bg-background px-5 py-2">
@@ -1462,7 +1461,7 @@ const isDragging = false;
             )}
                         {/* Actions */}
 
-            <div className="flex items-center justify-end gap-6 border-t border-border/20 py-4">
+                        <div className="flex items-center justify-end gap-6 border-t border-border/20 py-4">
               <button
                 type="button"
                 onClick={onEdit}
@@ -1481,14 +1480,17 @@ const isDragging = false;
                 Delete
               </button>
             </div>
+
           </div>
-                )}
+        )}
 
       </div>
 
     </div>
 
   </div>
+
+</div>
 
   );
 }
