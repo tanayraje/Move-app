@@ -1146,7 +1146,7 @@ const isDragging = false;
 
     {/* Header */}
 
-    <div className="flex items-start justify-between gap-4">
+    <div className="flex items-start gap-3">
 
       <div className="min-w-0 flex-1">
 
@@ -1154,11 +1154,9 @@ const isDragging = false;
           {travelLabel(item.travelType)}
         </p>
 
-        {/* Route */}
-
         {!expanded ? (
 
-          <div className="mt-1 flex min-w-0 items-center gap-2">
+          <div className="flex min-w-0 items-center">
 
             <span
               className="min-w-0 flex-1 truncate text-[18px] font-semibold leading-[1.35]"
@@ -1167,13 +1165,13 @@ const isDragging = false;
               {item.fromLocation || "—"}
             </span>
 
-            <div className="flex shrink-0 items-center">
+            <div className="mx-2 flex shrink-0 items-center">
 
-              <div className="w-2 border-t border-dashed border-blue-300" />
+              <div className="w-1.5 border-t border-dashed border-blue-300" />
 
               <Icon className="mx-1 h-4 w-4 shrink-0 text-blue-500" />
 
-              <div className="w-2 border-t border-dashed border-blue-300" />
+              <div className="w-1.5 border-t border-dashed border-blue-300" />
 
             </div>
 
@@ -1194,13 +1192,13 @@ const isDragging = false;
               {item.fromLocation || "—"}
             </p>
 
-            <div className="my-3 flex items-center justify-center">
+            <div className="my-4 flex items-center justify-center">
 
-              <div className="h-px w-10 bg-border/60" />
+              <div className="h-px w-8 border-t border-dashed border-blue-300" />
 
-              <Icon className="mx-3 h-4 w-4 text-blue-500" />
+              <Icon className="mx-2 h-4 w-4 text-blue-500" />
 
-              <div className="h-px w-10 bg-border/60" />
+              <div className="h-px w-8 border-t border-dashed border-blue-300" />
 
             </div>
 
@@ -1214,20 +1212,24 @@ const isDragging = false;
 
       </div>
 
-      <ChevronDown
-        className={cn(
-          "mt-6 h-4 w-4 shrink-0 text-muted-foreground/70 transition-transform duration-300",
-          expanded && "rotate-180"
-        )}
-      />
+      <button
+        type="button"
+        onClick={() => setExpanded(v => !v)}
+        className="mt-5 shrink-0 p-1"
+      >
+        <ChevronDown
+          className={cn(
+            "h-4 w-4 text-muted-foreground/70 transition-transform duration-300",
+            expanded && "rotate-180"
+          )}
+        />
+      </button>
 
     </div>
 
     {/* Journey */}
 
-    <div className="mt-5 grid grid-cols-[1fr_70px_1fr] items-end gap-3">
-
-      {/* Departure */}
+    <div className="mt-5 grid grid-cols-[1fr_auto_1fr] items-end gap-4">
 
       <div className="min-w-0">
 
@@ -1241,17 +1243,13 @@ const isDragging = false;
 
       </div>
 
-      {/* Duration */}
-
-      <div className="flex items-end justify-center">
+      <div className="px-2">
 
         <p className="whitespace-nowrap text-[11px] italic text-blue-600">
           {duration || "—"}
         </p>
 
       </div>
-
-      {/* Arrival */}
 
       <div className="min-w-0 text-right">
 
