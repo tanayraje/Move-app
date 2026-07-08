@@ -1029,20 +1029,20 @@ const isDragging = false;
 
       <ChevronDown
         className={cn(
-          "h-4 w-4 text-muted-foreground opacity-60 transition-transform",
+          "h-4 w-4 text-muted-foreground/70 transition-transform",
           expanded && "rotate-180"
         )}
       />
 
     </div>
 
-    <div className="mt-1.5">
+    <div className="mt-1">
 
-      <div className="flex items-start gap-3">
+      <div className="flex items-start gap-2">
 
         <h3
           className={cn(
-            "min-w-0 flex-1 text-[17px] font-semibold leading-snug",
+            "min-w-0 flex-1 text-[17px] font-semibold leading-[1.25]",
             expanded ? "break-words" : "line-clamp-2"
           )}
         >
@@ -1051,8 +1051,9 @@ const isDragging = false;
 
         <span
           className={cn(
-            "self-center shrink-0 rounded-full px-3 py-1 text-[10px] font-semibold whitespace-nowrap",
-            ELEMENT_BADGES.accommodation
+            "shrink-0 self-start rounded-full px-3 py-1 text-[10px] font-semibold whitespace-nowrap",
+            ELEMENT_BADGES.accommodation,
+            "text-violet-700"
           )}
         >
           {item.endDate
@@ -1067,7 +1068,7 @@ const isDragging = false;
       {item.location && (
         <p
           className={cn(
-            "mt-1.5 text-[13px] leading-5 text-muted-foreground",
+            "mt-1 text-[13px] leading-[1.35] text-muted-foreground",
             expanded ? "break-words" : "line-clamp-2"
           )}
         >
@@ -1077,7 +1078,7 @@ const isDragging = false;
 
     </div>
 
-    <div className="mt-4 grid grid-cols-[1fr_auto_1fr] items-start">
+    <div className="mt-3 grid grid-cols-[1fr_1px_1fr] items-stretch gap-5">
 
       {/* Check In */}
 
@@ -1087,7 +1088,7 @@ const isDragging = false;
           Check In
         </p>
 
-        <p className="mt-1 text-[15px] font-semibold">
+        <p className="mt-1 text-[15px] font-semibold leading-none">
           {safeFormatDate(
             item.date,
             (d) => format(d, "MMM d"),
@@ -1095,7 +1096,7 @@ const isDragging = false;
           )}
         </p>
 
-        <p className="text-[11px] italic text-muted-foreground/70">
+        <p className="mt-0.5 text-[11px] italic text-muted-foreground/70">
           {item.startTime || "—"}
         </p>
 
@@ -1103,7 +1104,7 @@ const isDragging = false;
 
       {/* Divider */}
 
-      <div className="mx-5 h-full w-px bg-border/60" />
+      <div className="bg-border/50 self-stretch" />
 
       {/* Check Out */}
 
@@ -1113,7 +1114,7 @@ const isDragging = false;
           Check Out
         </p>
 
-        <p className="mt-1 text-[15px] font-semibold">
+        <p className="mt-1 text-[15px] font-semibold leading-none">
           {item.endDate
             ? safeFormatDate(
                 item.endDate,
@@ -1123,7 +1124,7 @@ const isDragging = false;
             : "—"}
         </p>
 
-        <p className="text-[11px] italic text-muted-foreground/70">
+        <p className="mt-0.5 text-[11px] italic text-muted-foreground/70">
           {item.endTime || "—"}
         </p>
 
