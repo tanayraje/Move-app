@@ -544,10 +544,7 @@ function AccommodationCard({
     {/* LEFT STRIP */}
 
     <div
-      className={cn(
-        "w-[46px] shrink-0 self-stretch",
-        panelGradient(item.elementType)
-      )}
+      className="w-[46px] shrink-0 self-stretch bg-gradient-to-b from-violet-500 to-violet-700"
     >
       <div className="flex h-full min-h-[118px] items-center justify-center text-white">
         <Building2 className="h-5 w-5 stroke-[1.8]" />
@@ -562,13 +559,13 @@ function AccommodationCard({
 
       <div className="flex items-start justify-between gap-3">
 
-        <div className="flex min-w-0 flex-1 items-start gap-3">
+        <div className="min-w-0 flex-1">
 
           <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-violet-600 dark:text-violet-400">
-              Stay
-            </p>
+            Stay
+          </p>
 
-          <h3 className="min-w-0 flex-1 line-clamp-2 text-[16px] font-bold leading-[1.35] tracking-[-0.01em]">
+          <h3 className="line-clamp-2 text-[16px] font-semibold leading-[1.35] tracking-[-0.01em]">
             {item.title}
           </h3>
 
@@ -663,10 +660,7 @@ function AccommodationCard({
       {/* Continue left strip */}
 
       <div
-        className={cn(
-          "w-[46px] shrink-0 self-stretch",
-          panelGradient(item.elementType)
-        )}
+        className="w-[46px] shrink-0 self-stretch bg-gradient-to-b from-violet-500 to-violet-700"
       />
 
       <div className="min-w-0 flex-1 border-t border-border/20">
