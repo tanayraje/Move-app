@@ -539,32 +539,30 @@ function AccommodationCard({
   onClick={() => setExpanded(v => !v)}
   className="w-full text-left"
 >
-  <div className="flex">
+  <div className="flex items-stretch">
 
   {/* Left Strip */}
 
   <div
     className={cn(
-      "flex w-[48px] shrink-0 flex-col",
+      "w-[48px] shrink-0",
       panelGradient(item.elementType)
     )}
   >
-    <div className="flex h-[96px] items-center justify-center text-white">
+    <div className="sticky top-0 flex h-[96px] items-center justify-center text-white">
       <Building2 className="h-4 w-4 stroke-[1.8]" />
     </div>
-
-    {expanded && <div className="flex-1" />}
   </div>
 
   {/* CONTENT */}
 
-    <div className="min-w-0 flex-1 px-6 py-5">
+  <div className="min-w-0 flex-1">
 
       {/* Title */}
 
       <div className="flex items-start justify-between gap-3">
 
-        <div className="min-w-0 flex-1">
+        <div className="px-6 py-5">
 
           <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-violet-600 dark:text-violet-400">
             Stay
@@ -589,7 +587,7 @@ function AccommodationCard({
 
 <div className="mt-6">
 
-  <div className="grid grid-cols-[minmax(80px,1fr)_auto_minmax(80px,1fr)] items-end gap-3">
+  <div className="grid grid-cols-[1fr_72px_1fr] items-end gap-3">
 
     <div>
 
@@ -615,7 +613,7 @@ function AccommodationCard({
 
   <div className="mb-2 h-px w-8 bg-border/60" />
 
-  <p className="text-[12px] font-medium italic text-violet-600 dark:text-violet-400">
+  <p className="whitespace-nowrap text-[11px] font-medium italic text-violet-600 dark:text-violet-400">
     {nights} night{nights > 1 ? "s" : ""}
   </p>
 
@@ -661,17 +659,6 @@ function AccommodationCard({
   <div className="bg-background">
 
     <div className="flex">
-
-      {/* Continue left strip */}
-
-      <div
-        className={cn(
-          "w-[48px] shrink-0",
-          panelGradient(item.elementType)
-        )}
-      >
-        <div className="h-full" />
-      </div>
 
       <div className="min-w-0 flex-1 border-t border-border/20">
 
