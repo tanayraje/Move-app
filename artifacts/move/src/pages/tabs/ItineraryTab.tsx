@@ -594,24 +594,25 @@ const toggleChecklistItem = (checkId: string) => {
     >
       <div className="flex items-stretch">
 
-        {/* Left Sidebar */}
+        {/* Left Strip */}
 
-        <div
-          className={cn(
-            "w-[48px] shrink-0 self-start rounded-bl-[28px]",
-            panelGradient(item.elementType)
-          )}
-        >
-          <div className="flex h-[96px] items-center justify-center text-white">
-            <Building2 className="h-4 w-4 stroke-[1.8]" />
-          </div>
+  <div
+    className={cn(
+      "flex w-[48px] shrink-0 flex-col",
+      panelGradient(item.elementType)
+    )}
+  >
+    <div className="flex h-[96px] items-center justify-center text-white">
+      <Building2 className="h-4 w-4 stroke-[1.8]" />
+    </div>
 
-          <div className="flex-1" />
-        </div>
+    <div className="flex-1" />
 
-        {/* Right Panel */}
+  </div>
 
-        <div className="min-w-0 w-0 flex-1">
+  {/* Right Side */}
+
+  <div className="min-w-0 w-0 flex-1">
 
           <button
   type="button"
@@ -962,7 +963,7 @@ const toggleChecklistItem = (checkId: string) => {
     <button
       type="button"
       onClick={onEdit}
-      className="inline-flex h-10 items-center gap-2 rounded-2xl border border-border bg-background px-5 text-sm font-medium transition-colors hover:bg-muted"
+      className="inline-flex h-10 min-w-0 flex-1 items-center justify-center gap-2 rounded-2xl border border-border bg-background px-4 text-sm font-medium transition-colors hover:bg-muted sm:flex-none sm:px-5"
     >
       <Pencil className="h-4 w-4" />
       Edit
@@ -971,7 +972,7 @@ const toggleChecklistItem = (checkId: string) => {
     <button
       type="button"
       onClick={handleDelete}
-      className="inline-flex h-10 items-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-5 text-sm font-medium text-red-600 transition-colors hover:bg-red-100"
+      className="inline-flex h-10 min-w-0 flex-1 items-center justify-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 text-sm font-medium text-red-600 transition-colors hover:bg-red-100 sm:flex-none sm:px-5"
     >
       <Trash2 className="h-4 w-4" />
       Delete
@@ -1667,14 +1668,14 @@ function SortableItem({
 
   <div className="flex w-full">
 
-    <div className="w-12 shrink-0" />
+  <div className="w-12 shrink-0" />
 
-    <div className="ml-auto flex gap-3">
+  <div className="ml-auto flex min-w-0 flex-1 justify-end gap-3">
 
       <button
         type="button"
         onClick={onEdit}
-        className="inline-flex h-10 items-center gap-2 rounded-2xl border border-border bg-background px-5 text-sm font-medium transition-colors hover:bg-muted"
+        className="inline-flex h-10 min-w-0 flex-1 items-center justify-center gap-2 rounded-2xl border border-border bg-background px-4 text-sm font-medium transition-colors hover:bg-muted sm:flex-none sm:px-5"
       >
         <Pencil className="h-4 w-4" />
         Edit
@@ -1683,7 +1684,7 @@ function SortableItem({
       <button
         type="button"
         onClick={handleDelete}
-        className="inline-flex h-10 items-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-5 text-sm font-medium text-red-600 transition-colors hover:bg-red-100"
+        className="inline-flex h-10 min-w-0 flex-1 items-center justify-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 text-sm font-medium text-red-600 transition-colors hover:bg-red-100 sm:flex-none sm:px-5"
       >
         <Trash2 className="h-4 w-4" />
         Delete
