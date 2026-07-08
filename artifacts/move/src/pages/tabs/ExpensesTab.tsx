@@ -645,19 +645,24 @@ const isSplit =
   }) || [];
 
   return (
-    <div className="flex items-center justify-between p-4 group">
-      <div className="flex items-center gap-3 min-w-0">
+    <div className="flex items-center justify-between gap-4 p-4 group">
+      <div className="flex items-center gap-3 flex-1 min-w-0">
         <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-foreground/70 shrink-0">
           <Icon className="w-5 h-5" />
         </div>
         <div className="min-w-0">
           <p className="font-bold text-foreground text-sm truncate">{expense.title}</p>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
-            <span className="uppercase tracking-wider">{EXPENSE_LABELS[expense.category]}</span>
-            {expense.notes && (
-              <span className="truncate max-w-[100px] opacity-70">{expense.notes}</span>
-            )}
-          </div>
+          <div className="flex items-center gap-2 mt-0.5 min-w-0">
+  <span className="uppercase tracking-wider text-xs text-muted-foreground truncate flex-1 min-w-0">
+    {EXPENSE_LABELS[expense.category]}
+  </span>
+
+  {expense.notes && (
+    <span className="text-xs text-muted-foreground truncate max-w-[100px] opacity-70">
+      {expense.notes}
+    </span>
+  )}
+</div>
           <div className="flex items-center gap-2 mt-1">
             <div className="flex items-center gap-1">
               <div className="w-4 h-4 rounded-full flex items-center justify-center text-white text-[8px] font-bold"

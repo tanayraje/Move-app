@@ -90,8 +90,8 @@ export function buildExpenseLedger(
     return (a.createdAt || 0) - (b.createdAt || 0);
   });
 
-  // -----------------------------------------------------------------------------
-// Pass 1: replay only expense entries
+// -----------------------------------------------------------------------------
+// Pass 1: replay expense entries
 // -----------------------------------------------------------------------------
 orderedExpenses
   .filter(expense => expense.category !== "settlement")
@@ -100,12 +100,13 @@ orderedExpenses
 
     if (!payerId) return;
 
-    // Only shared expenses affect participant balances.
+    // Every payment contributes to the "Paid" column.
+    paid[payerId] += expense.amount;
+
+    // Only shared expenses affect balances.
     if (!expense.split || expense.split.length < 2) {
       return;
     }
-
-    paid[payerId] += expense.amount;
 
     expense.split.forEach(split => {
       owed[split.memberId] += split.amount;
