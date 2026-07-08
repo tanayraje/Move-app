@@ -587,11 +587,11 @@ function AccommodationCard({
 
 <div className="mt-6">
 
-  <div className="grid grid-cols-[1fr_auto_1fr] items-end gap-5">
+  <div className="grid grid-cols-[minmax(80px,1fr)_auto_minmax(80px,1fr)] items-end gap-3">
 
     <div>
 
-      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+      <p className="whitespace-nowrap text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
         Check-in
       </p>
 
