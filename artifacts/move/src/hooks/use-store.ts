@@ -533,7 +533,7 @@ export function useExpenses(tripId: string) {
         payerId: item.payer_id || undefined,
 payerName: item.payer_name || "",
         notes: item.notes || '',
-        split: item.split || [],
+        split: item.split,
         createdAt: item.created_at_ms,
       }));
     },
@@ -559,7 +559,7 @@ export function useSaveExpense() {
           payer_id: item.payerId,
           payer_name: item.payerName,
           notes: item.notes,
-          split: item.split || [],
+          split: item.split,
           created_at_ms: item.createdAt,
         });
 

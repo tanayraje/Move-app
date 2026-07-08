@@ -72,14 +72,16 @@ export function buildExpenseLedger(
   const members = [...memberMap.values()];
 
   const paid: Record<string, number> = {};
-  const owed: Record<string, number> = {};
-  const net: Record<string, number> = {};
+const sharedPaid: Record<string, number> = {};
+const owed: Record<string, number> = {};
+const net: Record<string, number> = {};
 
   members.forEach(member => {
-    paid[member.id] = 0;
-    owed[member.id] = 0;
-    net[member.id] = 0;
-  });
+  paid[member.id] = 0;
+  sharedPaid[member.id] = 0;
+  owed[member.id] = 0;
+  net[member.id] = 0;
+});
 
   const orderedExpenses = [...expenses].sort((a, b) => {
     const da = new Date(a.date).getTime();
@@ -100,23 +102,25 @@ orderedExpenses
 
     if (!payerId) return;
 
-    // Every payment contributes to the "Paid" column.
-    paid[payerId] += expense.amount;
+    // Count every payment in the "Paid" column.
+paid[payerId] += expense.amount;
 
-    // Only shared expenses affect balances.
-    if (!expense.split || expense.split.length < 2) {
-      return;
-    }
+// Only shared expenses affect balances.
+if (!expense.split || expense.split.length < 2) {
+  return;
+}
 
-    expense.split.forEach(split => {
-      owed[split.memberId] += split.amount;
-    });
+// Count only shared payments towards balances.
+sharedPaid[payerId] += expense.amount;
+
+expense.split.forEach(split => {
+  owed[split.memberId] += split.amount;
+});
   });
 
-// Initial balances
 members.forEach(member => {
   net[member.id] = round2(
-    paid[member.id] - owed[member.id]
+    sharedPaid[member.id] - owed[member.id]
   );
 });
 
