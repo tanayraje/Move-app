@@ -1607,52 +1607,51 @@ function SortableItem({
 
       {attachedDocs.map((doc) => (
 
-       <div
-  key={doc.id}
-  className="w-full rounded-3xl border border-border/60 bg-muted/20 px-6 py-5"
->
+        <div
+          key={doc.id}
+          className="w-full rounded-3xl border border-border/60 bg-muted/20 px-6 py-5"
+        >
 
-  <div className="flex items-start gap-4">
+          <button
+            type="button"
+            onClick={() => openDoc(doc)}
+            className="block w-full text-left"
+          >
 
-    <div
-      className={cn(
-        "mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl",
-        tintSurface(item.elementType)
-      )}
-    >
-      <Paperclip className="h-4 w-4" />
-    </div>
+            <div className="flex items-start gap-2">
 
-    <div className="min-w-0 flex-1">
+              <Paperclip className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
 
-      <button
-        type="button"
-        onClick={() => openDoc(doc)}
-        className="block w-full text-left"
-      >
-        <p className="overflow-hidden break-words text-[14px] font-medium leading-5">
-          {doc.name}
-        </p>
+              <div className="min-w-0 flex-1">
 
-        <p className="mt-1 text-[11px] text-muted-foreground">
-          Tap to open
-        </p>
-      </button>
+                <p className="break-words text-[14px] font-medium leading-5">
+                  {doc.name}
+                </p>
 
-      <button
-        type="button"
-        onClick={() => detachDoc(doc.id)}
-        className="mt-3 inline-flex items-center gap-1 text-xs text-red-500 transition-colors hover:text-red-600"
-      >
-        <X className="h-3.5 w-3.5" />
-        Remove attachment
-      </button>
+                <p className="mt-1 text-[11px] text-muted-foreground">
+                  Tap to open
+                </p>
 
-    </div>
+              </div>
 
-  </div>
+            </div>
 
-</div>
+          </button>
+
+          <div className="mt-4 flex justify-end">
+
+            <button
+              type="button"
+              onClick={() => detachDoc(doc.id)}
+              className="inline-flex h-9 items-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 text-sm font-medium text-red-600 transition-colors hover:bg-red-100"
+            >
+              <X className="h-4 w-4 shrink-0" />
+              Remove
+            </button>
+
+          </div>
+
+        </div>
 
       ))}
 
