@@ -505,7 +505,6 @@ function AccommodationCard({
   const { mutate: deleteItem } = useDeleteItineraryItem();
   const { mutate: deleteExpense } = useDeleteExpense();
   const { mutate: saveItem } = useSaveItineraryItem();
-  const { mutate: deleteDoc } = useDeleteDocument();
 
   const [expanded, setExpanded] = useState(false);
 
@@ -524,14 +523,12 @@ const doneChecklist =
   const destCurrency = trip.destinationCurrency || "INR";
 
   const openDoc = (doc: TripDocument) => {
-  if (!doc.blob) {
-    alert("Document file not found");
+  if (!doc.file_url) {
+    alert("Document not available.");
     return;
   }
 
-  const url = URL.createObjectURL(doc.blob);
-  window.open(url, "_blank");
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  window.open(doc.file_url, "_blank");
 };
 
 const detachDoc = (docId: string) => {
@@ -544,10 +541,6 @@ const detachDoc = (docId: string) => {
     ),
   });
 
-  deleteDoc({
-    id: docId,
-    tripId: item.tripId,
-  });
 };
 
 const toggleChecklistItem = (checkId: string) => {
@@ -612,7 +605,7 @@ const toggleChecklistItem = (checkId: string) => {
   onClick={() => setExpanded((v) => !v)}
   className="w-full text-left"
 >
-  <div className="px-5 py-4">
+  <div className="pl-8 pr-5 py-5">
 
     {/* Header */}
 
@@ -742,7 +735,7 @@ const toggleChecklistItem = (checkId: string) => {
           Cost
         </p>
 
-        <div className="rounded-3xl border border-border/60 bg-muted/20 px-5 py-5">
+        <div className="-mx-2 rounded-3xl border border-border/60 bg-muted/20 px-6 py-5">
 
           <p className="text-[24px] font-semibold tracking-[-0.02em]">
             ₹{Math.round(item.cost).toLocaleString("en-IN")}
@@ -901,7 +894,7 @@ const toggleChecklistItem = (checkId: string) => {
 
         <div
           key={doc.id}
-          className="flex min-w-0 items-center gap-3 rounded-3xl border border-border bg-muted/20 px-4 py-3"
+          className="-mx-2 flex min-w-0 items-center gap-4 rounded-3xl border border-border bg-muted/20 px-6 py-4"
         >
 
           <div
@@ -949,7 +942,7 @@ const toggleChecklistItem = (checkId: string) => {
 
 {/* Actions */}
 
-<div className="px-5 py-4">
+<div className="pl-8 pr-5 py-5">
 
   <div className="flex justify-end gap-3">
 
@@ -1035,31 +1028,24 @@ const isDragging = false;
       : ELEMENT_ICONS[item.elementType];
 
   const openDoc = (doc: TripDocument) => {
-    if (!doc.blob) {
-      alert("Document file not found");
-      return;
-    }
+  if (!doc.file_url) {
+    alert("Document not available.");
+    return;
+  }
 
-    const url = URL.createObjectURL(doc.blob);
-    window.open(url, "_blank");
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-  };
+  window.open(doc.file_url, "_blank");
+};
 
   const detachDoc = (docId: string) => {
-    if (!confirm("Remove this file from the item?")) return;
+  if (!confirm("Remove this attachment from this itinerary item?")) return;
 
-    saveItem({
-      ...item,
-      attachedDocIds: (item.attachedDocIds || []).filter(
-        (id) => id !== docId
-      ),
-    });
-
-    deleteDoc({
-      id: docId,
-      tripId: item.tripId,
-    });
-  };
+  saveItem({
+    ...item,
+    attachedDocIds: (item.attachedDocIds || []).filter(
+      id => id !== docId
+    ),
+  });
+};
 
   const toggleChecklistItem = (checkId: string) => {
     if (!item.checklist) return;
@@ -1156,27 +1142,33 @@ const isDragging = false;
 
         {!expanded ? (
 
-          <div className="flex min-w-0 items-center">
+          <div className="mt-1 flex min-w-0 items-center gap-2">
+
+            {/* From */}
 
             <span
-              className="min-w-0 flex-1 truncate text-[18px] font-semibold leading-[1.35]"
+              className="min-w-0 flex-1 truncate text-[17px] font-semibold leading-[1.35]"
               title={item.fromLocation}
             >
               {item.fromLocation || "—"}
             </span>
 
-            <div className="mx-2 flex shrink-0 items-center">
+            {/* Connector */}
 
-              <div className="w-1.5 border-t border-dashed border-blue-300" />
+            <div className="flex shrink-0 items-center">
+
+              <div className="w-1 border-t border-dashed border-blue-300" />
 
               <Icon className="mx-1 h-4 w-4 shrink-0 text-blue-500" />
 
-              <div className="w-1.5 border-t border-dashed border-blue-300" />
+              <div className="w-1 border-t border-dashed border-blue-300" />
 
             </div>
 
+            {/* To */}
+
             <span
-              className="min-w-0 flex-1 truncate text-right text-[18px] font-semibold leading-[1.35]"
+              className="min-w-0 flex-1 truncate text-right text-[17px] font-semibold leading-[1.35]"
               title={item.toLocation}
             >
               {item.toLocation || "—"}
@@ -1186,23 +1178,29 @@ const isDragging = false;
 
         ) : (
 
-          <div className="mt-2">
+          <div className="mt-3">
 
-            <p className="break-words text-[18px] font-semibold leading-[1.35]">
+            <p
+              className="break-words text-[18px] font-semibold leading-[1.35]"
+              title={item.fromLocation}
+            >
               {item.fromLocation || "—"}
             </p>
 
             <div className="my-4 flex items-center justify-center">
 
-              <div className="h-px w-8 border-t border-dashed border-blue-300" />
+              <div className="h-px w-10 border-t border-dashed border-blue-300" />
 
-              <Icon className="mx-2 h-4 w-4 text-blue-500" />
+              <Icon className="mx-3 h-4 w-4 shrink-0 text-blue-500" />
 
-              <div className="h-px w-8 border-t border-dashed border-blue-300" />
+              <div className="h-px w-10 border-t border-dashed border-blue-300" />
 
             </div>
 
-            <p className="break-words text-[18px] font-semibold leading-[1.35]">
+            <p
+              className="break-words text-[18px] font-semibold leading-[1.35]"
+              title={item.toLocation}
+            >
               {item.toLocation || "—"}
             </p>
 
@@ -1212,24 +1210,20 @@ const isDragging = false;
 
       </div>
 
-      <button
-        type="button"
-        onClick={() => setExpanded(v => !v)}
-        className="mt-5 shrink-0 p-1"
-      >
-        <ChevronDown
-          className={cn(
-            "h-4 w-4 text-muted-foreground/70 transition-transform duration-300",
-            expanded && "rotate-180"
-          )}
-        />
-      </button>
+      <ChevronDown
+        className={cn(
+          "mt-6 h-4 w-4 shrink-0 text-muted-foreground/70 transition-transform duration-300",
+          expanded && "rotate-180"
+        )}
+      />
 
     </div>
 
     {/* Journey */}
 
-    <div className="mt-5 grid grid-cols-[1fr_auto_1fr] items-end gap-4">
+    <div className="mt-5 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-end gap-4">
+
+      {/* Departure */}
 
       <div className="min-w-0">
 
@@ -1243,6 +1237,8 @@ const isDragging = false;
 
       </div>
 
+      {/* Duration */}
+
       <div className="px-2">
 
         <p className="whitespace-nowrap text-[11px] italic text-blue-600">
@@ -1250,6 +1246,8 @@ const isDragging = false;
         </p>
 
       </div>
+
+      {/* Arrival */}
 
       <div className="min-w-0 text-right">
 
@@ -1443,7 +1441,7 @@ const isDragging = false;
       Cost
     </p>
 
-    <div className="rounded-3xl border border-border/60 bg-muted/20 px-5 py-5">
+    <div className="-mx-2 rounded-3xl border border-border/60 bg-muted/20 px-6 py-5">
 
       <p className="text-[24px] font-semibold tracking-[-0.02em]">
         ₹{Math.round(item.cost).toLocaleString("en-IN")}
@@ -1599,7 +1597,7 @@ const isDragging = false;
 
         <div
           key={doc.id}
-          className="flex min-w-0 items-center gap-3 rounded-3xl border border-border bg-muted/20 px-4 py-3"
+          className="-mx-2 flex min-w-0 items-center gap-4 rounded-3xl border border-border bg-muted/20 px-6 py-4"
         >
 
           <div
@@ -1645,7 +1643,7 @@ const isDragging = false;
 )}
     {/* Actions */}
 
-<div className="px-5 py-4">
+<div className="pl-8 pr-5 py-5">
 
   <div className="flex justify-end gap-3">
 
