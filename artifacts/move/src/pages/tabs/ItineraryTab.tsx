@@ -541,20 +541,22 @@ function AccommodationCard({
 >
   <div className="flex">
 
-    {/* Left Strip */}
+  {/* Left Strip */}
 
-        <div
-          className={cn(
-            "w-[48px] shrink-0 self-stretch",
-            panelGradient(item.elementType)
-          )}
-        >
-          <div className="flex h-[96px] items-center justify-center text-white">
-            <Building2 className="h-4 w-4 stroke-[1.8]" />
-          </div>
-        </div>
+  <div
+    className={cn(
+      "flex w-[48px] shrink-0 flex-col",
+      panelGradient(item.elementType)
+    )}
+  >
+    <div className="flex h-[96px] items-center justify-center text-white">
+      <Building2 className="h-4 w-4 stroke-[1.8]" />
+    </div>
 
-    {/* CONTENT */}
+    {expanded && <div className="flex-1" />}
+  </div>
+
+  {/* CONTENT */}
 
     <div className="min-w-0 flex-1 px-6 py-5">
 
@@ -603,7 +605,7 @@ function AccommodationCard({
         )}
       </p>
 
-      <p className="mt-1 text-[15px] font-semibold">
+      <p className="mt-1 text-[12px] italic text-muted-foreground">
         {item.startTime || "—"}
       </p>
 
@@ -664,10 +666,12 @@ function AccommodationCard({
 
       <div
         className={cn(
-          "w-[48px] shrink-0 self-stretch",
+          "w-[48px] shrink-0",
           panelGradient(item.elementType)
         )}
-      />
+      >
+        <div className="h-full" />
+      </div>
 
       <div className="min-w-0 flex-1 border-t border-border/20">
 
@@ -919,22 +923,24 @@ const isDragging = false;
     >
       <div className="flex">
 
-        {/* Left Strip */}
+  {/* Left Strip */}
 
-        <div
-          className={cn(
-            "w-[48px] shrink-0 self-stretch",
-            panelGradient(item.elementType)
-          )}
-        >
-          <div className="flex h-[96px] items-center justify-center text-white">
-            <Icon className="h-4 w-4 stroke-[1.8]" />
-          </div>
-        </div>
+  <div
+    className={cn(
+      "flex w-[48px] shrink-0 flex-col",
+      panelGradient(item.elementType)
+    )}
+  >
+    <div className="flex h-[96px] items-center justify-center text-white">
+      <Building2 className="h-4 w-4 stroke-[1.8]" />
+    </div>
 
-        {/* Right Side */}
+    {expanded && <div className="flex-1" />}
+  </div>
 
-        <div className="min-w-0 flex-1">
+  {/* Right Side */}
+
+  <div className="min-w-0 flex-1">
 
           <button
             type="button"
