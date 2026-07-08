@@ -605,7 +605,7 @@ const toggleChecklistItem = (checkId: string) => {
 
         {/* Right Panel */}
 
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0 w-0 flex-1">
 
           <button
   type="button"
@@ -645,7 +645,7 @@ const toggleChecklistItem = (checkId: string) => {
 
       {/* Check In */}
 
-      <div className="min-w-[84px] flex-1">
+      <div className="min-w-0 flex-1">
 
         <p className="whitespace-nowrap text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
           Check-in
@@ -667,7 +667,7 @@ const toggleChecklistItem = (checkId: string) => {
 
       {/* Nights */}
 
-      <div className="shrink-0 px-2 text-center">
+      <div className="w-[56px] shrink-0 px-1 text-center">
 
         <div className="mb-2 h-px w-8 bg-border/60" />
 
@@ -681,7 +681,7 @@ const toggleChecklistItem = (checkId: string) => {
 
       {/* Check Out */}
 
-      <div className="min-w-[84px] flex-1 text-right">
+      <div className="min-w-0 flex-1 text-right">
 
         <p className="whitespace-nowrap text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
           Check-out
@@ -1130,7 +1130,7 @@ const isDragging = false;
 
   {/* Right Side */}
 
-  <div className="min-w-0 flex-1">
+  <div className="min-w-0 w-0 flex-1">
 
           <button
             type="button"
