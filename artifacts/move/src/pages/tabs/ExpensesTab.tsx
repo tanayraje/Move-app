@@ -930,7 +930,7 @@ console.log("total", total);
       payerName:
   members.find(m => m.id === payerId)?.name || "",
       notes: notesInput || undefined,
-      split: split,
+      split: showSplit ? split : undefined,
       createdAt: existingExpense?.createdAt || Date.now(),
     });
     onClose();
