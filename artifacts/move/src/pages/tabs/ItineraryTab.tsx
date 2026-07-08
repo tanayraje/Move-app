@@ -612,7 +612,7 @@ const toggleChecklistItem = (checkId: string) => {
   onClick={() => setExpanded((v) => !v)}
   className="w-full text-left"
 >
-  <div className="px-6 py-5">
+  <div className="px-5 py-4">
 
     {/* Header */}
 
@@ -620,11 +620,11 @@ const toggleChecklistItem = (checkId: string) => {
 
       <div className="min-w-0 flex-1">
 
-        <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-violet-600">
+        <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-violet-600">
           Stay
         </p>
 
-        <h3 className="min-w-0 break-words line-clamp-2 text-[16px] font-semibold leading-[1.35]">
+        <h3 className="min-w-0 break-words line-clamp-2 text-[18px] font-semibold leading-[1.35]">
           {item.title}
         </h3>
 
@@ -641,7 +641,7 @@ const toggleChecklistItem = (checkId: string) => {
 
     {/* Stay Timeline */}
 
-    <div className="mt-6 flex items-end justify-between gap-4">
+    <div className="mt-4 flex items-end justify-between gap-4">
 
       {/* Check In */}
 
@@ -651,7 +651,7 @@ const toggleChecklistItem = (checkId: string) => {
           Check-in
         </p>
 
-        <p className="mt-1 text-[15px] font-semibold">
+        <p className="mt-0.5 text-[15px] font-semibold">
           {safeFormatDate(
             item.date,
             d => format(d, "MMM d"),
@@ -659,7 +659,7 @@ const toggleChecklistItem = (checkId: string) => {
           )}
         </p>
 
-        <p className="mt-1 text-[12px] italic text-muted-foreground">
+        <p className="mt-0.5 text-[12px] italic text-muted-foreground">
           {item.startTime || "—"}
         </p>
 
@@ -669,13 +669,13 @@ const toggleChecklistItem = (checkId: string) => {
 
       <div className="w-[56px] shrink-0 px-1 text-center">
 
-        <div className="mb-2 h-px w-8 bg-border/60" />
+        <div className="mb-1 h-px w-6 bg-border/60" />
 
         <p className="whitespace-nowrap text-[11px] font-medium italic text-violet-600">
           {nights} night{nights > 1 ? "s" : ""}
         </p>
 
-        <div className="mt-2 h-px w-8 bg-border/60" />
+        <div className="mt-1 h-px w-6 bg-border/60" />
 
       </div>
 
@@ -949,7 +949,7 @@ const toggleChecklistItem = (checkId: string) => {
 
 {/* Actions */}
 
-<div className="px-6 py-5">
+<div className="px-5 py-4">
 
   <div className="flex justify-end gap-3">
 
