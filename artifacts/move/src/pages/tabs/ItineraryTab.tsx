@@ -445,19 +445,7 @@ const dur = Math.max(
     return (
       <button
   key={day}
-  onClick={() => {
-    if (
-      isWishlist &&
-      window.confirm(
-        `Delete ${day}?\n\nPress OK to delete this day.\nPress Cancel to simply open it.`
-      )
-    ) {
-      deleteWishlistDay(day);
-      return;
-    }
-
-    setSelectedDate(day);
-  }}
+  onClick={() => setSelectedDate(day)}
   className={cn(
           "flex flex-col items-center justify-center px-3 py-2 rounded-2xl transition-all font-medium border-2 relative",
           city ? "min-w-[68px] h-20" : "min-w-[64px] h-16",
@@ -507,7 +495,7 @@ const dur = Math.max(
     );
   })}
 
-  {isWishlist && (
+  {isWishlist && (trip.wishlistDayCount ?? 1) > 1 && (
     <button
       onClick={() => {
   const newCount = (trip.wishlistDayCount ?? 1) + 1;
@@ -531,7 +519,7 @@ const dur = Math.max(
       <div className="px-4 py-4 pb-32 overflow-y-auto flex-1">
         {/* City + date header */}
         <div className="flex items-center justify-between mb-4">
-          <div className="flex flex-col">
+          <div className="flex items-start gap-3">
             <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
               {isDayLabel(selectedDate) ? selectedDate : safeFormatDate(selectedDate, d => format(d, 'EEEE, MMMM d'), selectedDate)}
             </span>
@@ -563,9 +551,21 @@ const dur = Math.max(
                   <span className="text-[13px] text-muted-foreground/60 italic">Tap to add city…</span>
                 )}
                 <Pencil className="w-3.5 h-3.5 text-muted-foreground/40 group-hover/city:text-primary transition-colors" />
-              </button>
+                            </button>
             )}
+
           </div>
+
+          {isWishlist && (
+            <button
+              type="button"
+              onClick={() => deleteWishlistDay(selectedDate)}
+              className="mt-1 flex h-9 w-9 items-center justify-center rounded-xl border border-red-200 bg-red-50 text-red-600 transition-colors hover:bg-red-100"
+              aria-label="Delete day"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+          )}
 
           <div className="flex flex-col items-end gap-1">
             {totalDayMinutes > 0 && (
