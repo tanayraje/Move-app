@@ -1091,8 +1091,8 @@ function SortableItem({
   <div className="relative">
     <div
   className={cn(
-    "absolute -left-[38px] top-6 z-20 flex h-6 w-6 items-center justify-center rounded-full shadow-[0_2px_6px_rgba(0,0,0,0.15)]"
-    item.elementType === "travel"
+  "absolute -left-[38px] top-6 z-20 flex h-6 w-6 items-center justify-center rounded-full shadow-[0_2px_6px_rgba(0,0,0,0.15)]",
+  item.elementType === "travel"
       ? "bg-blue-500"
       : item.elementType === "meal"
       ? "bg-amber-400"
@@ -1104,9 +1104,9 @@ function SortableItem({
 
     <div
       className={cn(
-        "overflow-hidden rounded-[28px] border border-border/20 bg-card shadow-[0_10px_30px_rgba(15,23,42,0.08)] transition-[height] duration-300 hover:shadow-[0_14px_40px_rgba(15,23,42,0.12)]"
-        ELEMENT_BORDER[item.elementType]
-      )}
+  "overflow-hidden rounded-[28px] border border-border/20 bg-card shadow-[0_10px_30px_rgba(15,23,42,0.08)] transition-[height] duration-300 hover:shadow-[0_14px_40px_rgba(15,23,42,0.12)]",
+  ELEMENT_BORDER[item.elementType]
+)}
     >
       <div className="flex items-stretch">
 
