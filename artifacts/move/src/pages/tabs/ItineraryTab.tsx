@@ -241,8 +241,10 @@ function stayNights(checkIn: string, checkOut: string): number {
 export default function ItineraryTab({ trip }: { trip: Trip }) {
   const { data: allItems = [] } = useItinerary(trip.id);
   const { mutate: reorder } = useReorderItinerary();
-  const { mutate: updateTrip } = useUpdateTrip();
-  const { data: documents = [] } = useDocuments(trip.id);
+const { mutate: updateTrip } = useUpdateTrip();
+const { mutate: deleteItem } = useDeleteItineraryItem();
+const { mutate: saveItem } = useSaveItineraryItem();
+const { data: documents = [] } = useDocuments(trip.id);
 
   const status = trip.status || (trip.archived ? 'archived' : 'active');
   const isWishlist = status === 'wishlist';
@@ -308,6 +310,91 @@ export default function ItineraryTab({ trip }: { trip: Trip }) {
     setEditingCity(false);
   };
 
+  const deleteWishlistDay = (day: string) => {
+  if (!isWishlist) return;
+
+  if ((trip.wishlistDayCount ?? 1) <= 1) {
+    alert("You must keep at least one day.");
+    return;
+  }
+
+  const hasAccommodation = allItems.some(
+  (item) =>
+    item.elementType === "accommodation" &&
+    item.date === day
+);
+
+if (hasAccommodation) {
+  alert(
+    "Delete or edit the accommodation for this day before deleting the day."
+  );
+  return;
+}
+
+if (
+  !confirm(
+    `Delete ${day}?\n\nThis will permanently delete every itinerary item scheduled for this day.\n\nThis action cannot be undone.`
+  )
+) {
+  return;
+}
+
+  const deletedDay = parseInt(day.replace("Day ", ""), 10);
+
+  allItems.forEach((item) => {
+    const dayMatch = item.date.match(/^Day\s+(\d+)$/i);
+
+    if (!dayMatch) return;
+
+    const itemDay = parseInt(dayMatch[1], 10);
+
+    if (itemDay === deletedDay) {
+      deleteItem({
+        tripId: trip.id,
+        id: item.id,
+      });
+      return;
+    }
+
+    const updated = { ...item };
+let changed = false;
+
+if (itemDay > deletedDay) {
+  updated.date = `Day ${itemDay - 1}`;
+  changed = true;
+}
+
+if (
+  item.elementType === "accommodation" &&
+  item.endDate?.match(/^Day\s+(\d+)$/i)
+) {
+  const endDay = parseInt(
+    item.endDate.match(/^Day\s+(\d+)$/i)![1],
+    10
+  );
+
+  if (endDay > deletedDay) {
+    updated.endDate = `Day ${endDay - 1}`;
+    changed = true;
+  }
+}
+
+if (changed) {
+  saveItem(updated);
+}
+  });
+
+  updateTrip({
+    ...trip,
+    wishlistDayCount: (trip.wishlistDayCount ?? 1) - 1,
+  });
+
+  if (selectedDate === day) {
+  const newDay = Math.max(1, deletedDay - 1);
+  setSelectedDate(`Day ${newDay}`);
+}
+};
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
@@ -357,9 +444,21 @@ const dur = Math.max(
 
     return (
       <button
-        key={day}
-        onClick={() => setSelectedDate(day)}
-        className={cn(
+  key={day}
+  onClick={() => {
+    if (
+      isWishlist &&
+      window.confirm(
+        `Delete ${day}?\n\nPress OK to delete this day.\nPress Cancel to simply open it.`
+      )
+    ) {
+      deleteWishlistDay(day);
+      return;
+    }
+
+    setSelectedDate(day);
+  }}
+  className={cn(
           "flex flex-col items-center justify-center px-3 py-2 rounded-2xl transition-all font-medium border-2 relative",
           city ? "min-w-[68px] h-20" : "min-w-[64px] h-16",
           isSelected
@@ -410,12 +509,16 @@ const dur = Math.max(
 
   {isWishlist && (
     <button
-      onClick={() =>
-        updateTrip({
-          ...trip,
-          wishlistDayCount: (trip.wishlistDayCount ?? 1) + 1,
-        })
-      }
+      onClick={() => {
+  const newCount = (trip.wishlistDayCount ?? 1) + 1;
+
+  updateTrip({
+    ...trip,
+    wishlistDayCount: newCount,
+  });
+
+  setSelectedDate(`Day ${newCount}`);
+}}
       className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border-2 border-dashed border-primary/30 bg-card text-primary hover:bg-primary/5"
     >
       <Plus className="w-5 h-5" />
@@ -1959,12 +2062,39 @@ function AddEditSheet({ isOpen, onClose, trip, defaultDate, documents, allItems,
         )}
 
         {/* Date */}
-        {elementType !== 'accommodation' && (
-          <div>
-            <Label htmlFor="date">Date</Label>
-            <Input id="date" name="date" type="date" defaultValue={existingItem?.date || defaultDate} required />
-          </div>
+        {elementType !== "accommodation" && (
+  <div>
+    <Label htmlFor="date">Day</Label>
+
+    {trip.status === "wishlist" ? (
+      <Select
+        id="date"
+        name="date"
+        defaultValue={existingItem?.date || defaultDate}
+      >
+        {Array.from(
+          { length: trip.wishlistDayCount ?? 1 },
+          (_, i) => (
+            <option
+              key={i}
+              value={`Day ${i + 1}`}
+            >
+              Day {i + 1}
+            </option>
+          )
         )}
+      </Select>
+    ) : (
+      <Input
+        id="date"
+        name="date"
+        type="date"
+        defaultValue={existingItem?.date || defaultDate}
+        required
+      />
+    )}
+  </div>
+)}
 
         {/* TRAVEL fields */}
         {elementType === 'travel' && (
