@@ -462,7 +462,7 @@ const dur = Math.max(
             <p className="text-sm mt-1 opacity-70">Tap + to add something.</p>
           </div>
         ) : filteredItems.length === 0 ? null : (
-          <div className="relative border-l border-[#E8E8E8] ml-2 pl-4 space-y-3 mt-4">
+          <div className="relative border-l border-[#E8E8E8] ml-6 pl-5 space-y-3 mt-4">
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
               <SortableContext items={filteredItems.map(i => i.id)} strategy={verticalListSortingStrategy}>
                 {filteredItems.map(item => (
@@ -1090,17 +1090,17 @@ function SortableItem({
   return (
   <div className="relative">
     <div
-        className={cn(
-        "absolute -left-[20px] top-8 z-20 h-2.5 w-2.5 rounded-full border border-background",
-        item.elementType === "travel"
-          ? "bg-blue-500"
-          : item.elementType === "accommodation"
-          ? "bg-violet-500"
-          : item.elementType === "meal"
-          ? "bg-amber-400"
-          : "bg-orange-500"
-      )}
-    />
+  className={cn(
+    "absolute -left-[28px] top-6 z-20 flex h-7 w-7 items-center justify-center rounded-full border-2 border-background shadow-sm",
+    item.elementType === "travel"
+      ? "bg-blue-500"
+      : item.elementType === "meal"
+      ? "bg-amber-400"
+      : "bg-orange-500"
+  )}
+>
+  <Icon className="h-3.5 w-3.5 text-white stroke-[2]" />
+</div>
 
     <div
       className={cn(
@@ -1114,7 +1114,7 @@ function SortableItem({
 
 <div
   className={cn(
-    "w-1 shrink-0",
+    "w-2 shrink-0",
     item.elementType === "travel"
       ? "bg-blue-500"
       : item.elementType === "meal"

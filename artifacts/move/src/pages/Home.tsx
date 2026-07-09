@@ -238,13 +238,14 @@ const [editingTrip, setEditingTrip] = useState<Trip | null>(null);
  !isJoinOpen && (
   <div className="fixed bottom-6 left-0 right-0 flex justify-center z-20 max-w-md mx-auto gap-3">
     <Button
-      size="lg"
-      className="rounded-full px-7"
-      onClick={() => setIsAddOpen(true)}
-    >
-      <Plus className="w-5 h-5 mr-2" />
-      New Trip
-    </Button>
+  size="lg"
+  variant="outline"
+  className="rounded-full px-7 bg-white text-foreground border-white shadow-[0_10px_30px_rgba(0,0,0,0.10)] hover:shadow-[0_12px_34px_rgba(0,0,0,0.14)]"
+  onClick={() => setIsWishlistOpen(true)}
+>
+  <Heart className="w-5 h-5 mr-2" />
+  Wishlist
+</Button>
 
     <Button
   size="lg"
