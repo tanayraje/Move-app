@@ -462,18 +462,19 @@ const dur = Math.max(
             <p className="text-sm mt-1 opacity-70">Tap + to add something.</p>
           </div>
         ) : filteredItems.length === 0 ? null : (
-          <div className="relative ml-8 pl-8 space-y-5 mt-5 before:absolute before:left-0 before:top-0 before:bottom-0 before:w-px before:bg-[#E9E9E9]">
+          <div className="space-y-5 mt-5">
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
               <SortableContext items={filteredItems.map(i => i.id)} strategy={verticalListSortingStrategy}>
-                {filteredItems.map(item => (
-                  <SortableItem
-                    key={item.id}
-                    item={item}
-                    documents={documents}
-                    trip={trip}
-                    onEdit={() => setEditItem(item)}
-                  />
-                ))}
+                {filteredItems.map((item, index) => (
+                <SortableItem
+                  key={item.id}
+                  item={item}
+                  documents={documents}
+                  trip={trip}
+                  onEdit={() => setEditItem(item)}
+                  isLast={index === filteredItems.length - 1}
+                />
+              ))}
               </SortableContext>
             </DndContext>
           </div>
@@ -998,11 +999,13 @@ function SortableItem({
   documents,
   trip,
   onEdit,
+  isLast,
 }: {
   item: ItineraryItem;
   documents: TripDocument[];
   trip: Trip;
   onEdit: () => void;
+  isLast: boolean;
 }) {
 
   const { mutate: deleteItem } = useDeleteItineraryItem();
@@ -1088,29 +1091,52 @@ function SortableItem({
   };
 
   return (
-  <div className="relative">
+  <div className="flex items-stretch gap-4">
+
+   {/* Timeline */}
+
+<div className="relative flex w-14 shrink-0 flex-col items-center">
+
+  <div
+    className={cn(
+      "flex h-11 w-11 items-center justify-center rounded-full shadow-md",
+      item.elementType === "travel"
+        ? "bg-blue-500"
+        : item.elementType === "meal"
+        ? "bg-amber-400"
+        : "bg-orange-500"
+    )}
+  >
+    <Icon className="h-5 w-5 text-white stroke-[2]" />
+  </div>
+
+  <span className="mt-2 text-[10px] font-medium tracking-wide text-muted-foreground">
+    {item.startTime}
+  </span>
+
+  {!isLast && (
     <div
-  className={cn(
-  "absolute -left-[38px] top-6 z-20 flex h-6 w-6 items-center justify-center rounded-full shadow-[0_2px_6px_rgba(0,0,0,0.15)]",
-  item.elementType === "travel"
-      ? "bg-blue-500"
-      : item.elementType === "meal"
-      ? "bg-amber-400"
-      : "bg-orange-500"
+      className="mt-3 w-px bg-border"
+      style={{
+        height: "calc(100% + 40px)",
+        minHeight: 120,
+      }}
+    />
   )}
->
-  <Icon className="h-3 w-3 text-white stroke-[2]" />
+
 </div>
 
-    <div
-      className={cn(
-  "overflow-hidden rounded-[28px] border border-border/20 bg-card shadow-[0_10px_30px_rgba(15,23,42,0.08)] transition-[height] duration-300 hover:shadow-[0_14px_40px_rgba(15,23,42,0.12)]",
-  ELEMENT_BORDER[item.elementType]
-)}
-    >
-      <div className="flex items-stretch">
+{/* Card */}
 
-  {/* Thin Accent */}
+<div
+  className={cn(
+    "flex-1 overflow-hidden rounded-[28px] border border-border/20 bg-card shadow-[0_10px_30px_rgba(15,23,42,0.08)] transition-[height] duration-300 hover:shadow-[0_14px_40px_rgba(15,23,42,0.12)]",
+    ELEMENT_BORDER[item.elementType]
+  )}
+>
+  <div className="flex items-stretch">
+
+    {/* Thin Accent */}
 
 <div
   className={cn(
@@ -1694,9 +1720,11 @@ function SortableItem({
   </div>
 )}
 
-      </div>
+            </div>
     </div>
+
   </div>
+
 </div>
 );
 }
