@@ -261,7 +261,33 @@ const { data: documents = [] } = useDocuments(trip.id);
 const touchStartY = useRef(0);
 const [swipeDirection, setSwipeDirection] = useState<1 | -1>(1);
 
-const currentDayIndex = days.indexOf(selectedDate);
+
+  const [isAddOpen, setIsAddOpen] = useState(false);
+  const [editItem, setEditItem] = useState<ItineraryItem | null>(null);
+  const [editingCity, setEditingCity] = useState(false);
+  const [cityDraft, setCityDraft] = useState('');
+  const cityInputRef = useRef<HTMLInputElement>(null);
+const dayScrollerRef = useRef<HTMLDivElement>(null);
+
+  const wishlistDays = useMemo(() => {
+  const count = Math.max(trip.wishlistDayCount ?? 1, 1);
+
+  return Array.from(
+    { length: count },
+    (_, i) => `Day ${i + 1}`
+  );
+}, [trip.wishlistDayCount]);
+
+  const startDateParsed = safeParseDate(trip.startDate);
+  const endDateParsed = safeParseDate(trip.endDate);
+  const daysCount = isWishlist ? wishlistDays.length
+    : startDateParsed && endDateParsed ? differenceInDays(endDateParsed, startDateParsed) + 1 : 0;
+  const days = isWishlist ? wishlistDays
+    : startDateParsed ? Array.from({ length: daysCount }).map((_, i) =>
+      format(addDays(startDateParsed, i), 'yyyy-MM-dd')
+    ) : [];
+
+    const currentDayIndex = days.indexOf(selectedDate);
 
 const goToNextDay = useCallback(() => {
   if (currentDayIndex < days.length - 1) {
@@ -295,47 +321,6 @@ const handleTouchEnd = (e: React.TouchEvent) => {
     goToPreviousDay();
   }
 };
-
-useEffect(() => {
-  const container = dayScrollerRef.current;
-  if (!container) return;
-
-  const index = days.indexOf(selectedDate);
-  if (index === -1) return;
-
-  const button = container.children[index] as HTMLElement;
-  if (!button) return;
-
-  button.scrollIntoView({
-    behavior: "smooth",
-    inline: "center",
-    block: "nearest",
-  });
-}, [selectedDate, days]);
-  const [isAddOpen, setIsAddOpen] = useState(false);
-  const [editItem, setEditItem] = useState<ItineraryItem | null>(null);
-  const [editingCity, setEditingCity] = useState(false);
-  const [cityDraft, setCityDraft] = useState('');
-  const cityInputRef = useRef<HTMLInputElement>(null);
-const dayScrollerRef = useRef<HTMLDivElement>(null);
-
-  const wishlistDays = useMemo(() => {
-  const count = Math.max(trip.wishlistDayCount ?? 1, 1);
-
-  return Array.from(
-    { length: count },
-    (_, i) => `Day ${i + 1}`
-  );
-}, [trip.wishlistDayCount]);
-
-  const startDateParsed = safeParseDate(trip.startDate);
-  const endDateParsed = safeParseDate(trip.endDate);
-  const daysCount = isWishlist ? wishlistDays.length
-    : startDateParsed && endDateParsed ? differenceInDays(endDateParsed, startDateParsed) + 1 : 0;
-  const days = isWishlist ? wishlistDays
-    : startDateParsed ? Array.from({ length: daysCount }).map((_, i) =>
-      format(addDays(startDateParsed, i), 'yyyy-MM-dd')
-    ) : [];
 
   const sortedItems = useMemo(() => sortItems(allItems), [allItems]);
   const filteredItems = useMemo(() =>
@@ -509,9 +494,9 @@ const dur = Math.max(
     <div className="flex flex-col h-full relative">
       {/* Day Selector */}
       <div className="sticky top-0 z-20 bg-background pt-3 pb-2 px-4 overflow-x-auto no-scrollbar border-b border-border/50">
-        <div
+      <div
   ref={dayScrollerRef}
-  className="flex gap-2 min-w-max"
+  className="flex gap-2 min-w-max pb-1"
 >
   {days.map((day) => {
     const isSelected = selectedDate === day;
@@ -627,56 +612,86 @@ const dur = Math.max(
       className="px-4 py-4 pb-32 overflow-y-auto h-full"
     >
         {/* City + date header */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-start gap-3">
-            <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-              {isDayLabel(selectedDate) ? selectedDate : safeFormatDate(selectedDate, d => format(d, 'EEEE, MMMM d'), selectedDate)}
-            </span>
-            {editingCity ? (
-              <div className="flex items-center gap-2 mt-1">
-                <input
-                  ref={cityInputRef}
-                  autoFocus
-                  value={cityDraft}
-                  onChange={e => setCityDraft(e.target.value)}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter') saveCity(cityDraft);
-                    if (e.key === 'Escape') setEditingCity(false);
-                  }}
-                  placeholder="City name…"
-                  className="text-base font-bold bg-transparent border-b-2 border-primary outline-none text-foreground placeholder:text-muted-foreground/50 min-w-0 w-40"
-                />
-                <button onClick={() => saveCity(cityDraft)} className="text-primary"><Check className="w-4 h-4" /></button>
-                <button onClick={() => setEditingCity(false)} className="text-muted-foreground"><X className="w-4 h-4" /></button>
-              </div>
-            ) : (
-              <button
-                onClick={() => { setCityDraft(currentCity); setEditingCity(true); }}
-                className="flex items-center gap-1.5 mt-0.5 group/city"
-              >
-                {currentCity ? (
-                  <span className="text-base font-bold text-foreground">{currentCity}</span>
-                ) : (
-                  <span className="text-[13px] text-muted-foreground/60 italic">Tap to add city…</span>
-                )}
-                <Pencil className="w-3.5 h-3.5 text-muted-foreground/40 group-hover/city:text-primary transition-colors" />
-                            </button>
-            )}
+        <div className="flex items-start justify-between mb-4">
 
-          </div>
+  <div className="min-w-0 flex-1">
 
-          {isWishlist && (
-            <button
-              type="button"
-              onClick={() => deleteWishlistDay(selectedDate)}
-              className="mt-1 flex h-9 w-9 items-center justify-center rounded-xl border border-red-200 bg-red-50 text-red-600 transition-colors hover:bg-red-100"
-              aria-label="Delete day"
-            >
-              <Trash2 className="h-4 w-4" />
-            </button>
+    <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+      {isDayLabel(selectedDate)
+        ? selectedDate
+        : safeFormatDate(
+            selectedDate,
+            d => format(d, "EEEE, MMMM d"),
+            selectedDate
           )}
+    </span>
 
-          <div className="flex flex-col items-end gap-1">
+    {editingCity ? (
+      <div className="flex items-center gap-2 mt-1">
+        <input
+          ref={cityInputRef}
+          autoFocus
+          value={cityDraft}
+          onChange={e => setCityDraft(e.target.value)}
+          onKeyDown={e => {
+            if (e.key === "Enter") saveCity(cityDraft);
+            if (e.key === "Escape") setEditingCity(false);
+          }}
+          placeholder="City name…"
+          className="text-base font-bold bg-transparent border-b-2 border-primary outline-none text-foreground placeholder:text-muted-foreground/50 min-w-0 w-40"
+        />
+
+        <button onClick={() => saveCity(cityDraft)}>
+          <Check className="w-4 h-4 text-primary" />
+        </button>
+
+        <button onClick={() => setEditingCity(false)}>
+          <X className="w-4 h-4 text-muted-foreground" />
+        </button>
+      </div>
+    ) : (
+      <button
+        onClick={() => {
+          setCityDraft(currentCity);
+          setEditingCity(true);
+        }}
+        className="mt-1 flex items-center gap-1.5 group/city"
+      >
+        {currentCity ? (
+          <span className="text-[15px] font-medium text-foreground">
+            {currentCity}
+          </span>
+        ) : (
+          <span className="text-[13px] italic text-muted-foreground/60">
+            Tap to add city...
+          </span>
+        )}
+
+        <Pencil className="w-3.5 h-3.5 text-muted-foreground/40 group-hover/city:text-primary transition-colors" />
+      </button>
+    )}
+  </div>
+
+  <div className="flex items-start gap-2">
+
+    {isWishlist && (trip.wishlistDayCount ?? 1) > 1 && (
+      <button
+        type="button"
+        onClick={() => deleteWishlistDay(selectedDate)}
+        className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-red-200 bg-red-50 text-red-600 transition-colors hover:bg-red-100"
+        aria-label="Delete day"
+      >
+        <Trash2 className="h-4 w-4" />
+      </button>
+    )}
+
+    <div className="flex flex-col items-end gap-1">
+    
+    </div>
+
+  </div>
+
+</div>
             {totalDayMinutes > 0 && (
               <div className="flex items-center gap-1 text-xs font-bold text-muted-foreground bg-muted px-2.5 py-1 rounded-full">
                 <Clock className="w-3 h-3" />
@@ -688,8 +703,6 @@ const dur = Math.max(
                 ₹{Math.round(totalDayCost).toLocaleString('en-IN')}
               </div>
             )}
-          </div>
-        </div>
 
         {/* Accommodation banners */}
         {activeAccommodations.map(accom => (
@@ -732,7 +745,12 @@ const dur = Math.max(
   </AnimatePresence>
 </div>
 
-{getTripStatus(trip) !== 'archived' && <FAB ...
+{getTripStatus(trip) !== "archived" && (
+  <FAB
+    icon={Plus}
+    onClick={() => setIsAddOpen(true)}
+  />
+)}
 
       <AddEditSheet
         isOpen={isAddOpen}
