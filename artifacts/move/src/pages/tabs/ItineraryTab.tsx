@@ -947,19 +947,27 @@ const toggleChecklistItem = (checkId: string) => {
 
       </div>
 
-      {/* Nights */}
+      {/* Stay Progress */}
 
-      <div className="flex w-[72px] shrink-0 flex-col items-center justify-center">
+<div className="flex w-[72px] shrink-0 flex-col items-center justify-center">
 
-        <div className="mb-2 h-px w-8 bg-border/60" />
+  <div className="mb-2 h-px w-8 bg-border/60" />
 
-        <p className="whitespace-nowrap text-[11px] font-medium italic text-violet-600">
-          {nights} night{nights > 1 ? "s" : ""}
-        </p>
+  <p className="whitespace-nowrap text-[11px] font-medium italic text-violet-600">
+    {item.endDate === selectedDate
+      ? "Check-out"
+      : `${Math.max(
+          differenceInDays(
+            safeParseDate(selectedDate)!,
+            safeParseDate(item.date)!
+          ) + 1,
+          1
+        )} night`}
+  </p>
 
-        <div className="mt-2 h-px w-8 bg-border/60" />
+  <div className="mt-2 h-px w-8 bg-border/60" />
 
-      </div>
+</div>
 
       {/* Check Out */}
 
