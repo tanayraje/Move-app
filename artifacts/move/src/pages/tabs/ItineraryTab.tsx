@@ -1117,7 +1117,7 @@ function SortableItem({
 
   {!isLast && (
   <div
-    className="absolute left-1/2 top-[96px] -translate-x-1/2 rounded-full bg-border/80"
+    className="absolute left-1/2 top-[112px] -translate-x-1/2 rounded-full bg-border/80"
     style={{
       width: "2px",
       height: "140px",
@@ -1141,7 +1141,7 @@ function SortableItem({
 
 <div
   className={cn(
-    "w-[10px] shrink-0",
+    "w-[8px] shrink-0",
     item.elementType === "travel"
       ? "bg-blue-500"
       : item.elementType === "meal"
