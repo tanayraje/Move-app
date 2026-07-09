@@ -620,7 +620,7 @@ const toggleChecklistItem = (checkId: string) => {
   onClick={() => setExpanded((v) => !v)}
   className="w-full text-left"
 >
-  <div className="pl-8 pr-5 py-5">
+  <div className="pl-6 pr-5 py-5">
 
     {/* Header */}
 
@@ -675,15 +675,15 @@ const toggleChecklistItem = (checkId: string) => {
 
       {/* Nights */}
 
-      <div className="w-[56px] shrink-0 px-1 text-center">
+      <div className="flex w-[72px] shrink-0 flex-col items-center justify-center">
 
-        <div className="mb-1 h-px w-6 bg-border/60" />
+        <div className="mb-2 h-px w-8 bg-border/60" />
 
         <p className="whitespace-nowrap text-[11px] font-medium italic text-violet-600">
           {nights} night{nights > 1 ? "s" : ""}
         </p>
 
-        <div className="mt-1 h-px w-6 bg-border/60" />
+        <div className="mt-2 h-px w-8 bg-border/60" />
 
       </div>
 
