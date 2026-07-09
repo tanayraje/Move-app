@@ -1141,7 +1141,7 @@ function SortableItem({
 
 <div
   className={cn(
-    "w-[3px] rounded-l-[28px] shrink-0",
+    "w-[5px] rounded-l-[28px] shrink-0",
     item.elementType === "travel"
       ? "bg-blue-500"
       : item.elementType === "meal"
@@ -1667,10 +1667,10 @@ function SortableItem({
             <button
               type="button"
               onClick={() => detachDoc(doc.id)}
-              className="inline-flex h-9 items-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 text-sm font-medium text-red-600 transition-colors hover:bg-red-100"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-red-200 bg-red-50 text-red-600 transition-colors hover:bg-red-100"
+              aria-label="Remove attachment"
             >
-              <X className="h-4 w-4 shrink-0" />
-              Remove
+              <X className="h-4 w-4" />
             </button>
 
           </div>
