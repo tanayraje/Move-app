@@ -599,7 +599,7 @@ const toggleChecklistItem = (checkId: string) => {
 
   <div
     className={cn(
-      "flex w-[48px] shrink-0 flex-col",
+      "flex w-[36px] shrink-0 flex-col",
       panelGradient(item.elementType)
     )}
   >
