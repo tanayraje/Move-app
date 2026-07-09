@@ -247,11 +247,11 @@ const [editingTrip, setEditingTrip] = useState<Trip | null>(null);
     </Button>
 
     <Button
-      size="lg"
-      variant="outline"
-      className="rounded-full px-7"
-      onClick={() => setIsWishlistOpen(true)}
-    >
+  size="lg"
+  variant="outline"
+  className="rounded-full px-7 bg-white text-foreground border-white hover:bg-white"
+  onClick={() => setIsWishlistOpen(true)}
+>
       <Heart className="w-5 h-5 mr-2" />
       Wishlist
     </Button>

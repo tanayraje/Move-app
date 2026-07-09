@@ -353,7 +353,7 @@ const dur = Math.max(
                 onClick={() => setSelectedDate(day)}
                 className={cn(
                 "flex flex-col items-center justify-center px-3 py-2 rounded-2xl transition-all font-medium border-2 relative",
-                city ? "min-w-[60px] h-20" : "min-w-[56px] h-16",
+                city ? "min-w-[68px] h-20" : "min-w-[64px] h-16",
                 isSelected
                   ? "bg-primary border-primary text-primary-foreground shadow-md shadow-primary/20"
                   : "bg-card border-border text-foreground/70 hover:border-primary/30"
@@ -462,7 +462,7 @@ const dur = Math.max(
             <p className="text-sm mt-1 opacity-70">Tap + to add something.</p>
           </div>
         ) : filteredItems.length === 0 ? null : (
-          <div className="relative border-l-2 border-border/40 ml-5 pl-6 space-y-3 mt-4">
+          <div className="relative border-l border-[#E8E8E8] ml-2 pl-4 space-y-3 mt-4">
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
               <SortableContext items={filteredItems.map(i => i.id)} strategy={verticalListSortingStrategy}>
                 {filteredItems.map(item => (
@@ -1090,8 +1090,8 @@ function SortableItem({
   return (
   <div className="relative">
     <div
-      className={cn(
-        "absolute -left-[30px] top-9 z-20 h-3 w-3 rounded-full border-2 border-background",
+        className={cn(
+        "absolute -left-[20px] top-8 z-20 h-2.5 w-2.5 rounded-full border border-background",
         item.elementType === "travel"
           ? "bg-blue-500"
           : item.elementType === "accommodation"
@@ -1110,21 +1110,18 @@ function SortableItem({
     >
       <div className="flex items-stretch">
 
-  {/* Left Strip */}
+  {/* Thin Accent */}
 
-  <div
-    className={cn(
-      "flex w-[48px] shrink-0 flex-col",
-      panelGradient(item.elementType)
-    )}
-  >
-    <div className="flex h-[96px] items-center justify-center text-white">
-      <Icon className="h-4 w-4 stroke-[1.8]" />
-    </div>
-
-    <div className="flex-1" />
-
-  </div>
+<div
+  className={cn(
+    "w-1 shrink-0",
+    item.elementType === "travel"
+      ? "bg-blue-500"
+      : item.elementType === "meal"
+      ? "bg-amber-400"
+      : "bg-orange-500"
+  )}
+/>
 
   {/* Right Side */}
 
@@ -1135,7 +1132,7 @@ function SortableItem({
             onClick={() => setExpanded((v) => !v)}
             className="w-full text-left"
           >
-            <div className="px-5 py-3">
+            <div className="px-4 py-3">
 
       {/* Individual cards go here */}
 
