@@ -563,23 +563,23 @@ const dur = Math.max(
     );
   })}
 
-  {isWishlist && (trip.wishlistDayCount ?? 1) > 1 && (
-    <button
-      onClick={() => {
-  const newCount = (trip.wishlistDayCount ?? 1) + 1;
+  {isWishlist && (
+  <button
+    onClick={() => {
+      const newCount = (trip.wishlistDayCount ?? 1) + 1;
 
-  updateTrip({
-    ...trip,
-    wishlistDayCount: newCount,
-  });
+      updateTrip({
+        ...trip,
+        wishlistDayCount: newCount,
+      });
 
-  setSelectedDate(`Day ${newCount}`);
-}}
-      className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border-2 border-dashed border-primary/30 bg-card text-primary hover:bg-primary/5"
-    >
-      <Plus className="w-5 h-5" />
-    </button>
-  )}
+      setSelectedDate(`Day ${newCount}`);
+    }}
+    className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border-2 border-dashed border-primary/30 bg-card text-primary hover:bg-primary/5"
+  >
+    <Plus className="w-5 h-5" />
+  </button>
+)}
 </div>
       </div>
 
