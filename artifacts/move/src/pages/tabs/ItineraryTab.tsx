@@ -462,7 +462,7 @@ const dur = Math.max(
             <p className="text-sm mt-1 opacity-70">Tap + to add something.</p>
           </div>
         ) : filteredItems.length === 0 ? null : (
-          <div className="relative border-l border-[#E8E8E8] ml-6 pl-5 space-y-3 mt-4">
+          <div className="relative ml-8 pl-8 space-y-5 mt-5 before:absolute before:left-0 before:top-0 before:bottom-0 before:w-px before:bg-[#E9E9E9]">
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
               <SortableContext items={filteredItems.map(i => i.id)} strategy={verticalListSortingStrategy}>
                 {filteredItems.map(item => (
@@ -902,7 +902,7 @@ const toggleChecklistItem = (checkId: string) => {
 
     </div>
 
-    <div className="space-y-3">
+    <div className="space-y-5">
 
       {attachedDocs.map((doc) => (
 
@@ -1091,7 +1091,7 @@ function SortableItem({
   <div className="relative">
     <div
   className={cn(
-    "absolute -left-[28px] top-6 z-20 flex h-7 w-7 items-center justify-center rounded-full border-2 border-background shadow-sm",
+    "absolute -left-[38px] top-6 z-20 flex h-6 w-6 items-center justify-center rounded-full shadow-[0_2px_6px_rgba(0,0,0,0.15)]"
     item.elementType === "travel"
       ? "bg-blue-500"
       : item.elementType === "meal"
@@ -1099,12 +1099,12 @@ function SortableItem({
       : "bg-orange-500"
   )}
 >
-  <Icon className="h-3.5 w-3.5 text-white stroke-[2]" />
+  <Icon className="h-3 w-3 text-white stroke-[2]" />
 </div>
 
     <div
       className={cn(
-        "overflow-hidden rounded-[28px] border border-border/40 bg-card shadow-[0_2px_10px_rgba(0,0,0,0.05)] transition-[height] duration-300 hover:shadow-[0_8px_28px_rgba(0,0,0,0.08)]",
+        "overflow-hidden rounded-[28px] border border-border/20 bg-card shadow-[0_10px_30px_rgba(15,23,42,0.08)] transition-[height] duration-300 hover:shadow-[0_14px_40px_rgba(15,23,42,0.12)]"
         ELEMENT_BORDER[item.elementType]
       )}
     >
@@ -1114,7 +1114,7 @@ function SortableItem({
 
 <div
   className={cn(
-    "w-2 shrink-0",
+    "w-[6px] rounded-l-[28px] shrink-0",
     item.elementType === "travel"
       ? "bg-blue-500"
       : item.elementType === "meal"
@@ -1132,7 +1132,7 @@ function SortableItem({
             onClick={() => setExpanded((v) => !v)}
             className="w-full text-left"
           >
-            <div className="px-4 py-3">
+            <div className="px-5 py-5">
 
       {/* Individual cards go here */}
 
@@ -1305,7 +1305,7 @@ function SortableItem({
 
     {/* Time */}
 
-    <div className="mt-4">
+    <div className="mt-5">
 
   <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
     Time
@@ -1600,7 +1600,7 @@ function SortableItem({
 
     </div>
 
-    <div className="space-y-3">
+    <div className="space-y-6">
 
       {attachedDocs.map((doc) => (
 

@@ -239,23 +239,22 @@ const [editingTrip, setEditingTrip] = useState<Trip | null>(null);
   <div className="fixed bottom-6 left-0 right-0 flex justify-center z-20 max-w-md mx-auto gap-3">
     <Button
   size="lg"
-  variant="outline"
-  className="rounded-full px-7 bg-white text-foreground border-white shadow-[0_10px_30px_rgba(0,0,0,0.10)] hover:shadow-[0_12px_34px_rgba(0,0,0,0.14)]"
-  onClick={() => setIsWishlistOpen(true)}
+  className="rounded-full px-7 shadow-[0_10px_30px_rgba(37,99,235,0.28)] hover:shadow-[0_12px_34px_rgba(37,99,235,0.34)] transition-shadow"
+  onClick={() => setIsAddOpen(true)}
 >
-  <Heart className="w-5 h-5 mr-2" />
-  Wishlist
+  <Plus className="w-5 h-5 mr-2" />
+  New Trip
 </Button>
 
     <Button
   size="lg"
   variant="outline"
-  className="rounded-full px-7 bg-white text-foreground border-white hover:bg-white"
+  className="rounded-full px-7 bg-white border-white shadow-[0_10px_30px_rgba(0,0,0,0.10)] hover:shadow-[0_12px_34px_rgba(0,0,0,0.14)] transition-shadow"
   onClick={() => setIsWishlistOpen(true)}
 >
-      <Heart className="w-5 h-5 mr-2" />
-      Wishlist
-    </Button>
+  <Heart className="w-5 h-5 mr-2" />
+  Wishlist
+</Button>
   </div>
 )}
       <AddTripSheet
