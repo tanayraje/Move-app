@@ -591,17 +591,35 @@ const dur = Math.max(
 >
   <AnimatePresence mode="wait" custom={swipeDirection}>
     <motion.div
-      key={selectedDate}
-      custom={swipeDirection}
-      initial={{ x: swipeDirection > 0 ? 8 : -8 }}
-        animate={{ x: 0 }}
-        exit={{ x: swipeDirection > 0 ? -8 : 8 }}
-        transition={{
-          duration: 0.14,
-          ease: "easeOut",
-        }}
-      className="px-4 py-4 pb-32 overflow-y-auto h-full"
-    >
+  key={selectedDate}
+  layout
+  custom={swipeDirection}
+  initial={{
+    x: swipeDirection > 0 ? 16 : -16,
+    opacity: 0,
+  }}
+  animate={{
+    x: 0,
+    opacity: 1,
+  }}
+  exit={{
+    x: swipeDirection > 0 ? -16 : 16,
+    opacity: 0,
+  }}
+  transition={{
+    x: {
+      duration: 0.22,
+      ease: "easeInOut",
+    },
+    opacity: {
+      duration: 0.18,
+    },
+    layout: {
+      duration: 0.22,
+    },
+  }}
+  className="px-4 py-4 pb-32 overflow-y-auto h-full"
+>
         {/* City + date header */}
         <div className="flex items-start justify-between mb-4">
 
