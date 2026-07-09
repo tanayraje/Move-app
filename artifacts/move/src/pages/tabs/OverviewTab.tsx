@@ -60,13 +60,14 @@ export default function OverviewTab({ trip }: { trip: Trip }) {
 // Hero location (city if available)
 // ==========================================
 
-let heroLocation = trip.destination;
+let heroLocation = trip.state || trip.destination;
 
 if (!isWishlist) {
   const today = format(new Date(), "yyyy-MM-dd");
 
   heroLocation =
     trip.dayCities?.[today] ||
+    trip.state ||
     trip.destination;
 }
 
