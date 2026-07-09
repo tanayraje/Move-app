@@ -1,4 +1,11 @@
-import React, { useState, useMemo, useCallback, useRef } from "react";
+import React, {
+  useState,
+  useMemo,
+  useCallback,
+  useRef,
+  useEffect,
+} from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { format, addDays, differenceInDays } from "date-fns";
 import {
   Plus, GripVertical, MapPin, Trash2, CalendarDays,
@@ -250,11 +257,67 @@ const { data: documents = [] } = useDocuments(trip.id);
   const isWishlist = status === 'wishlist';
 
   const [selectedDate, setSelectedDate] = useState<string>(isWishlist ? 'Day 1' : trip.startDate);
+  const touchStartX = useRef(0);
+const touchStartY = useRef(0);
+const [swipeDirection, setSwipeDirection] = useState<1 | -1>(1);
+
+const currentDayIndex = days.indexOf(selectedDate);
+
+const goToNextDay = useCallback(() => {
+  if (currentDayIndex < days.length - 1) {
+    setSwipeDirection(1);
+    setSelectedDate(days[currentDayIndex + 1]);
+  }
+}, [currentDayIndex, days]);
+
+const goToPreviousDay = useCallback(() => {
+  if (currentDayIndex > 0) {
+    setSwipeDirection(-1);
+    setSelectedDate(days[currentDayIndex - 1]);
+  }
+}, [currentDayIndex, days]);
+
+const handleTouchStart = (e: React.TouchEvent) => {
+  touchStartX.current = e.touches[0].clientX;
+  touchStartY.current = e.touches[0].clientY;
+};
+
+const handleTouchEnd = (e: React.TouchEvent) => {
+  const dx = e.changedTouches[0].clientX - touchStartX.current;
+  const dy = e.changedTouches[0].clientY - touchStartY.current;
+
+  if (Math.abs(dx) < 60) return;
+  if (Math.abs(dx) < Math.abs(dy)) return;
+
+  if (dx < 0) {
+    goToNextDay();
+  } else {
+    goToPreviousDay();
+  }
+};
+
+useEffect(() => {
+  const container = dayScrollerRef.current;
+  if (!container) return;
+
+  const index = days.indexOf(selectedDate);
+  if (index === -1) return;
+
+  const button = container.children[index] as HTMLElement;
+  if (!button) return;
+
+  button.scrollIntoView({
+    behavior: "smooth",
+    inline: "center",
+    block: "nearest",
+  });
+}, [selectedDate, days]);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editItem, setEditItem] = useState<ItineraryItem | null>(null);
   const [editingCity, setEditingCity] = useState(false);
   const [cityDraft, setCityDraft] = useState('');
   const cityInputRef = useRef<HTMLInputElement>(null);
+const dayScrollerRef = useRef<HTMLDivElement>(null);
 
   const wishlistDays = useMemo(() => {
   const count = Math.max(trip.wishlistDayCount ?? 1, 1);
@@ -425,11 +488,31 @@ const dur = Math.max(
     reorder({ tripId: trip.id, items: [...allItems.filter(i => i.date !== selectedDate || i.elementType === 'accommodation'), ...repositioned] });
   }, [filteredItems, allItems, selectedDate, trip.id, reorder]);
 
+  useEffect(() => {
+  const container = dayScrollerRef.current;
+  if (!container) return;
+
+  const index = days.indexOf(selectedDate);
+  if (index === -1) return;
+
+  const button = container.children[index] as HTMLElement;
+  if (!button) return;
+
+  button.scrollIntoView({
+    behavior: "smooth",
+    inline: "center",
+    block: "nearest",
+  });
+}, [selectedDate, days]);
+
   return (
     <div className="flex flex-col h-full relative">
       {/* Day Selector */}
       <div className="sticky top-0 z-20 bg-background pt-3 pb-2 px-4 overflow-x-auto no-scrollbar border-b border-border/50">
-        <div className="flex gap-2 min-w-max">
+        <div
+  ref={dayScrollerRef}
+  className="flex gap-2 min-w-max"
+>
   {days.map((day) => {
     const isSelected = selectedDate === day;
     const hasItems = sortedItems.some(i => i.date === day);
@@ -516,7 +599,33 @@ const dur = Math.max(
       </div>
 
       {/* Timeline */}
-      <div className="px-4 py-4 pb-32 overflow-y-auto flex-1">
+      <div
+  className="overflow-hidden flex-1"
+  onTouchStart={handleTouchStart}
+  onTouchEnd={handleTouchEnd}
+>
+  <AnimatePresence mode="wait" custom={swipeDirection}>
+    <motion.div
+      key={selectedDate}
+      custom={swipeDirection}
+      initial={{
+        x: swipeDirection > 0 ? 40 : -40,
+        opacity: 0,
+      }}
+      animate={{
+        x: 0,
+        opacity: 1,
+      }}
+      exit={{
+        x: swipeDirection > 0 ? -40 : 40,
+        opacity: 0,
+      }}
+      transition={{
+        duration: 0.2,
+        ease: "easeOut",
+      }}
+      className="px-4 py-4 pb-32 overflow-y-auto h-full"
+    >
         {/* City + date header */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-start gap-3">
@@ -619,9 +728,11 @@ const dur = Math.max(
             </DndContext>
           </div>
         )}
-      </div>
+          </motion.div>
+  </AnimatePresence>
+</div>
 
-      {getTripStatus(trip) !== 'archived' && <FAB icon={Plus} onClick={() => setIsAddOpen(true)} />}
+{getTripStatus(trip) !== 'archived' && <FAB ...
 
       <AddEditSheet
         isOpen={isAddOpen}
