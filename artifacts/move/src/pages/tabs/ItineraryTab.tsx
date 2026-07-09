@@ -1091,15 +1091,16 @@ function SortableItem({
   };
 
   return (
-  <div className="flex items-stretch gap-4">
+  <div className="flex items-start gap-3">
 
    {/* Timeline */}
 
-<div className="relative flex w-14 shrink-0 flex-col items-center">
+<div className="relative w-10 shrink-0">
+  <div className="h-[152px]" />
 
   <div
-    className={cn(
-      "flex h-11 w-11 items-center justify-center rounded-full shadow-md",
+  className={cn(
+  "absolute left-1/2 top-[44px] z-10 flex h-8 w-8 -translate-x-1/2 items-center justify-center rounded-full shadow-sm",
       item.elementType === "travel"
         ? "bg-blue-500"
         : item.elementType === "meal"
@@ -1107,22 +1108,22 @@ function SortableItem({
         : "bg-orange-500"
     )}
   >
-    <Icon className="h-5 w-5 text-white stroke-[2]" />
+    <Icon className="h-4 w-4 text-white stroke-[2]" />
   </div>
 
-  <span className="mt-2 text-[10px] font-medium tracking-wide text-muted-foreground">
+  <span className="absolute left-1/2 top-[84px] -translate-x-1/2 whitespace-nowrap text-[10px] font-medium text-muted-foreground">
     {item.startTime}
   </span>
 
   {!isLast && (
-    <div
-      className="mt-3 w-px bg-border"
-      style={{
-        height: "calc(100% + 40px)",
-        minHeight: 120,
-      }}
-    />
-  )}
+  <div
+    className="absolute left-1/2 top-[92px] -translate-x-1/2 bg-border/50"
+    style={{
+      width: "1px",
+      height: "140px",
+    }}
+  />
+)}
 
 </div>
 
@@ -1140,7 +1141,7 @@ function SortableItem({
 
 <div
   className={cn(
-    "w-[6px] rounded-l-[28px] shrink-0",
+    "w-[3px] rounded-l-[28px] shrink-0",
     item.elementType === "travel"
       ? "bg-blue-500"
       : item.elementType === "meal"
@@ -1167,7 +1168,7 @@ function SortableItem({
 
     {/* Header */}
 
-    <div className="flex items-start gap-3">
+    <div className="flex items-start gap-2.5">
 
       <div className="min-w-0 flex-1">
 
