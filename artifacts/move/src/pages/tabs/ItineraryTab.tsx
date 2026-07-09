@@ -959,13 +959,26 @@ const toggleChecklistItem = (checkId: string) => {
   <p className="whitespace-nowrap text-[11px] font-medium italic text-violet-600">
     {item.endDate === currentDay
   ? "Check-out"
-  : `${Math.max(
-      differenceInDays(
-        safeParseDate(currentDay)!,
-        safeParseDate(item.date)!
-      ) + 1,
-      1
-    )} night`}
+  : (() => {
+      const night = Math.max(
+        differenceInDays(
+          safeParseDate(currentDay)!,
+          safeParseDate(item.date)!
+        ) + 1,
+        1
+      );
+
+      const suffix =
+        night % 10 === 1 && night % 100 !== 11
+          ? "st"
+          : night % 10 === 2 && night % 100 !== 12
+          ? "nd"
+          : night % 10 === 3 && night % 100 !== 13
+          ? "rd"
+          : "th";
+
+      return `${night}${suffix} night`;
+    })()}
   </p>
 
   <div className="mt-2 h-px w-8 bg-border/60" />
