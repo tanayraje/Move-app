@@ -10,6 +10,7 @@ import { useSaveItineraryItem } from "@/hooks/use-store";
 import { generateId, safeFormatDate, safeParseDate, getTripStatus } from "@/lib/utils";
 import { Button, Input, Label, BottomSheet } from "@/components/ui";
 import { COUNTRIES, Country } from "@/lib/countries";
+import { INDIAN_STATES } from "@/lib/india-states";
 import type { Trip, TripStatus } from "@/lib/types";
 import { useSupabaseAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/hooks/use-profile";
@@ -392,7 +393,7 @@ const hasMembers = memberCount > 1;
       <div className="flex items-center text-white/90 text-sm mt-1">
         <MapPin className="w-3.5 h-3.5 mr-1 shrink-0" />
         <span className="truncate">
-          {trip.heroLocation || trip.destination}
+          {trip.heroLocation || trip.state || trip.destination}
         </span>
       </div>
     </div>
@@ -408,11 +409,13 @@ const hasMembers = memberCount > 1;
           Saved for later
         </div>
       ) : (
-        <div className="flex items-center text-sm font-medium text-foreground/80 bg-muted/50 px-3 py-1 rounded-xl">
-          <Calendar className="w-4 h-4 mr-2 opacity-70" />
+        <div className="flex items-center text-[13px] font-medium text-foreground/75 bg-muted/50 px-3 py-1 rounded-xl">
+        <Calendar className="w-3.5 h-3.5 mr-2 opacity-70 shrink-0" />
+        <span className="truncate">
           {safeFormatDate(trip.startDate, d => format(d, "MMM d"), "")} –{" "}
           {safeFormatDate(trip.endDate, d => format(d, "MMM d, yyyy"), "")}
-        </div>
+        </span>
+      </div>
       )}
 
       {days !== null && (
@@ -708,6 +711,7 @@ function CountryPicker({ value, onChange }: { value: Country | null; onChange: (
 function AddTripSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const { mutateAsync: createTrip, isPending } = useCreateTrip();
   const [country, setCountry] = useState<Country | null>(null);
+  const [state, setState] = useState("");
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -754,6 +758,7 @@ function AddTripSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
 function AddWishlistSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const { mutateAsync: createTrip, isPending } = useCreateTrip();
   const [country, setCountry] = useState<Country | null>(null);
+  const [state, setState] = useState("");
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -806,6 +811,7 @@ function EditTripSheet({
   const { mutate: updateTrip, isPending } = useUpdateTrip();
 
   const [country, setCountry] = useState<Country | null>(null);
+  const [state, setState] = useState("");
 
   useEffect(() => {
     if (!trip) return;
@@ -814,6 +820,7 @@ function EditTripSheet({
       COUNTRIES.find(c => c.name === trip.destination) ?? null;
 
     setCountry(found);
+    setState(trip.state ?? "");
   }, [trip]);
 
   if (!trip) return null;
@@ -835,6 +842,7 @@ function EditTripSheet({
       name: fd.get("name") as string,
       destination: country.name,
       destinationCurrency: country.currency,
+      state: country.name === "India" ? state || undefined : undefined,
       startDate:
         trip.status === "wishlist"
           ? ""
@@ -872,15 +880,39 @@ function EditTripSheet({
         </div>
 
         <div>
-          <Label>
-            Destination Country
-          </Label>
+  <Label>Destination Country</Label>
 
-          <CountryPicker
-            value={country}
-            onChange={setCountry}
-          />
-        </div>
+  <CountryPicker
+    value={country}
+    onChange={(c) => {
+      setCountry(c);
+
+      if (c.name !== "India") {
+        setState("");
+      }
+    }}
+  />
+</div>
+
+{country?.name === "India" && (
+  <div>
+    <Label>State (Optional)</Label>
+
+    <select
+      value={state}
+      onChange={(e) => setState(e.target.value)}
+      className="flex h-12 w-full rounded-xl border-2 border-border bg-card px-4 text-base focus:outline-none focus:border-primary"
+    >
+      <option value="">All of India</option>
+
+      {INDIAN_STATES.map((s) => (
+        <option key={s} value={s}>
+          {s}
+        </option>
+      ))}
+    </select>
+  </div>
+)}
 
         {trip.status !== "wishlist" && (
           <div className="grid grid-cols-2 gap-4">

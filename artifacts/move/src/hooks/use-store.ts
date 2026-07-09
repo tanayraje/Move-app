@@ -81,6 +81,7 @@ const { data, error } = await supabase
   createdAt: trip.created_at_ms,
   heroImage: trip.hero_image,
   heroLocation: trip.hero_location,
+  state: trip.state,
 }));
     },
   });
@@ -116,6 +117,7 @@ export function useTrip(id: string) {
   createdAt: data.created_at_ms,
   heroImage: data.hero_image,
   heroLocation: data.hero_location,
+  state: data.state,
 };
     },
     enabled: !!id,
@@ -149,6 +151,7 @@ if (!user) {
           status: trip.status || 'active',
           day_cities: trip.dayCities || {},
           created_at_ms: trip.createdAt,
+          state: trip.state ?? null,
         });
 
       if (error) throw error;
@@ -177,9 +180,9 @@ if (memberError) {
 try {
   await supabase.functions.invoke("hero-image", {
     body: {
-      trip_id: trip.id,
-      destination: trip.destination,
-    },
+    trip_id: trip.id,
+    destination: trip.state || trip.destination,
+},
   });
 } catch (err) {
   console.error("Hero image failed", err);
@@ -212,6 +215,7 @@ export function useUpdateTrip() {
     status: trip.status || "active",
     day_cities: trip.dayCities || {},
     budget: trip.budget ?? null,
+    state: trip.state ?? null,
   })
   .eq("id", trip.id)
   .select();

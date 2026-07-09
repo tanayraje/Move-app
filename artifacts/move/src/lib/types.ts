@@ -22,6 +22,7 @@ export interface Trip {
   createdAt: number;
   heroImage?: string;
   heroLocation?: string;
+  state?: string;
 }
 
 export interface TripBudget {
