@@ -145,15 +145,7 @@ const [editingTrip, setEditingTrip] = useState<Trip | null>(null);
         </div>
       </header>
 
-      <main className="flex-1 px-6 pb-28 flex flex-col gap-4">
-        {isLoading ? (
-          <div className="flex flex-col gap-4">
-            {[1, 2, 3].map(i => <div key={i} className="h-32 rounded-3xl bg-muted animate-pulse" />)}
-          </div>
-        ) : (
-          <>
-  {/* Always show Active, Wishlist and Archived tabs even when count is 0 */}
-  <div className="sticky top-[104px] z-50 -mx-6 px-6 py-2 bg-background/90 backdrop-blur-xl">
+<div className="sticky top-[112px] z-[90] bg-background/90 backdrop-blur-xl px-6 py-2">
   <div className="flex bg-muted p-1.5 rounded-xl">
     <button
       onClick={() => setTab("active")}
@@ -188,8 +180,16 @@ const [editingTrip, setEditingTrip] = useState<Trip | null>(null);
       Archived ({archivedTrips.length})
     </button>
   </div>
-  </div>
+</div>
 
+<main className="flex-1 px-6 pb-28 flex flex-col gap-4">
+        {isLoading ? (
+          <div className="flex flex-col gap-4">
+            {[1, 2, 3].map(i => <div key={i} className="h-32 rounded-3xl bg-muted animate-pulse" />)}
+          </div>
+        ) : (
+          <>
+ 
   {tripsToShow.length === 0 ? (
   <div className="flex-1 flex items-center justify-center">
     <div className="text-center">
