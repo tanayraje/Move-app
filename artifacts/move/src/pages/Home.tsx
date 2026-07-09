@@ -76,109 +76,116 @@ const [editingTrip, setEditingTrip] = useState<Trip | null>(null);
   return (
   <div className="flex flex-col min-h-[100dvh] pb-8 relative">
     
-      <header className="px-6 pt-12 pb-4 sticky top-0 bg-background/90 backdrop-blur-xl z-[100]">
-        <div className="flex items-start justify-between gap-8">
-          <div>
-            <h1 className="text-4xl font-display font-extrabold text-foreground tracking-tight">Move.</h1>
-            <p className="text-muted-foreground mt-1 text-lg">Where to next?</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setIsJoinOpen(true)}
-              className="p-2.5 bg-muted rounded-full hover:bg-primary/10 hover:text-primary transition-colors"
-              title="Join a trip by code"
+      <div className="sticky top-0 z-[100] bg-background/90 backdrop-blur-xl">
+  <header className="px-6 pt-12 pb-3">
+    <div className="flex items-start justify-between gap-8">
+      <div>
+        <h1 className="text-4xl font-display font-extrabold text-foreground tracking-tight">
+          Move.
+        </h1>
+        <p className="text-muted-foreground mt-1 text-lg">
+          Where to next?
+        </p>
+      </div>
+
+      <div className="flex items-center gap-3">
+        <button
+          onClick={() => setIsJoinOpen(true)}
+          className="p-2.5 bg-muted rounded-full hover:bg-primary/10 hover:text-primary transition-colors"
+          title="Join a trip by code"
+        >
+          <Users className="w-5 h-5" />
+        </button>
+
+        <div className="relative">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowUserMenu(!showUserMenu);
+            }}
+            className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold hover:opacity-90 transition-opacity"
+          >
+            {profile?.username?.[0]?.toUpperCase() || "?"}
+          </button>
+
+          {showUserMenu && (
+            <div
+              className="absolute right-0 top-12 bg-card border border-border rounded-2xl shadow-2xl p-2 min-w-[220px] z-[9999]"
+              onClick={(e) => e.stopPropagation()}
             >
-              <Users className="w-5 h-5" />
-            </button>
-            <div className="relative">
+              <div className="px-3 py-1 border-b border-border mb-1">
+                <p className="text-sm font-semibold text-foreground">
+                  {profile?.username || "User"}
+                </p>
+
+                {profile?.name && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {profile.name}
+                  </p>
+                )}
+              </div>
+
+              <Link href="/profile">
+                <button
+                  onClick={() => setShowUserMenu(false)}
+                  className="w-full text-left px-3 py-1.5 text-sm font-medium hover:bg-muted rounded-xl"
+                >
+                  Profile
+                </button>
+              </Link>
+
               <button
-  onClick={(e) => {
-    e.stopPropagation();
-    setShowUserMenu(!showUserMenu);
-  }}
-                className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold hover:opacity-90 transition-opacity"
+                onClick={() => {
+                  setShowUserMenu(false);
+                  logout();
+                }}
+                className="w-full text-left px-3 py-1.5 text-sm font-medium text-red-500 hover:bg-red-50 rounded-xl flex items-center gap-2"
               >
-                {profile?.username?.[0]?.toUpperCase() || '?'}
+                <LogOut className="w-4 h-4" />
+                Log out
               </button>
-              {showUserMenu && (
-  <div
-  className="absolute right-0 top-12 bg-card border border-border rounded-2xl shadow-2xl p-2 min-w-[220px] z-[9999]"
-  onClick={(e) => e.stopPropagation()}
->
-
-    <div className="px-3 py-1 border-b border-border mb-1">
-  <p className="text-sm font-semibold text-foreground">
-    {profile?.username || "User"}
-  </p>
-
-  {profile?.name && (
-    <p className="text-xs text-muted-foreground mt-1">
-      {profile.name}
-    </p>
-  )}
-</div>
-
-    <Link href="/profile">
-      <button
-        onClick={() => setShowUserMenu(false)}
-        className="w-full text-left px-3 py-1.5 text-sm font-medium hover:bg-muted rounded-xl"
-      >
-        Profile
-      </button>
-    </Link>
-
-    <button
-      onClick={() => {
-        setShowUserMenu(false);
-        logout();
-      }}
-      className="w-full text-left px-3 py-1.5 text-sm font-medium text-red-500 hover:bg-red-50 rounded-xl flex items-center gap-2"
-    >
-      <LogOut className="w-4 h-4" />
-      Log out
-    </button>
-
-  </div>
-)}
             </div>
-          </div>
+          )}
         </div>
-      </header>
+      </div>
+    </div>
+  </header>
 
-<div className="sticky top-[112px] z-[90] bg-background/90 backdrop-blur-xl px-6 py-2">
-  <div className="flex bg-muted p-1.5 rounded-xl">
-    <button
-      onClick={() => setTab("active")}
-      className={`flex-1 py-2 px-2 text-xs font-semibold rounded-lg transition-all ${
-        tab === "active"
-          ? "bg-background text-foreground shadow-sm"
-          : "text-muted-foreground"
-      }`}
-    >
-      Active ({activeTrips.length})
-    </button>
+  <div className="px-6 pb-2">
+    <div className="flex bg-muted p-1.5 rounded-xl">
+      <button
+        onClick={() => setTab("active")}
+        className={`flex-1 py-2 px-2 text-xs font-semibold rounded-lg transition-all ${
+          tab === "active"
+            ? "bg-background text-foreground shadow-sm"
+            : "text-muted-foreground"
+        }`}
+      >
+        Active ({activeTrips.length})
+      </button>
 
-    <button
-      onClick={() => setTab("wishlist")}
-      className={`flex-1 py-2 px-2 text-xs font-semibold rounded-lg transition-all ${
-        tab === "wishlist"
-          ? "bg-background text-foreground shadow-sm"
-          : "text-muted-foreground"
-      }`}
-    >
-      Wishlist ({wishlistTrips.length})
-    </button>
+      <button
+        onClick={() => setTab("wishlist")}
+        className={`flex-1 py-2 px-2 text-xs font-semibold rounded-lg transition-all ${
+          tab === "wishlist"
+            ? "bg-background text-foreground shadow-sm"
+            : "text-muted-foreground"
+        }`}
+      >
+        Wishlist ({wishlistTrips.length})
+      </button>
 
-    <button
-      onClick={() => setTab("archived")}
-      className={`flex-1 py-2 px-2 text-xs font-semibold rounded-lg transition-all ${
-        tab === "archived"
-          ? "bg-background text-foreground shadow-sm"
-          : "text-muted-foreground"
-      }`}
-    >
-      Archived ({archivedTrips.length})
-    </button>
+      <button
+        onClick={() => setTab("archived")}
+        className={`flex-1 py-2 px-2 text-xs font-semibold rounded-lg transition-all ${
+          tab === "archived"
+            ? "bg-background text-foreground shadow-sm"
+            : "text-muted-foreground"
+        }`}
+      >
+        Archived ({archivedTrips.length})
+      </button>
+    </div>
   </div>
 </div>
 

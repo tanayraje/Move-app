@@ -66,7 +66,7 @@ const { data, error } = await supabase
 
       if (error) throw error;
 
-      return (data || []).map((trip: any) => ({
+    return (data || []).map((trip: any) => ({
   id: trip.id,
   name: trip.name,
   destination: trip.destination,
@@ -77,6 +77,7 @@ const { data, error } = await supabase
   guests: trip.trip_members || [],
   status: trip.status || 'active',
   dayCities: trip.day_cities || {},
+  wishlistDayCount: trip.wishlist_day_count ?? 1,
   budget: trip.budget || undefined,
   createdAt: trip.created_at_ms,
   heroImage: trip.hero_image,
@@ -102,7 +103,7 @@ export function useTrip(id: string) {
         return null;
       }
 
-      return {
+    return {
   id: data.id,
   name: data.name,
   destination: data.destination,
@@ -113,6 +114,7 @@ export function useTrip(id: string) {
   guests: data.members || [],
   status: data.status || 'active',
   dayCities: data.day_cities || {},
+  wishlistDayCount: data.wishlist_day_count ?? 1,
   budget: data.budget || undefined,
   createdAt: data.created_at_ms,
   heroImage: data.hero_image,
@@ -216,6 +218,7 @@ export function useUpdateTrip() {
     day_cities: trip.dayCities || {},
     budget: trip.budget ?? null,
     state: trip.state ?? null,
+    wishlist_day_count: trip.wishlistDayCount ?? 1,
   })
   .eq("id", trip.id)
   .select();
