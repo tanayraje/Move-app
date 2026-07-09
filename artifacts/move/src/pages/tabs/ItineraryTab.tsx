@@ -1100,7 +1100,7 @@ function SortableItem({
 
   <div
   className={cn(
-  "absolute left-1/2 top-[44px] z-20 flex h-8 w-8 -translate-x-1/2 items-center justify-center rounded-full shadow-sm",
+  "absolute left-1/2 top-[44px] z-20 flex h-8 w-8 -translate-x-1/2 items-center justify-center rounded-full bg-background shadow-sm",
       item.elementType === "travel"
         ? "bg-blue-500"
         : item.elementType === "meal"
@@ -1119,8 +1119,9 @@ function SortableItem({
   <div
     className="absolute left-1/2 top-[112px] -translate-x-1/2 rounded-full bg-border/80"
     style={{
+      top: "116px",
       width: "2px",
-      height: "118px",
+      height: "110px",
     }}
   />
 )}
