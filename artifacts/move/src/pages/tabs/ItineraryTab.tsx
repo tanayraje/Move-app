@@ -1141,7 +1141,7 @@ function SortableItem({
 
 <div
   className={cn(
-    "w-[5px] shrink-0",
+    "w-[8px] shrink-0",
     item.elementType === "travel"
       ? "bg-blue-500"
       : item.elementType === "meal"
@@ -1632,50 +1632,40 @@ function SortableItem({
       {attachedDocs.map((doc) => (
 
         <div
-          key={doc.id}
-          className="w-full rounded-3xl border border-border/60 bg-muted/20 px-6 py-5"
-        >
+  key={doc.id}
+  className="w-full rounded-3xl border border-border/60 bg-muted/20 px-6 py-5"
+>
 
-          <button
-            type="button"
-            onClick={() => openDoc(doc)}
-            className="block w-full text-left"
-          >
+  <div className="flex items-start gap-3">
 
-            <div className="flex items-start gap-2">
+    <Paperclip className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
 
-              <Paperclip className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+    <button
+      type="button"
+      onClick={() => openDoc(doc)}
+      className="min-w-0 flex-1 text-left"
+    >
+      <p className="break-words text-[14px] font-medium leading-5">
+        {doc.name}
+      </p>
 
-              <div className="min-w-0 flex-1">
+      <p className="mt-1 text-[11px] text-muted-foreground">
+        Tap to open
+      </p>
+    </button>
 
-                <p className="break-words text-[14px] font-medium leading-5">
-                  {doc.name}
-                </p>
+    <button
+      type="button"
+      onClick={() => detachDoc(doc.id)}
+      className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-red-200 bg-red-50 text-red-600 transition-colors hover:bg-red-100"
+      aria-label="Remove attachment"
+    >
+      <X className="h-4 w-4" />
+    </button>
 
-                <p className="mt-1 text-[11px] text-muted-foreground">
-                  Tap to open
-                </p>
+  </div>
 
-              </div>
-
-            </div>
-
-          </button>
-
-          <div className="mt-4 flex justify-end">
-
-            <button
-              type="button"
-              onClick={() => detachDoc(doc.id)}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-red-200 bg-red-50 text-red-600 transition-colors hover:bg-red-100"
-              aria-label="Remove attachment"
-            >
-              <X className="h-4 w-4" />
-            </button>
-
-          </div>
-
-        </div>
+</div>
 
       ))}
 
