@@ -6,7 +6,7 @@ import {
   Archive, Heart, User, MoreVertical, Users, LogOut, Pencil
 } from "lucide-react";
 import { useTrips, useCreateTrip, useDeleteTrip, useUpdateTrip } from "@/hooks/use-store";
-import { useSaveItineraryItem } from "@/hooks/use-store";
+import { useItinerary, useSaveItineraryItem } from "@/hooks/use-store";
 import { generateId, safeFormatDate, safeParseDate, getTripStatus } from "@/lib/utils";
 import { Button, Input, Label, BottomSheet } from "@/components/ui";
 import { COUNTRIES, Country } from "@/lib/countries";
@@ -76,7 +76,7 @@ const [editingTrip, setEditingTrip] = useState<Trip | null>(null);
   return (
   <div className="flex flex-col min-h-[100dvh] pb-8 relative">
     
-      <header className="px-6 pt-12 pb-8 sticky top-0 bg-background/90 backdrop-blur-xl z-[100]">
+      <header className="px-6 pt-12 pb-4 sticky top-0 bg-background/90 backdrop-blur-xl z-[100]">
         <div className="flex items-start justify-between gap-8">
           <div>
             <h1 className="text-4xl font-display font-extrabold text-foreground tracking-tight">Move.</h1>
@@ -153,7 +153,8 @@ const [editingTrip, setEditingTrip] = useState<Trip | null>(null);
         ) : (
           <>
   {/* Always show Active, Wishlist and Archived tabs even when count is 0 */}
-  <div className="flex bg-muted p-1.5 rounded-xl mb-3">
+  <div className="sticky top-[104px] z-50 -mx-6 px-6 py-2 bg-background/90 backdrop-blur-xl">
+  <div className="flex bg-muted p-1.5 rounded-xl">
     <button
       onClick={() => setTab("active")}
       className={`flex-1 py-2 px-2 text-xs font-semibold rounded-lg transition-all ${
@@ -186,6 +187,7 @@ const [editingTrip, setEditingTrip] = useState<Trip | null>(null);
     >
       Archived ({archivedTrips.length})
     </button>
+  </div>
   </div>
 
   {tripsToShow.length === 0 ? (
@@ -774,6 +776,7 @@ function AddWishlistSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
       endDate: '',
       inviteCode: `MOVE-${id.slice(0, 4).toUpperCase()}`,
       status: 'wishlist',
+      wishlistDayCount: 1,
       createdAt: Date.now()
     });
     setCountry(null);
@@ -969,6 +972,8 @@ function ConvertTripSheet({
   onClose: () => void;
 }) {
   const { mutate: updateTrip } = useUpdateTrip();
+  const { data: items = [] } = useItinerary(trip?.id ?? "");
+  const { mutate: saveItem } = useSaveItineraryItem();
 
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -980,56 +985,67 @@ function ConvertTripSheet({
     return;
   }
 
-      const startDt = safeParseDate(startDate);
-    const endDt = safeParseDate(endDate);
+  const startDt = safeParseDate(startDate);
+const endDt = safeParseDate(endDate);
 
-    if (!startDt || !endDt) {
-      alert('Invalid dates');
-      return;
-    }
+if (!startDt || !endDt) {
+  alert("Invalid dates");
+  return;
+}
 
-    const days = differenceInDays(endDt, startDt) + 1;
+const plannedDays = trip.wishlistDayCount ?? 1;
+const days = differenceInDays(endDt, startDt) + 1;
 
-    if (days < 1) {
-      alert('End date must be after start date');
-      return;
-    }
+if (days < 1) {
+  alert("End date must be after start date");
+  return;
+}
+
+if (days < plannedDays) {
+  const proceed = confirm(
+    `This itinerary contains ${plannedDays} planned days but you selected only ${days} travel days.\n\nDays ${days + 1}-${plannedDays} won't fit into this trip.\n\nContinue anyway?`
+  );
+
+  if (!proceed) return;
+}
 
     updateTrip({
-      ...trip,
-      status: 'active',
-      startDate,
-      endDate,
-    });
+  ...trip,
+  status: "active",
+  startDate,
+  endDate,
+  wishlistDayCount: undefined,
+});
 
-    const items = JSON.parse(
-      localStorage.getItem(`move_itinerary_${trip.id}`) || '[]'
+    items.forEach((item) => {
+  const dayMatch = item.date?.match(/^Day\s+(\d+)$/i);
+
+  if (!dayMatch) return;
+
+  const dayNum = parseInt(dayMatch[1], 10);
+
+  const updatedItem = {
+    ...item,
+    date: format(addDays(startDt, dayNum - 1), "yyyy-MM-dd"),
+  };
+
+  if (
+    item.elementType === "accommodation" &&
+    item.endDate?.match(/^Day\s+(\d+)$/i)
+  ) {
+    const endDay = parseInt(
+      item.endDate.match(/^Day\s+(\d+)$/i)![1],
+      10
     );
 
-    const updatedItems = items.map((item: any) => {
-      const dayMatch = item.date?.match(/^Day\s+(\d+)$/i);
-
-      if (dayMatch) {
-        const dayNum = parseInt(dayMatch[1], 10);
-
-        const realDate = format(
-          addDays(startDt, dayNum - 1),
-          'yyyy-MM-dd'
-        );
-
-        return {
-          ...item,
-          date: realDate,
-        };
-      }
-
-      return item;
-    });
-
-    localStorage.setItem(
-      `move_itinerary_${trip.id}`,
-      JSON.stringify(updatedItems)
+    updatedItem.endDate = format(
+      addDays(startDt, endDay - 1),
+      "yyyy-MM-dd"
     );
+  }
+
+  saveItem(updatedItem);
+});
 
     setStartDate('');
     setEndDate('');

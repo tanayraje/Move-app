@@ -255,10 +255,13 @@ export default function ItineraryTab({ trip }: { trip: Trip }) {
   const cityInputRef = useRef<HTMLInputElement>(null);
 
   const wishlistDays = useMemo(() => {
-    const uniqueDays = new Set(allItems.map(i => i.date).filter(Boolean));
-    let count = Math.max(uniqueDays.size, 1);
-    return Array.from({ length: count }).map((_, i) => `Day ${i + 1}`);
-  }, [allItems]);
+  const count = Math.max(trip.wishlistDayCount ?? 1, 1);
+
+  return Array.from(
+    { length: count },
+    (_, i) => `Day ${i + 1}`
+  );
+}, [trip.wishlistDayCount]);
 
   const startDateParsed = safeParseDate(trip.startDate);
   const endDateParsed = safeParseDate(trip.endDate);
@@ -340,51 +343,85 @@ const dur = Math.max(
       {/* Day Selector */}
       <div className="sticky top-0 z-20 bg-background pt-3 pb-2 px-4 overflow-x-auto no-scrollbar border-b border-border/50">
         <div className="flex gap-2 min-w-max">
-          {days.map((day) => {
-            const isSelected = selectedDate === day;
-            const hasItems = sortedItems.some(i => i.date === day);
-            const hasAccom = allItems.some(i =>
-              i.elementType === 'accommodation' && i.date <= day && (i.endDate ?? i.date) >= day
-            );
-            const city = dayCities[day] ?? '';
-            return (
-              <button
-                key={day}
-                onClick={() => setSelectedDate(day)}
-                className={cn(
-                "flex flex-col items-center justify-center px-3 py-2 rounded-2xl transition-all font-medium border-2 relative",
-                city ? "min-w-[68px] h-20" : "min-w-[64px] h-16",
-                isSelected
-                  ? "bg-primary border-primary text-primary-foreground shadow-md shadow-primary/20"
-                  : "bg-card border-border text-foreground/70 hover:border-primary/30"
-              )}
-              >
-                {city && (
-                  <span
-                    className={cn(
-                      "text-[11px] font-bold leading-none mb-0.5 whitespace-nowrap",
-                      isSelected ? "text-primary-foreground/80" : "text-primary"
-                    )}
-                  >
-                    {city}
-                  </span>
-                )}
-                <span className="text-xs uppercase opacity-80">
-                  {isDayLabel(day) ? day : safeFormatDate(day, d => format(d, 'EEE'), '')}
-                </span>
-                <span className="text-[19px] font-semibold mt-0.5">
-                  {isDayLabel(day) ? day.replace('Day ', 'D') : safeFormatDate(day, d => format(d, 'd'), '')}
-                </span>
-                {hasAccom && (
-                  <span className={cn(
-                    "text-[9px] font-bold mt-0.5 leading-none",
-                    isSelected ? "text-primary-foreground/60" : "text-violet-400"
-                  )}>STAY</span>
-                )}
-              </button>
-            );
-          })}
-        </div>
+  {days.map((day) => {
+    const isSelected = selectedDate === day;
+    const hasItems = sortedItems.some(i => i.date === day);
+    const hasAccom = allItems.some(
+      i =>
+        i.elementType === "accommodation" &&
+        i.date <= day &&
+        (i.endDate ?? i.date) >= day
+    );
+
+    const city = dayCities[day] ?? "";
+
+    return (
+      <button
+        key={day}
+        onClick={() => setSelectedDate(day)}
+        className={cn(
+          "flex flex-col items-center justify-center px-3 py-2 rounded-2xl transition-all font-medium border-2 relative",
+          city ? "min-w-[68px] h-20" : "min-w-[64px] h-16",
+          isSelected
+            ? "bg-primary border-primary text-primary-foreground shadow-md shadow-primary/20"
+            : "bg-card border-border text-foreground/70 hover:border-primary/30"
+        )}
+      >
+        {city && (
+          <span
+            className={cn(
+              "text-[11px] font-bold leading-none mb-0.5 whitespace-nowrap",
+              isSelected
+                ? "text-primary-foreground/80"
+                : "text-primary"
+            )}
+          >
+            {city}
+          </span>
+        )}
+
+        <span className="text-xs uppercase opacity-80">
+          {isDayLabel(day)
+            ? day
+            : safeFormatDate(day, d => format(d, "EEE"), "")}
+        </span>
+
+        <span className="text-[19px] font-semibold mt-0.5">
+          {isDayLabel(day)
+            ? day.replace("Day ", "D")
+            : safeFormatDate(day, d => format(d, "d"), "")}
+        </span>
+
+        {hasAccom && (
+          <span
+            className={cn(
+              "text-[9px] font-bold mt-0.5 leading-none",
+              isSelected
+                ? "text-primary-foreground/60"
+                : "text-violet-400"
+            )}
+          >
+            STAY
+          </span>
+        )}
+      </button>
+    );
+  })}
+
+  {isWishlist && (
+    <button
+      onClick={() =>
+        updateTrip({
+          ...trip,
+          wishlistDayCount: (trip.wishlistDayCount ?? 1) + 1,
+        })
+      }
+      className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border-2 border-dashed border-primary/30 bg-card text-primary hover:bg-primary/5"
+    >
+      <Plus className="w-5 h-5" />
+    </button>
+  )}
+</div>
       </div>
 
       {/* Timeline */}
@@ -940,7 +977,8 @@ const toggleChecklistItem = (checkId: string) => {
           <button
             type="button"
             onClick={() => detachDoc(doc.id)}
-            className="rounded-lg p-2 transition-colors hover:bg-red-50 hover:text-red-500"
+            className="p-1 text-muted-foreground transition-colors hover:text-foreground"
+            aria-label="Remove attachment"
           >
             <X className="h-4 w-4" />
           </button>

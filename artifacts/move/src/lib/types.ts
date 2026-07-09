@@ -23,6 +23,7 @@ export interface Trip {
   heroImage?: string;
   heroLocation?: string;
   state?: string;
+  wishlistDayCount?: number;
 }
 
 export interface TripBudget {

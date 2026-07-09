@@ -225,9 +225,18 @@ if (response.error) {
   throw response.error;
 }
 
-return trip;
+try {
+  await supabase.functions.invoke("hero-image", {
+    body: {
+      trip_id: trip.id,
+      destination: trip.state || trip.destination,
+    },
+  });
+} catch (err) {
+  console.error("Hero image update failed", err);
+}
 
-      return trip;
+return trip;
     },
 
     onSuccess: (trip) => {
