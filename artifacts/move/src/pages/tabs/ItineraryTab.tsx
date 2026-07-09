@@ -712,11 +712,12 @@ const dur = Math.max(
         {/* Accommodation banners */}
         {activeAccommodations.map(accom => (
           <AccommodationCard
-            key={accom.id}
-            item={accom}
-            trip={trip}
-            onEdit={() => setEditItem(accom)}
-          />
+          key={accom.id}
+          item={accom}
+          trip={trip}
+          currentDay={selectedDate}
+          onEdit={() => setEditItem(accom)}
+        />
         ))}
 
         {/* Regular items */}
@@ -784,10 +785,12 @@ const dur = Math.max(
 function AccommodationCard({
   item,
   trip,
+  currentDay,
   onEdit,
 }: {
   item: ItineraryItem;
   trip: Trip;
+  currentDay: string;
   onEdit: () => void;
 }) {
   const { mutate: deleteItem } = useDeleteItineraryItem();
@@ -954,15 +957,15 @@ const toggleChecklistItem = (checkId: string) => {
   <div className="mb-2 h-px w-8 bg-border/60" />
 
   <p className="whitespace-nowrap text-[11px] font-medium italic text-violet-600">
-    {item.endDate === selectedDate
-      ? "Check-out"
-      : `${Math.max(
-          differenceInDays(
-            safeParseDate(selectedDate)!,
-            safeParseDate(item.date)!
-          ) + 1,
-          1
-        )} night`}
+    {item.endDate === currentDay
+  ? "Check-out"
+  : `${Math.max(
+      differenceInDays(
+        safeParseDate(currentDay)!,
+        safeParseDate(item.date)!
+      ) + 1,
+      1
+    )} night`}
   </p>
 
   <div className="mt-2 h-px w-8 bg-border/60" />
