@@ -593,22 +593,13 @@ const dur = Math.max(
     <motion.div
       key={selectedDate}
       custom={swipeDirection}
-      initial={{
-        x: swipeDirection > 0 ? 40 : -40,
-        opacity: 0,
-      }}
-      animate={{
-        x: 0,
-        opacity: 1,
-      }}
-      exit={{
-        x: swipeDirection > 0 ? -40 : 40,
-        opacity: 0,
-      }}
-      transition={{
-        duration: 0.2,
-        ease: "easeOut",
-      }}
+      initial={{ x: swipeDirection > 0 ? 8 : -8 }}
+        animate={{ x: 0 }}
+        exit={{ x: swipeDirection > 0 ? -8 : 8 }}
+        transition={{
+          duration: 0.14,
+          ease: "easeOut",
+        }}
       className="px-4 py-4 pb-32 overflow-y-auto h-full"
     >
         {/* City + date header */}
@@ -672,9 +663,12 @@ const dur = Math.max(
     )}
   </div>
 
+  <div className="flex items-start">
+
+    {isWishlist ? (
   <div className="flex items-start gap-2">
 
-    {isWishlist && (trip.wishlistDayCount ?? 1) > 1 && (
+    {(trip.wishlistDayCount ?? 1) > 1 && (
       <button
         type="button"
         onClick={() => deleteWishlistDay(selectedDate)}
@@ -686,6 +680,9 @@ const dur = Math.max(
     )}
 
     <div className="flex flex-col items-end gap-1">
+) : (
+    <div className="flex flex-col items-end gap-1">
+)}
     
     </div>
 
@@ -700,10 +697,12 @@ const dur = Math.max(
             )}
             {totalDayCost > 0 && (
               <div className="flex items-center gap-1 text-xs font-bold text-primary bg-primary/10 px-2.5 py-1 rounded-full">
-                ₹{Math.round(totalDayCost).toLocaleString('en-IN')}
+                ₹{Math.round(totalDayCost).toLocaleString("en-IN")}
               </div>
             )}
+            </div>
 
+            {isWishlist && </div>}
         {/* Accommodation banners */}
         {activeAccommodations.map(accom => (
           <AccommodationCard
