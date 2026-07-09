@@ -1120,7 +1120,7 @@ function SortableItem({
     className="absolute left-1/2 top-[112px] -translate-x-1/2 rounded-full bg-border/80"
     style={{
       width: "2px",
-      height: "140px",
+      height: "122px",
     }}
   />
 )}
