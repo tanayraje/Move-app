@@ -664,45 +664,33 @@ const dur = Math.max(
   </div>
 
   <div className="flex items-start">
+  {isWishlist && (trip.wishlistDayCount ?? 1) > 1 && (
+    <button
+      type="button"
+      onClick={() => deleteWishlistDay(selectedDate)}
+      className="mr-2 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-red-200 bg-red-50 text-red-600 transition-colors hover:bg-red-100"
+      aria-label="Delete day"
+    >
+      <Trash2 className="h-4 w-4" />
+    </button>
+  )}
 
-    {isWishlist ? (
-  <div className="flex items-start gap-2">
-
-    {(trip.wishlistDayCount ?? 1) > 1 && (
-      <button
-        type="button"
-        onClick={() => deleteWishlistDay(selectedDate)}
-        className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-red-200 bg-red-50 text-red-600 transition-colors hover:bg-red-100"
-        aria-label="Delete day"
-      >
-        <Trash2 className="h-4 w-4" />
-      </button>
+  <div className="flex flex-col items-end gap-1">
+    {totalDayMinutes > 0 && (
+      <div className="flex items-center gap-1 rounded-full bg-muted px-2.5 py-1 text-xs font-bold text-muted-foreground">
+        <Clock className="h-3 w-3" />
+        {getDuration("00:00", addMinutesToTime("00:00", totalDayMinutes))}
+      </div>
     )}
 
-    <div className="flex flex-col items-end gap-1">
-) : (
-    <div className="flex flex-col items-end gap-1">
-)}
-    
-    </div>
-
+    {totalDayCost > 0 && (
+      <div className="flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary">
+        ₹{Math.round(totalDayCost).toLocaleString("en-IN")}
+      </div>
+    )}
   </div>
-
 </div>
-            {totalDayMinutes > 0 && (
-              <div className="flex items-center gap-1 text-xs font-bold text-muted-foreground bg-muted px-2.5 py-1 rounded-full">
-                <Clock className="w-3 h-3" />
-                {getDuration('00:00', addMinutesToTime('00:00', totalDayMinutes))}
-              </div>
-            )}
-            {totalDayCost > 0 && (
-              <div className="flex items-center gap-1 text-xs font-bold text-primary bg-primary/10 px-2.5 py-1 rounded-full">
-                ₹{Math.round(totalDayCost).toLocaleString("en-IN")}
-              </div>
-            )}
-            </div>
-
-            {isWishlist && </div>}
+</div>
         {/* Accommodation banners */}
         {activeAccommodations.map(accom => (
           <AccommodationCard
