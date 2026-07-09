@@ -1141,7 +1141,7 @@ function SortableItem({
 
 <div
   className={cn(
-    "w-[5px] rounded-l-[28px] shrink-0",
+    "w-[5px] shrink-0",
     item.elementType === "travel"
       ? "bg-blue-500"
       : item.elementType === "meal"
