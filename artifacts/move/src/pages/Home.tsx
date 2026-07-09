@@ -393,7 +393,7 @@ const hasMembers = memberCount > 1;
       <div className="flex items-center text-white/90 text-sm mt-1">
         <MapPin className="w-3.5 h-3.5 mr-1 shrink-0" />
         <span className="truncate">
-          {trip.heroLocation || trip.state || trip.destination}
+          {trip.state || trip.heroLocation || trip.destination}
         </span>
       </div>
     </div>
