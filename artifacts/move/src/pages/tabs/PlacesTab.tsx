@@ -140,15 +140,20 @@ function PlaceCard({
       "bg-card rounded-2xl border transition-all overflow-hidden",
       place.visited ? "border-primary/30 bg-primary/5" : "border-border shadow-sm"
     )}>
-      <div className="p-4 flex gap-3 items-start">
+      <div className="p-4 flex gap-3 items-start min-h-[88px]">
         <button onClick={onToggle} className="mt-0.5 shrink-0 text-primary transition-transform active:scale-90">
           {place.visited
             ? <CheckCircle2 className="w-6 h-6" />
             : <Circle className="w-6 h-6 text-muted-foreground" />}
         </button>
 
-        <div className="flex-1 min-w-0">
-          <h4 className={cn("font-bold text-foreground text-base", place.visited && "line-through text-foreground/60")}>
+        <div className="flex-1 min-w-0 pr-2">
+          <h4
+            className={cn(
+              "font-bold text-foreground text-base leading-5 break-words pr-1",
+              place.visited && "line-through text-foreground/60"
+            )}
+          >
             {place.name}
           </h4>
           {place.location && (
@@ -228,7 +233,7 @@ function PlaceCard({
           )}
         </div>
 
-        <div className="flex flex-col gap-2 shrink-0">
+        <div className="flex items-start gap-1.5 shrink-0 ml-2">
   <button
     onClick={onEdit}
     className="text-muted-foreground hover:text-primary p-1"
@@ -309,6 +314,7 @@ function AddPlaceSheet({
           <Input
           id="name"
           name="name"
+          placeholder="Louvre Museum"
           defaultValue={place?.name}
           required
         />
@@ -318,6 +324,7 @@ function AddPlaceSheet({
           <Input
           id="location"
           name="location"
+          placeholder="Paris, France"
           defaultValue={place?.location}
         />
         </div>
@@ -336,6 +343,7 @@ function AddPlaceSheet({
           <Input
           id="notes"
           name="notes"
+          placeholder="Buy tickets online beforehand"
           defaultValue={place?.notes}
         />
         </div>
