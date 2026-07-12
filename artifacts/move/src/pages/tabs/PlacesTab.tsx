@@ -140,14 +140,14 @@ function PlaceCard({
       "bg-card rounded-2xl border transition-all overflow-hidden",
       place.visited ? "border-primary/30 bg-primary/5" : "border-border shadow-sm"
     )}>
-      <div className="p-4 flex gap-3 items-start">
+      <div className="p-4 flex gap-3 items-center">
         <button onClick={onToggle} className="mt-0.5 shrink-0 text-primary transition-transform active:scale-90">
           {place.visited
             ? <CheckCircle2 className="w-6 h-6" />
             : <Circle className="w-6 h-6 text-muted-foreground" />}
         </button>
 
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 self-center">
           <h4
             className={cn(
               "font-bold text-foreground text-base leading-5 break-words max-w-full",
@@ -233,7 +233,7 @@ function PlaceCard({
           )}
         </div>
 
-        <div className="flex items-start gap-1.5 shrink-0 ml-2">
+        <div className="flex items-center gap-1.5 shrink-0 ml-2 self-center">
   <button
     onClick={onEdit}
     className="text-muted-foreground hover:text-primary p-1"
