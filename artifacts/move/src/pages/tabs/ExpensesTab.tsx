@@ -86,7 +86,6 @@ const [showBudgetBreakdown, setShowBudgetBreakdown] = useState(false);
       ? "#9ca3af"
       : COLORS[index % COLORS.length],
 })),
-  ...(trip.guests || []),
 ];
 
 const activeMembers = members.filter(
