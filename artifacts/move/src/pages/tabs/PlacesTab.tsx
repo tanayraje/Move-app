@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Plus, MapPin, CheckCircle2, Circle, Trash2, Calendar, Link2 } from "lucide-react";
+import { Plus, MapPin, CheckCircle2, Circle, Trash2, Calendar, Link2, Pencil } from "lucide-react";
 import { usePlaces, useSavePlace, useDeletePlace, useSaveItineraryItem } from "@/hooks/use-store";
 import { Trip, Place, ItineraryItem, ChecklistItem } from "@/lib/types";
 import { generateId, cn, safeFormatDate, getTripStatus } from "@/lib/utils";
@@ -10,6 +10,7 @@ export default function PlacesTab({ trip }: { trip: Trip }) {
   const { data: places = [] } = usePlaces(trip.id);
   const { mutate: savePlace } = useSavePlace();
   const [isAddOpen, setIsAddOpen] = useState(false);
+const [editingPlace, setEditingPlace] = useState<Place | null>(null);
   const [filter, setFilter] = useState<'all' | 'visited' | 'unvisited'>('all');
 
   const filtered = places.filter(p => {
@@ -45,18 +46,47 @@ export default function PlacesTab({ trip }: { trip: Trip }) {
           </div>
         ) : (
           filtered.map(place => (
-            <PlaceCard key={place.id} place={place} trip={trip} onToggle={() => toggleVisit(place)} />
+            <PlaceCard
+            key={place.id}
+            place={place}
+            trip={trip}
+            onToggle={() => toggleVisit(place)}
+            onEdit={() => setEditingPlace(place)}
+          />
           ))
         )}
       </div>
 
       {getTripStatus(trip) !== 'archived' && <FAB icon={Plus} onClick={() => setIsAddOpen(true)} />}
-      <AddPlaceSheet isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} tripId={trip.id} />
+      <>
+  <AddPlaceSheet
+    isOpen={isAddOpen}
+    onClose={() => setIsAddOpen(false)}
+    tripId={trip.id}
+  />
+
+  <AddPlaceSheet
+    isOpen={!!editingPlace}
+    onClose={() => setEditingPlace(null)}
+    tripId={trip.id}
+    place={editingPlace}
+  />
+</>
     </div>
   );
 }
 
-function PlaceCard({ place, trip, onToggle }: { place: Place; trip: Trip; onToggle: () => void }) {
+function PlaceCard({
+  place,
+  trip,
+  onToggle,
+  onEdit,
+}: {
+  place: Place;
+  trip: Trip;
+  onToggle: () => void;
+  onEdit: () => void;
+}) {
   const { mutate: deletePlace } = useDeletePlace();
   const { mutate: savePlace } = useSavePlace();
   const { mutate: saveItinerary } = useSaveItineraryItem();
@@ -198,21 +228,52 @@ function PlaceCard({ place, trip, onToggle }: { place: Place; trip: Trip; onTogg
           )}
         </div>
 
-        <button
-          onClick={() => { if (confirm('Remove place?')) deletePlace({ tripId: place.tripId, id: place.id }); }}
-          className="text-muted-foreground hover:text-red-500 p-1 shrink-0"
-        >
-          <Trash2 className="w-4 h-4" />
-        </button>
+        <div className="flex flex-col gap-2 shrink-0">
+  <button
+    onClick={onEdit}
+    className="text-muted-foreground hover:text-primary p-1"
+  >
+    <Pencil className="w-4 h-4" />
+  </button>
+
+  <button
+    onClick={() => {
+      if (confirm("Remove place?")) {
+        deletePlace({ tripId: place.tripId, id: place.id });
+      }
+    }}
+    className="text-muted-foreground hover:text-red-500 p-1"
+  >
+    <Trash2 className="w-4 h-4" />
+  </button>
+</div>
       </div>
     </div>
   );
 }
 
-function AddPlaceSheet({ isOpen, onClose, tripId }: { isOpen: boolean; onClose: () => void; tripId: string }) {
+function AddPlaceSheet({
+  isOpen,
+  onClose,
+  tripId,
+  place,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  tripId: string;
+  place?: Place | null;
+}) {
   const { mutateAsync: savePlace, isPending } = useSavePlace();
   const [checklistText, setChecklistText] = useState('');
   const [checklist, setChecklist] = useState<ChecklistItem[]>([]);
+
+  React.useEffect(() => {
+  if (place) {
+    setChecklist(place.checklist ?? []);
+  } else {
+    setChecklist([]);
+  }
+}, [place, isOpen]);
 
   const addChecklistItem = () => {
     if (!checklistText.trim()) return;
@@ -241,24 +302,42 @@ function AddPlaceSheet({ isOpen, onClose, tripId }: { isOpen: boolean; onClose: 
   };
 
   return (
-    <BottomSheet isOpen={isOpen} onClose={onClose} title="Save a Place">
+    <BottomSheet isOpen={isOpen} onClose={onClose} title={place ? "Edit Place" : "Save a Place"}>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div>
           <Label htmlFor="name">Place Name</Label>
-          <Input id="name" name="name" placeholder="Louvre Museum" required />
+          <Input
+          id="name"
+          name="name"
+          defaultValue={place?.name}
+          required
+        />
         </div>
         <div>
           <Label htmlFor="location">Address / Location</Label>
-          <Input id="location" name="location" placeholder="Paris, France" />
+          <Input
+          id="location"
+          name="location"
+          defaultValue={place?.location}
+        />
         </div>
         <div>
           <Label htmlFor="date">Link to Date (optional)</Label>
-          <Input id="date" name="date" type="date" />
+          <Input
+          id="date"
+          name="date"
+          type="date"
+          defaultValue={place?.date}
+        />
           <p className="text-xs text-muted-foreground mt-1 ml-1">Setting a date lets you add this to the timeline</p>
         </div>
         <div>
           <Label htmlFor="notes">Notes</Label>
-          <Input id="notes" name="notes" placeholder="Buy tickets online beforehand" />
+          <Input
+          id="notes"
+          name="notes"
+          defaultValue={place?.notes}
+        />
         </div>
         <div>
           <Label>Checklist (optional)</Label>
@@ -285,7 +364,7 @@ function AddPlaceSheet({ isOpen, onClose, tripId }: { isOpen: boolean; onClose: 
             </div>
           )}
         </div>
-        <Button type="submit" size="lg" className="mt-4" isLoading={isPending}>Add Place</Button>
+        <Button type="submit" size="lg" className="mt-4" isLoading={isPending}>{place ? "Save Changes" : "Add Place"}</Button>
       </form>
     </BottomSheet>
   );
