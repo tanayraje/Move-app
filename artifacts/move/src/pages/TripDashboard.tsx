@@ -68,7 +68,7 @@ export default function TripDashboard({ params }: { params: { id: string, tab?: 
 
       {/* Main Content Area */}
      <main
-  className="relative flex-1 overflow-x-hidden pb-28"
+  className="relative flex-1 overflow-x-hidden overflow-y-hidden pb-28"
   style={{
     paddingBottom: "calc(88px + env(safe-area-inset-bottom))",
   }}
@@ -84,7 +84,7 @@ export default function TripDashboard({ params }: { params: { id: string, tab?: 
       </main>
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 w-full max-w-md bg-card/90 backdrop-blur-xl border-t border-border/50 pb-[env(safe-area-inset-bottom)] z-0 px-2 pt-2">
+      <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-card/95 backdrop-blur-xl border-t border-border/50 pb-[env(safe-area-inset-bottom)] z-50 px-2 pt-2 shadow-[0_-8px_24px_rgba(0,0,0,0.08)]">
         <div className="flex justify-between items-center px-1">
           {tabs.map(tab => {
             const Icon = tab.icon;
