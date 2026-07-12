@@ -33,9 +33,11 @@ export function buildExpenseLedger(
   // Current members
   currentMembers.forEach(member => {
     memberMap.set(member.id, {
-      ...member,
-      historical: false,
-    });
+  ...member,
+  name: member.name || "Unknown User",
+  color: member.color || "#9ca3af",
+  historical: false,
+});
   });
 
   // Recover historical members
@@ -195,6 +197,14 @@ net[receiver.memberId] = round2(
     if (Math.abs(creditors[c].amount) < 0.01) c++;
 if (Math.abs(debtors[d].amount) < 0.01) d++;
   }
+
+    console.table(
+  members.map(m => ({
+    id: m.id,
+    name: m.name,
+    historical: m.historical,
+  }))
+);
 
   return {
     members,

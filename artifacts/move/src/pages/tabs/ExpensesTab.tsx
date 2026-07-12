@@ -73,15 +73,19 @@ const [showBudgetBreakdown, setShowBudgetBreakdown] = useState(false);
         : 0
     )
     .map((m: any, index: number) => ({
-      id: m.user_id,
-      name: m.name || m.username,
-      username: m.username,
-      status: m.status,
-      color:
-        m.status === "removed"
-          ? "#9ca3af"
-          : COLORS[index % COLORS.length],
-    })),
+  id: m.user_id,
+  name:
+    m.name?.trim() ||
+    m.username?.trim() ||
+    m.email?.split("@")[0] ||
+    "Unknown User",
+  username: m.username || "",
+  status: m.status,
+  color:
+    m.status === "removed"
+      ? "#9ca3af"
+      : COLORS[index % COLORS.length],
+})),
   ...(trip.guests || []),
 ];
 
@@ -292,11 +296,13 @@ setShowSettlement(false);
       <tbody>
         {Object.keys(ledger?.net ?? {}).map(id => {
   const m =
-  ledger.members.find(x => x.id === id) || {
-    id,
-    name: "Unknown User",
-    color: "#9ca3af",
-  };
+  ledger.members.find(x => x.id === id) || 
+  {
+  id,
+  name: "Unknown User",
+  username: "",
+  color: "#9ca3af",
+}
 
   const net = ledger?.net?.[id] ?? 0;
 const paid = ledger?.paid?.[id] ?? 0;
@@ -309,7 +315,7 @@ const paid = ledger?.paid?.[id] ?? 0;
                     className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold"
                     style={{ backgroundColor: m.color || '#2563eb' }}
                   >
-                    {m.name.charAt(0)}
+                    {(m.name || "?").charAt(0)}
                   </div>
                   <span
   className="font-medium"
@@ -667,7 +673,7 @@ const isSplit =
             <div className="flex items-center gap-1">
               <div className="w-4 h-4 rounded-full flex items-center justify-center text-white text-[8px] font-bold"
                 style={{ backgroundColor: payer.color || '#2563eb' }}>
-                {payer.name.charAt(0)}
+                {(payer.name || "?").charAt(0)}
               </div>
               <span
   className="text-xs"
@@ -1056,7 +1062,7 @@ console.log("total", total);
                           </div>
                           <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold"
                             style={{ backgroundColor: m.color || '#2563eb' }}>
-                            {m.name.charAt(0)}
+                            {(m.name || "?").charAt(0)}
                           </div>
                           <span className="text-sm font-medium text-foreground">{m.name}</span>
                           {splitMode === 'unequal' && isSelected && (
