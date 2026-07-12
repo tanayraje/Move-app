@@ -590,7 +590,7 @@ const dur = Math.max(
   onTouchEnd={handleTouchEnd}
 >
   <AnimatePresence mode="wait" custom={swipeDirection}>
-    <motion.div
+   <motion.div
   key={selectedDate}
   layout
   custom={swipeDirection}
@@ -618,7 +618,7 @@ const dur = Math.max(
       duration: 0.22,
     },
   }}
-  className="px-4 py-4 pb-32 overflow-y-auto h-full"
+  className="px-4 py-4 pb-40 overflow-y-auto h-full"
 >
         {/* City + date header */}
         <div className="flex items-start justify-between mb-4">
