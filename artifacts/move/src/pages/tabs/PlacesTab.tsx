@@ -291,15 +291,16 @@ function AddPlaceSheet({
     const fd = new FormData(e.currentTarget);
     const dateVal = fd.get('date') as string;
     await savePlace({
-      id: generateId(),
+      id: place?.id ?? generateId(),
       tripId,
-      name: fd.get('name') as string,
-      location: fd.get('location') as string,
-      notes: fd.get('notes') as string,
-      visited: false,
+      name: fd.get("name") as string,
+      location: fd.get("location") as string,
+      notes: fd.get("notes") as string,
+      visited: place?.visited ?? false,
+      linkedToTimeline: place?.linkedToTimeline ?? false,
       date: dateVal || undefined,
       checklist: checklist.length > 0 ? checklist : undefined,
-      createdAt: Date.now()
+      createdAt: place?.createdAt ?? Date.now(),
     });
     setChecklist([]);
     setChecklistText('');
