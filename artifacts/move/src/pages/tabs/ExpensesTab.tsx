@@ -290,7 +290,7 @@ setShowSettlement(false);
       </thead>
 
       <tbody>
-        {Object.keys(ledger.net).map(id => {
+        {Object.keys(ledger?.net ?? {}).map(id => {
   const m =
   ledger.members.find(x => x.id === id) || {
     id,
@@ -298,8 +298,8 @@ setShowSettlement(false);
     color: "#9ca3af",
   };
 
-  const net = ledger.net[id] || 0;
-  const paid = ledger.paid[id] || 0;
+  const net = ledger?.net?.[id] ?? 0;
+const paid = ledger?.paid?.[id] ?? 0;
 
   return (
     <tr key={id} className="border-b border-border/30 last:border-0">
