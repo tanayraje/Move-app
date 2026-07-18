@@ -1480,67 +1480,101 @@ function SortableItem({
 
           <div className="mt-1 flex min-w-0 items-center gap-2">
 
-            {/* From */}
+  {/* From */}
 
-            <span
-              className="min-w-0 flex-1 truncate text-[17px] font-semibold leading-[1.35]"
-              title={item.fromLocation}
-            >
-              {item.fromLocation || "—"}
-            </span>
+  <div className="min-w-0 flex-1">
+    <p
+      className="truncate text-[17px] font-semibold leading-[1.35]"
+      title={item.fromLocation}
+    >
+      {item.fromLocation || "—"}
+    </p>
+  </div>
 
-            {/* Connector */}
+  {/* Connector */}
 
-            <div className="flex shrink-0 items-center">
+  <div className="flex min-w-[96px] shrink-0 items-center">
 
-              <div className="w-1 border-t border-dashed border-blue-300" />
+    <div
+      className="h-[2px] flex-1"
+      style={{
+        backgroundImage:
+          "repeating-linear-gradient(to right,#93c5fd 0 6px,transparent 6px 9px)",
+      }}
+    />
 
-              <Icon className="mx-1 h-4 w-4 shrink-0 text-blue-500" />
+    <Icon className="mx-2 h-4 w-4 shrink-0 text-blue-500" />
 
-              <div className="w-1 border-t border-dashed border-blue-300" />
+    <div
+      className="h-[2px] flex-1"
+      style={{
+        backgroundImage:
+          "repeating-linear-gradient(to right,#93c5fd 0 6px,transparent 6px 9px)",
+      }}
+    />
 
-            </div>
+  </div>
 
-            {/* To */}
+  {/* To */}
 
-            <span
-              className="min-w-0 flex-1 truncate text-right text-[17px] font-semibold leading-[1.35]"
-              title={item.toLocation}
-            >
-              {item.toLocation || "—"}
-            </span>
+  <div className="min-w-0 flex-1">
+    <p
+      className="truncate text-[17px] font-semibold leading-[1.35]"
+      title={item.toLocation}
+    >
+      {item.toLocation || "—"}
+    </p>
+  </div>
 
-          </div>
+</div>
 
         ) : (
 
-          <div className="mt-3">
+          <div className="mt-3 flex flex-col items-start">
 
-            <p
-              className="break-words text-[18px] font-semibold leading-[1.35]"
-              title={item.fromLocation}
-            >
-              {item.fromLocation || "—"}
-            </p>
+  {/* From */}
 
-            <div className="my-4 flex items-center justify-center">
+  <p
+    className="max-w-full truncate text-[18px] font-semibold leading-[1.35]"
+    title={item.fromLocation}
+  >
+    {item.fromLocation || "—"}
+  </p>
 
-              <div className="h-px w-10 border-t border-dashed border-blue-300" />
+  {/* Connector */}
 
-              <Icon className="mx-3 h-4 w-4 shrink-0 text-blue-500" />
+  <div className="my-4 flex w-full items-center">
 
-              <div className="h-px w-10 border-t border-dashed border-blue-300" />
+    <div
+      className="h-[2px] flex-1"
+      style={{
+        backgroundImage:
+          "repeating-linear-gradient(to right,#93c5fd 0 6px,transparent 6px 9px)",
+      }}
+    />
 
-            </div>
+    <Icon className="mx-2 h-4 w-4 shrink-0 text-blue-500" />
 
-            <p
-              className="break-words text-[18px] font-semibold leading-[1.35]"
-              title={item.toLocation}
-            >
-              {item.toLocation || "—"}
-            </p>
+    <div
+      className="h-[2px] flex-1"
+      style={{
+        backgroundImage:
+          "repeating-linear-gradient(to right,#93c5fd 0 6px,transparent 6px 9px)",
+      }}
+    />
 
-          </div>
+  </div>
+
+  {/* To */}
+
+  <p
+    className="max-w-full truncate text-[18px] font-semibold leading-[1.35]"
+    title={item.toLocation}
+  >
+    {item.toLocation || "—"}
+  </p>
+
+</div>
 
         )}
 
@@ -1557,7 +1591,7 @@ function SortableItem({
 
     {/* Journey */}
 
-    <div className="mt-5 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-end gap-4">
+    <div className="mt-5 flex items-end gap-8">
 
       {/* Departure */}
 
@@ -1575,7 +1609,7 @@ function SortableItem({
 
       {/* Duration */}
 
-      <div className="px-2">
+      <div className="shrink-0">
 
         <p className="whitespace-nowrap text-[11px] italic text-blue-600">
           {duration || "—"}
@@ -1585,7 +1619,7 @@ function SortableItem({
 
       {/* Arrival */}
 
-      <div className="min-w-0 text-right">
+      <div className="min-w-0">
 
         <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
           Arrival
