@@ -1493,25 +1493,13 @@ function SortableItem({
 
   {/* Connector */}
 
-  <div className="flex min-w-[96px] shrink-0 items-center">
+  <div className="mx-2 flex min-w-[44px] flex-1 items-center">
 
-    <div
-      className="h-[2px] flex-1"
-      style={{
-        backgroundImage:
-          "repeating-linear-gradient(to right,#93c5fd 0 6px,transparent 6px 9px)",
-      }}
-    />
+    <div className="flex-1 border-t border-dashed border-blue-300" />
 
     <Icon className="mx-2 h-4 w-4 shrink-0 text-blue-500" />
 
-    <div
-      className="h-[2px] flex-1"
-      style={{
-        backgroundImage:
-          "repeating-linear-gradient(to right,#93c5fd 0 6px,transparent 6px 9px)",
-      }}
-    />
+    <div className="flex-1 border-t border-dashed border-blue-300" />
 
   </div>
 
@@ -1545,23 +1533,11 @@ function SortableItem({
 
   <div className="my-4 flex w-full items-center">
 
-    <div
-      className="h-[2px] flex-1"
-      style={{
-        backgroundImage:
-          "repeating-linear-gradient(to right,#93c5fd 0 6px,transparent 6px 9px)",
-      }}
-    />
+    <div className="flex-1 border-t border-dashed border-blue-300" />
 
     <Icon className="mx-2 h-4 w-4 shrink-0 text-blue-500" />
 
-    <div
-      className="h-[2px] flex-1"
-      style={{
-        backgroundImage:
-          "repeating-linear-gradient(to right,#93c5fd 0 6px,transparent 6px 9px)",
-      }}
-    />
+    <div className="flex-1 border-t border-dashed border-blue-300" />
 
   </div>
 
