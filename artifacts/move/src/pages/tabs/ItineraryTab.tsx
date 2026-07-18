@@ -1482,7 +1482,7 @@ function SortableItem({
 
   {/* From */}
 
-  <div className="min-w-0 flex-1">
+  <div className="shrink-0">
     <p
       className="truncate text-[17px] font-semibold leading-[1.35]"
       title={item.fromLocation}
@@ -1493,13 +1493,13 @@ function SortableItem({
 
   {/* Connector */}
 
-  <div className="mx-2 flex min-w-[44px] flex-1 items-center">
+  <div className="mx-3 flex min-w-[28px] flex-1 items-center">
 
-    <div className="flex-1 border-t border-dashed border-blue-300" />
+    <div className="flex-1 border-t-[1px] border-dashed border-blue-300" />
 
     <Icon className="mx-2 h-4 w-4 shrink-0 text-blue-500" />
 
-    <div className="flex-1 border-t border-dashed border-blue-300" />
+    <div className="flex-1 border-t-[1px] border-dashed border-blue-300" />
 
   </div>
 
@@ -1533,11 +1533,11 @@ function SortableItem({
 
   <div className="my-4 flex w-full items-center">
 
-    <div className="flex-1 border-t border-dashed border-blue-300" />
+    <div className="flex-1 border-t-[1px] border-dashed border-blue-300" />
 
     <Icon className="mx-2 h-4 w-4 shrink-0 text-blue-500" />
 
-    <div className="flex-1 border-t border-dashed border-blue-300" />
+    <div className="flex-1 border-t-[1px] border-dashed border-blue-300" />
 
   </div>
 
