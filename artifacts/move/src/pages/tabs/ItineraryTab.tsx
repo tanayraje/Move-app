@@ -1523,7 +1523,7 @@ function SortableItem({
   {/* From */}
 
   <p
-    className="max-w-full truncate text-[18px] font-semibold leading-[1.35]"
+  className="max-w-full truncate text-[18px] font-semibold leading-[1.2]"
     title={item.fromLocation}
   >
     {item.fromLocation || "—"}
@@ -1531,7 +1531,7 @@ function SortableItem({
 
   {/* Connector */}
 
-  <div className="my-4 flex w-full items-center">
+  <div className="my-2 flex w-full items-center">
 
     <div className="flex-1 border-t-[1px] border-dashed border-blue-300" />
 
@@ -1544,7 +1544,7 @@ function SortableItem({
   {/* To */}
 
   <p
-    className="max-w-full truncate text-[18px] font-semibold leading-[1.35]"
+    className="max-w-full truncate text-[18px] font-semibold leading-[1.2]"
     title={item.toLocation}
   >
     {item.toLocation || "—"}
