@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Move</string>
+    <string name="title_activity_main">Move</string>
+    <string name="package_name">com.move.app</string>
+    <string name="custom_url_scheme">com.move.app</string>
+</resources>
