@@ -268,15 +268,6 @@ const [swipeDirection, setSwipeDirection] = useState<1 | -1>(1);
   const [cityDraft, setCityDraft] = useState('');
   const cityInputRef = useRef<HTMLInputElement>(null);
 const dayScrollerRef = useRef<HTMLDivElement>(null);
-useEffect(() => {
-  if (isWishlist) return;
-
-  const today = format(new Date(), "yyyy-MM-dd");
-
-  if (days.includes(today) && selectedDate !== today) {
-    setSelectedDate(today);
-  }
-}, [days, isWishlist]);
 
   const wishlistDays = useMemo(() => {
   const count = Math.max(trip.wishlistDayCount ?? 1, 1);
@@ -292,11 +283,21 @@ useEffect(() => {
   const daysCount = isWishlist ? wishlistDays.length
     : startDateParsed && endDateParsed ? differenceInDays(endDateParsed, startDateParsed) + 1 : 0;
   const days = isWishlist ? wishlistDays
-    : startDateParsed ? Array.from({ length: daysCount }).map((_, i) =>
+  : startDateParsed ? Array.from({ length: daysCount }).map((_, i) =>
       format(addDays(startDateParsed, i), 'yyyy-MM-dd')
     ) : [];
 
-    const currentDayIndex = days.indexOf(selectedDate);
+useEffect(() => {
+  if (isWishlist) return;
+
+  const today = format(new Date(), "yyyy-MM-dd");
+
+  if (days.includes(today) && selectedDate !== today) {
+    setSelectedDate(today);
+  }
+}, [days, isWishlist, selectedDate]);
+
+const currentDayIndex = days.indexOf(selectedDate);
 
 const goToNextDay = useCallback(() => {
   if (currentDayIndex < days.length - 1) {
