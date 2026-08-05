@@ -288,14 +288,18 @@ const dayScrollerRef = useRef<HTMLDivElement>(null);
     ) : [];
 
 useEffect(() => {
-  if (isWishlist) return;
+  if (isWishlist || days.length === 0) return;
 
   const today = format(new Date(), "yyyy-MM-dd");
 
-  if (days.includes(today) && selectedDate !== today) {
+  if (today < days[0]) {
+    setSelectedDate(days[0]);
+  } else if (today > days[days.length - 1]) {
+    setSelectedDate(days[0]);
+  } else if (days.includes(today)) {
     setSelectedDate(today);
   }
-}, [days, isWishlist, selectedDate]);
+}, [trip.id]);
 
 const currentDayIndex = days.indexOf(selectedDate);
 
