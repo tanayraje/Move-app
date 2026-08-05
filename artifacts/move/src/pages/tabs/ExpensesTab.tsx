@@ -487,10 +487,29 @@ const paid = ledger?.paid?.[id] ?? 0;
             <p>No expenses tracked yet.</p>
           </div>
         ) : (
-          Object.entries(grouped).map(([date, items]) => (
-            <div key={date}>
-              <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3 ml-1">{date}</h3>
-              <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden divide-y divide-border/50">
+          Object.entries(grouped).map(([date, items]) => {
+  const dayTotal = items.reduce(
+    (sum, expense) => sum + expense.amount,
+    0
+  );
+
+  const displayDayTotal = showInDest
+    ? convertFromINR(dayTotal, destCurrency)
+    : dayTotal;
+
+  return (
+    <div key={date}>
+      <div className="flex items-center justify-between mb-3 px-1">
+        <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+          {date}
+        </h3>
+
+        <span className="text-sm font-bold text-foreground">
+          {formatCurrency(displayDayTotal, activeCurrency)}
+        </span>
+      </div>
+
+      <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden divide-y divide-border/50">
                 {items.map(exp => (
                   <ExpenseRow
                   key={exp.id}
@@ -503,9 +522,10 @@ const paid = ledger?.paid?.[id] ?? 0;
                   onEdit={() => setEditExpense(exp)}
                 />
                 ))}
-              </div>
-            </div>
-          ))
+                    </div>
+                </div>
+              );
+            })
         )}
       </div>
 

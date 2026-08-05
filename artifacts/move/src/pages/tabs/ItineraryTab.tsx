@@ -268,6 +268,15 @@ const [swipeDirection, setSwipeDirection] = useState<1 | -1>(1);
   const [cityDraft, setCityDraft] = useState('');
   const cityInputRef = useRef<HTMLInputElement>(null);
 const dayScrollerRef = useRef<HTMLDivElement>(null);
+useEffect(() => {
+  if (isWishlist) return;
+
+  const today = format(new Date(), "yyyy-MM-dd");
+
+  if (days.includes(today) && selectedDate !== today) {
+    setSelectedDate(today);
+  }
+}, [days, isWishlist]);
 
   const wishlistDays = useMemo(() => {
   const count = Math.max(trip.wishlistDayCount ?? 1, 1);
