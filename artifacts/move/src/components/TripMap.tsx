@@ -335,27 +335,6 @@ for (const [date, rawCity] of entries) {
 }
 
 return unique;
-
-    for (const [date, rawCity] of entries) {
-      const city = rawCity.trim();
-
-      if (!city) continue;
-
-      const exists = unique.some(
-        item =>
-          item.city.toLowerCase() ===
-          city.toLowerCase()
-      );
-
-      if (!exists) {
-        unique.push({
-          city,
-          date,
-        });
-      }
-    }
-
-    return unique;
   }, [trip.dayCities]);
 
   const currentCity = useMemo(() => {
