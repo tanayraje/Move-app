@@ -165,12 +165,12 @@ export default function Profile() {
               </h2>
 
               <button
-                type="button"
-                onClick={() => setShowAvatarPicker(false)}
-                className="text-sm text-muted-foreground"
-              >
-                Done
-              </button>
+              type="button"
+              onClick={() => setShowAvatarPicker(false)}
+              className="text-sm text-primary font-medium"
+            >
+              Done
+            </button>
             </div>
 
             <div className="grid grid-cols-4 gap-4">
