@@ -115,7 +115,7 @@ useEffect(() => {
 ]);
 
 return (
-    <div className="p-5 flex flex-col gap-4">
+    <div className="p-5 pb-28 flex flex-col gap-4">
       {/* Hero card */}
 <div
   className="relative rounded-[2rem] overflow-hidden shadow-xl min-h-[220px] flex items-end"

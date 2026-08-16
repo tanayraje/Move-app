@@ -478,7 +478,7 @@ return unique;
       className={
         fullscreen
           ? "fixed inset-0 z-[9999] bg-background"
-          : "bg-card border border-border rounded-2xl overflow-hidden shadow-sm"
+          : "relative z-0 isolate bg-card border border-border rounded-2xl overflow-hidden shadow-sm"
       }
     >
       <div
