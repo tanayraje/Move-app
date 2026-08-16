@@ -251,9 +251,7 @@ return (
       )}
 
       {/* Trip Map */}
-      {!isWishlist && (
-  <TripMap trip={trip} />
-)}
+      <TripMap trip={trip} />
     </div>
   );
 }
