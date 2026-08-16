@@ -547,12 +547,12 @@ return unique;
 
     return (
     <div
-      className={
-        fullscreen
-          ? "fixed inset-0 z-[9999] bg-background"
-          : "relative z-0 isolate bg-card border border-border rounded-2xl overflow-hidden shadow-sm"
-      }
-    >
+        className={
+            fullscreen
+            ? "trip-map fixed inset-0 z-[9999] bg-background"
+            : "trip-map bg-card border border-border rounded-2xl overflow-hidden shadow-sm"
+        }
+        >
       <div
   className={
   fullscreen
@@ -665,3 +665,28 @@ return unique;
     </div>
   );
 }
+
+<style>{`
+  .trip-map .leaflet-control-zoom {
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  .trip-map .leaflet-control-zoom a {
+    width: 36px !important;
+    height: 36px !important;
+    line-height: 36px !important;
+    margin-bottom: 4px;
+    border-radius: 9999px !important;
+    border: 1px solid rgba(255,255,255,0.2) !important;
+    background: rgba(0,0,0,0.30) !important;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    color: white !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.10);
+  }
+
+  .trip-map .leaflet-control-zoom a:hover {
+    background: rgba(0,0,0,0.40) !important;
+  }
+`}</style>
