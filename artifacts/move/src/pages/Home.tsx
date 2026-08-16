@@ -96,9 +96,11 @@ useEffect(() => {
   <header className="px-6 pt-12 pb-3">
     <div className="flex items-start justify-between gap-8">
       <div>
-        <h1 className="text-4xl font-display font-extrabold text-foreground tracking-tight">
-          Move.
-        </h1>
+        <img
+        src="/move-logo.svg"
+        alt="Move"
+        className="h-10 w-auto object-contain"
+      />
         <p className="text-muted-foreground mt-1 text-lg">
           Where to next?
         </p>
