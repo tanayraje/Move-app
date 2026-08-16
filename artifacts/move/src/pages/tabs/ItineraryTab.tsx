@@ -388,56 +388,64 @@ const handleTouchEnd = (e: React.TouchEvent) => {
   const deleteWishlistDay = (day: string) => {
   if (!isWishlist) return;
 
-  if ((trip.wishlistDayCount ?? 1) <= 1) {
+  const currentDayCount = trip.wishlistDayCount ?? 1;
+
+  if (currentDayCount <= 1) {
     alert("You must keep at least one day.");
     return;
   }
 
   const hasAccommodation = allItems.some(
-  (item) =>
-    item.elementType === "accommodation" &&
-    item.date === day
-);
-
-if (hasAccommodation) {
-  alert(
-    "Delete or edit the accommodation for this day before deleting the day."
+    (item) =>
+      item.elementType === "accommodation" &&
+      item.date === day
   );
-  return;
-}
 
-if (
-  !confirm(
-    `Delete ${day}?\n\nThis will permanently delete every itinerary item scheduled for this day.\n\nThis action cannot be undone.`
-  )
-) {
-  return;
-}
+  if (hasAccommodation) {
+    alert(
+      "Delete or edit the accommodation for this day before deleting the day."
+    );
+    return;
+  }
+
+  if (
+    !confirm(
+      `Delete ${day}?\n\nThis will permanently delete every itinerary item scheduled for this day.\n\nThis action cannot be undone.`
+    )
+  ) {
+    return;
+  }
 
   const deletedDay = parseInt(day.replace("Day ", ""), 10);
+
+  // Rebuild dayCities without the deleted day.
+  // Days after the deleted day shift down by one.
   const updatedDayCities: Record<string, string> = {};
 
-Object.entries(dayCities).forEach(([date, city]) => {
-  const match = date.match(/^Day\s+(\d+)$/i);
+  Object.entries(dayCities).forEach(([date, city]) => {
+    const match = date.match(/^Day\s+(\d+)$/i);
 
-  if (!match) {
-    updatedDayCities[date] = city;
-    return;
-  }
+    if (!match) {
+      updatedDayCities[date] = city;
+      return;
+    }
 
-  const cityDay = parseInt(match[1], 10);
+    const cityDay = parseInt(match[1], 10);
 
-  if (cityDay === deletedDay) {
-    return;
-  }
+    // Completely remove the deleted day's city.
+    if (cityDay === deletedDay) {
+      return;
+    }
 
-  if (cityDay > deletedDay) {
-    updatedDayCities[`Day ${cityDay - 1}`] = city;
-  } else {
-    updatedDayCities[date] = city;
-  }
-});
+    // Shift later days down.
+    if (cityDay > deletedDay) {
+      updatedDayCities[`Day ${cityDay - 1}`] = city;
+    } else {
+      updatedDayCities[date] = city;
+    }
+  });
 
+  // Update / delete itinerary items.
   allItems.forEach((item) => {
     const dayMatch = item.date.match(/^Day\s+(\d+)$/i);
 
@@ -445,6 +453,7 @@ Object.entries(dayCities).forEach(([date, city]) => {
 
     const itemDay = parseInt(dayMatch[1], 10);
 
+    // Delete everything belonging to the deleted day.
     if (itemDay === deletedDay) {
       deleteItem({
         tripId: trip.id,
@@ -453,44 +462,46 @@ Object.entries(dayCities).forEach(([date, city]) => {
       return;
     }
 
-    const updated = { ...item };
-let changed = false;
+    // Shift later itinerary items down by one day.
+    if (itemDay > deletedDay) {
+      const updated = {
+        ...item,
+        date: `Day ${itemDay - 1}`,
+      };
 
-if (itemDay > deletedDay) {
-  updated.date = `Day ${itemDay - 1}`;
-  changed = true;
-}
+      // Shift accommodation checkout day as well.
+      if (updated.endDate) {
+        const endMatch = updated.endDate.match(/^Day\s+(\d+)$/i);
 
-if (
-  item.elementType === "accommodation" &&
-  item.endDate?.match(/^Day\s+(\d+)$/i)
-) {
-  const endDay = parseInt(
-    item.endDate.match(/^Day\s+(\d+)$/i)![1],
-    10
-  );
+        if (endMatch) {
+          const endDay = parseInt(endMatch[1], 10);
 
-  if (endDay > deletedDay) {
-    updated.endDate = `Day ${endDay - 1}`;
-    changed = true;
-  }
-}
+          if (endDay > deletedDay) {
+            updated.endDate = `Day ${endDay - 1}`;
+          }
+        }
+      }
 
-if (changed) {
-  saveItem(updated);
-}
+      saveItem(updated);
+    }
   });
 
+  // Save the cleaned city map and new day count.
   updateTrip({
-  ...trip,
-  dayCities: updatedDayCities,
-  wishlistDayCount: (trip.wishlistDayCount ?? 1) - 1,
-});
+    ...trip,
+    dayCities: updatedDayCities,
+    wishlistDayCount: currentDayCount - 1,
+  });
 
+  // Move selection to a valid remaining day.
   if (selectedDate === day) {
-  const newDay = Math.max(1, deletedDay - 1);
-  setSelectedDate(`Day ${newDay}`);
-}
+    const newDay = Math.min(
+      deletedDay,
+      currentDayCount - 1
+    );
+
+    setSelectedDate(`Day ${Math.max(newDay, 1)}`);
+  }
 };
 
   const sensors = useSensors(
