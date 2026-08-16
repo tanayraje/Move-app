@@ -251,7 +251,12 @@ return (
       )}
 
       {/* Trip Map */}
-      {!isWishlist && <TripMap trip={trip} />}
+      {!isWishlist && (
+  <TripMap
+    trip={trip}
+    itinerary={itinerary}
+  />
+)}
     </div>
   );
 }

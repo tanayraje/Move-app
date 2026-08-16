@@ -8,22 +8,36 @@ import {
   useMap,
 } from "react-leaflet";
 import L from "leaflet";
+import {
+  X,
+  Maximize2,
+  Plane,
+  Train,
+  Bus,
+  Car,
+} from "lucide-react";
+import { Trip, ItineraryItem, TravelType } from "@/lib/types";
+import { cn } from "@/lib/utils";
 import "leaflet/dist/leaflet.css";
-import { Trip } from "@/lib/types";
 
 interface CityPoint {
   city: string;
   lat: number;
   lon: number;
+  date?: string;
+  travelType?: TravelType;
 }
 
-function createNumberIcon(number: number) {
+function createNumberIcon(
+  number: number,
+  isCurrent: boolean = false
+) {
   return L.divIcon({
     className: "",
     html: `
       <div style="
-        width: 30px;
-        height: 30px;
+        width: ${isCurrent ? 34 : 30}px;
+        height: ${isCurrent ? 34 : 30}px;
         border-radius: 9999px;
         background: hsl(var(--primary));
         color: white;
@@ -33,41 +47,180 @@ function createNumberIcon(number: number) {
         font-size: 12px;
         font-weight: 700;
         border: 3px solid white;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        box-shadow: 0 2px 9px rgba(0,0,0,0.25);
+        ${isCurrent ? "outline: 3px solid hsl(var(--primary) / 0.2);" : ""}
       ">
         ${number}
       </div>
     `,
-    iconSize: [30, 30],
-    iconAnchor: [15, 15],
+    iconSize: [
+      isCurrent ? 34 : 30,
+      isCurrent ? 34 : 30,
+    ],
+    iconAnchor: [
+      isCurrent ? 17 : 15,
+      isCurrent ? 17 : 15,
+    ],
   });
 }
 
-function FitBounds({ points }: { points: CityPoint[] }) {
+function createTravelIcon(type?: TravelType) {
+  const symbols: Record<string, string> = {
+    flight: "✈",
+    train: "▣",
+    bus: "▰",
+    car: "●",
+  };
+
+  return L.divIcon({
+    className: "",
+    html: `
+      <div style="
+        width: 28px;
+        height: 28px;
+        border-radius: 9999px;
+        background: white;
+        color: hsl(var(--primary));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 13px;
+        font-weight: 700;
+        border: 1px solid hsl(var(--primary) / 0.25);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+      ">
+        ${symbols[type || "car"] || "●"}
+      </div>
+    `,
+    iconSize: [28, 28],
+    iconAnchor: [14, 14],
+  });
+}
+
+function FitBounds({
+  points,
+  fullscreen = false,
+}: {
+  points: CityPoint[];
+  fullscreen?: boolean;
+}) {
   const map = useMap();
 
   useEffect(() => {
     if (points.length === 0) return;
 
-    if (points.length === 1) {
-      map.setView([points[0].lat, points[0].lon], 8);
-      return;
-    }
+    const updateMap = () => {
+      map.invalidateSize();
 
-    const bounds = L.latLngBounds(
-      points.map(point => [point.lat, point.lon] as [number, number])
-    );
+      if (points.length === 1) {
+        map.setView(
+          [points[0].lat, points[0].lon],
+          fullscreen ? 9 : 8
+        );
+        return;
+      }
 
-    map.fitBounds(bounds, {
-      padding: [35, 35],
-      maxZoom: 8,
-    });
-  }, [map, points]);
+      const bounds = L.latLngBounds(
+        points.map(point => [
+          point.lat,
+          point.lon,
+        ] as [number, number])
+      );
+
+      map.fitBounds(bounds, {
+        padding: fullscreen ? [60, 60] : [35, 35],
+        maxZoom: fullscreen ? 9 : 8,
+      });
+    };
+
+    const timer = window.setTimeout(updateMap, 100);
+
+    return () => window.clearTimeout(timer);
+  }, [map, points, fullscreen]);
 
   return null;
 }
 
-async function geocodeCity(city: string): Promise<CityPoint | null> {
+function haversineDistance(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number
+) {
+  const R = 6371;
+
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) ** 2;
+
+  return R * 2 * Math.atan2(
+    Math.sqrt(a),
+    Math.sqrt(1 - a)
+  );
+}
+
+function formatDistance(km: number) {
+  if (km < 1) return "<1 km";
+
+  if (km < 100) {
+    return `${Math.round(km)} km`;
+  }
+
+  return `${Math.round(km).toLocaleString("en-IN")} km`;
+}
+
+function travelLabel(type?: TravelType) {
+  switch (type) {
+    case "flight":
+      return "Flight";
+    case "train":
+      return "Train";
+    case "bus":
+      return "Bus";
+    case "car":
+      return "Car";
+    default:
+      return "";
+  }
+}
+
+function getTravelType(
+  fromCity: string,
+  toCity: string,
+  itinerary: ItineraryItem[]
+): TravelType | undefined {
+  const normalise = (value: string) =>
+    value
+      .toLowerCase()
+      .replace(/\([^)]*\)/g, "")
+      .trim();
+
+  const from = normalise(fromCity);
+  const to = normalise(toCity);
+
+  const travelItem = itinerary.find(item => {
+    if (item.elementType !== "travel") return false;
+
+    const itemFrom = normalise(item.fromLocation || "");
+    const itemTo = normalise(item.toLocation || "");
+
+    return (
+      (itemFrom.includes(from) || from.includes(itemFrom)) &&
+      (itemTo.includes(to) || to.includes(itemTo))
+    );
+  });
+
+  return travelItem?.travelType;
+}
+
+async function geocodeCity(
+  city: string
+): Promise<{ lat: number; lon: number } | null> {
   try {
     const cacheKey = `move-geocode:${city.trim().toLowerCase()}`;
 
@@ -81,11 +234,7 @@ async function geocodeCity(city: string): Promise<CityPoint | null> {
         typeof parsed.lat === "number" &&
         typeof parsed.lon === "number"
       ) {
-        return {
-          city,
-          lat: parsed.lat,
-          lon: parsed.lon,
-        };
+        return parsed;
       }
     }
 
@@ -113,52 +262,182 @@ async function geocodeCity(city: string): Promise<CityPoint | null> {
       return null;
     }
 
+    const result = { lat, lon };
+
     localStorage.setItem(
       cacheKey,
-      JSON.stringify({
-        lat,
-        lon,
-      })
+      JSON.stringify(result)
     );
 
-    return {
-      city,
-      lat,
-      lon,
-    };
+    return result;
   } catch {
     return null;
   }
 }
 
-export default function TripMap({ trip }: { trip: Trip }) {
+function MapContent({
+  points,
+  currentCity,
+  fullscreen,
+}: {
+  points: CityPoint[];
+  currentCity?: string;
+  fullscreen?: boolean;
+}) {
+  return (
+    <>
+      <TileLayer
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+      />
+
+      <FitBounds
+        points={points}
+        fullscreen={fullscreen}
+      />
+
+      {points.length > 1 &&
+        points.slice(0, -1).map((point, index) => {
+          const next = points[index + 1];
+
+          return (
+            <React.Fragment
+              key={`segment-${index}`}
+            >
+              <Polyline
+                positions={[
+                  [point.lat, point.lon],
+                  [next.lat, next.lon],
+                ]}
+                pathOptions={{
+                  color: "hsl(var(--primary))",
+                  weight: 3,
+                  opacity: 0.85,
+                }}
+              />
+
+              {point.travelType && (
+                <Marker
+                  position={[
+                    (point.lat + next.lat) / 2,
+                    (point.lon + next.lon) / 2,
+                  ]}
+                  icon={createTravelIcon(
+                    point.travelType
+                  )}
+                  interactive={false}
+                />
+              )}
+            </React.Fragment>
+          );
+        })}
+
+      {points.map((point, index) => {
+        const isCurrent =
+          !!currentCity &&
+          point.city.toLowerCase() ===
+            currentCity.toLowerCase();
+
+        return (
+          <Marker
+            key={`${point.city}-${index}`}
+            position={[point.lat, point.lon]}
+            icon={createNumberIcon(
+              index + 1,
+              isCurrent
+            )}
+          >
+            <Popup>
+              <div className="text-sm">
+                <strong>
+                  {index + 1}. {point.city}
+                </strong>
+
+                {point.travelType && (
+                  <div className="mt-1 text-xs">
+                    {travelLabel(point.travelType)}
+                  </div>
+                )}
+
+                {isCurrent && (
+                  <div className="mt-1 text-xs font-semibold">
+                    Current city
+                  </div>
+                )}
+              </div>
+            </Popup>
+          </Marker>
+        );
+      })}
+    </>
+  );
+}
+
+export default function TripMap({
+  trip,
+  itinerary = [],
+}: {
+  trip: Trip;
+  itinerary?: ItineraryItem[];
+}) {
   const [points, setPoints] = useState<CityPoint[]>([]);
   const [loading, setLoading] = useState(false);
+  const [fullscreen, setFullscreen] = useState(false);
 
   const cities = useMemo(() => {
     const dayCities = trip.dayCities ?? {};
 
-    return Object.entries(dayCities)
+    const entries = Object.entries(dayCities)
       .sort(([dateA], [dateB]) => {
-        if (dateA.startsWith("Day ") && dateB.startsWith("Day ")) {
-          const a = Number(dateA.replace("Day ", ""));
-          const b = Number(dateB.replace("Day ", ""));
-          return a - b;
+        if (
+          dateA.startsWith("Day ") &&
+          dateB.startsWith("Day ")
+        ) {
+          return (
+            Number(dateA.replace("Day ", "")) -
+            Number(dateB.replace("Day ", ""))
+          );
         }
 
         return dateA.localeCompare(dateB);
-      })
-      .map(([, city]) => city.trim())
-      .filter(Boolean)
-      .filter((city, index, arr) => {
-        const normalised = city.toLowerCase();
-
-        return (
-          arr.findIndex(
-            item => item.toLowerCase() === normalised
-          ) === index
-        );
       });
+
+    const unique: {
+      city: string;
+      date: string;
+    }[] = [];
+
+    for (const [date, rawCity] of entries) {
+      const city = rawCity.trim();
+
+      if (!city) continue;
+
+      const exists = unique.some(
+        item =>
+          item.city.toLowerCase() ===
+          city.toLowerCase()
+      );
+
+      if (!exists) {
+        unique.push({
+          city,
+          date,
+        });
+      }
+    }
+
+    return unique;
+  }, [trip.dayCities]);
+
+  const currentCity = useMemo(() => {
+    const today = new Date();
+    const todayKey = `${today.getFullYear()}-${String(
+      today.getMonth() + 1
+    ).padStart(2, "0")}-${String(
+      today.getDate()
+    ).padStart(2, "0")}`;
+
+    return trip.dayCities?.[todayKey] || "";
   }, [trip.dayCities]);
 
   useEffect(() => {
@@ -174,23 +453,48 @@ export default function TripMap({ trip }: { trip: Trip }) {
 
       const results: CityPoint[] = [];
 
-      for (const city of cities) {
+      for (const entry of cities) {
         if (cancelled) return;
 
-        const point = await geocodeCity(city);
+        const coordinates = await geocodeCity(
+          entry.city
+        );
 
-        if (point) {
-          results.push(point);
+        if (coordinates) {
+          results.push({
+            city: entry.city,
+            date: entry.date,
+            lat: coordinates.lat,
+            lon: coordinates.lon,
+          });
         }
 
-        // Respect Nominatim's public rate limit.
         if (cities.length > 1) {
-          await new Promise(resolve => setTimeout(resolve, 1100));
+          await new Promise(resolve =>
+            setTimeout(resolve, 1100)
+          );
         }
       }
 
       if (!cancelled) {
-        setPoints(results);
+        const enriched = results.map(
+          (point, index) => {
+            if (index === 0) return point;
+
+            const previous = results[index - 1];
+
+            return {
+              ...point,
+              travelType: getTravelType(
+                previous.city,
+                point.city,
+                itinerary
+              ),
+            };
+          }
+        );
+
+        setPoints(enriched);
         setLoading(false);
       }
     }
@@ -200,102 +504,179 @@ export default function TripMap({ trip }: { trip: Trip }) {
     return () => {
       cancelled = true;
     };
-  }, [cities]);
+  }, [cities, itinerary]);
+
+  const totalDistance = useMemo(() => {
+    return points
+      .slice(0, -1)
+      .reduce((total, point, index) => {
+        const next = points[index + 1];
+
+        return (
+          total +
+          haversineDistance(
+            point.lat,
+            point.lon,
+            next.lat,
+            next.lon
+          )
+        );
+      }, 0);
+  }, [points]);
 
   if (cities.length === 0) {
     return (
       <div className="bg-card border border-border rounded-2xl p-5">
-        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">
+        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
           Trip Route
         </p>
 
-        <p className="text-sm text-muted-foreground">
-          Add cities to your Timeline to see your trip route.
+        <p className="text-sm text-muted-foreground mt-1">
+          Add cities to your Timeline to see your
+          trip route.
         </p>
       </div>
     );
   }
 
   return (
-    <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
-      <div className="px-4 pt-4 pb-3 flex items-center justify-between">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-            Trip Route
-          </p>
+    <>
+      <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
+        <div className="px-4 pt-4 pb-3 flex items-start justify-between">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              Trip Route
+            </p>
 
-          <p className="text-sm text-muted-foreground mt-1">
-            {cities.length} {cities.length === 1 ? "city" : "cities"}
-          </p>
+            <p className="text-sm text-muted-foreground mt-1">
+              {cities.length}{" "}
+              {cities.length === 1
+                ? "city"
+                : "cities"}
+
+              {totalDistance > 0 && (
+                <>
+                  {" · "}
+                  {formatDistance(totalDistance)}
+                </>
+              )}
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setFullscreen(true)}
+            className="flex items-center gap-1.5 text-xs font-semibold text-primary"
+          >
+            <Maximize2 className="w-3.5 h-3.5" />
+            Full map
+          </button>
         </div>
 
-        {loading && (
-          <span className="text-xs text-muted-foreground">
-            Loading map…
-          </span>
-        )}
-      </div>
-
-      <div className="h-[260px] w-full">
-        <MapContainer
-          center={[20, 0]}
-          zoom={2}
-          scrollWheelZoom={false}
-          dragging={true}
-          zoomControl={true}
-          attributionControl={true}
-          className="h-full w-full"
-        >
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
-
-          <FitBounds points={points} />
-
-          {points.length > 1 && (
-            <Polyline
-              positions={points.map(point => [
-                point.lat,
-                point.lon,
-              ])}
-              pathOptions={{
-                color: "hsl(var(--primary))",
-                weight: 3,
-                opacity: 0.85,
-              }}
+        <div className="h-[260px] w-full">
+          <MapContainer
+            center={[20, 0]}
+            zoom={2}
+            scrollWheelZoom={false}
+            dragging={true}
+            zoomControl={true}
+            attributionControl={true}
+            className="h-full w-full"
+          >
+            <MapContent
+              points={points}
+              currentCity={currentCity}
             />
-          )}
+          </MapContainer>
+        </div>
 
-          {points.map((point, index) => (
-            <Marker
-              key={`${point.city}-${index}`}
-              position={[point.lat, point.lon]}
-              icon={createNumberIcon(index + 1)}
-            >
-              <Popup>
-                <strong>{index + 1}. {point.city}</strong>
-              </Popup>
-            </Marker>
-          ))}
-        </MapContainer>
-      </div>
+        <div className="px-4 py-3 border-t border-border/50">
+          <div className="flex flex-wrap gap-x-4 gap-y-2">
+            {points.map((point, index) => (
+              <div
+                key={`${point.city}-label`}
+                className="flex items-center gap-1.5 text-xs text-muted-foreground"
+              >
+                <span className="font-bold text-primary">
+                  {index + 1}
+                </span>
 
-      <div className="px-4 py-3 border-t border-border/50">
-        <div className="flex flex-wrap gap-x-4 gap-y-2">
-          {points.map((point, index) => (
-            <div
-              key={`${point.city}-label`}
-              className="flex items-center gap-1.5 text-xs text-muted-foreground"
-            >
-              <span className="font-bold text-primary">
-                {index + 1}
-              </span>
-              <span>{point.city}</span>
-            </div>
-          ))}
+                <span>{point.city}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
-    </div>
+
+      {fullscreen && (
+        <div className="fixed inset-0 z-[100] bg-background">
+          <div className="absolute top-0 left-0 right-0 z-[110] bg-background/95 backdrop-blur-md border-b border-border">
+            <div className="flex items-center justify-between px-5 py-4">
+              <div>
+                <p className="text-base font-bold text-foreground">
+                  Trip Route
+                </p>
+
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {cities.length} cities
+                  {totalDistance > 0 &&
+                    ` · ${formatDistance(
+                      totalDistance
+                    )}`}
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setFullscreen(false)}
+                className="w-10 h-10 rounded-full bg-muted flex items-center justify-center"
+                aria-label="Close map"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+
+          <div className="absolute inset-0 pt-[73px]">
+            <MapContainer
+              center={[20, 0]}
+              zoom={2}
+              scrollWheelZoom={true}
+              dragging={true}
+              zoomControl={true}
+              attributionControl={true}
+              className="h-full w-full"
+            >
+              <MapContent
+                points={points}
+                currentCity={currentCity}
+                fullscreen
+              />
+            </MapContainer>
+          </div>
+
+          <div className="absolute bottom-5 left-4 right-4 z-[110]">
+            <div className="bg-background/95 backdrop-blur-md border border-border rounded-2xl p-4 shadow-lg">
+              <div className="flex flex-wrap gap-3">
+                {points.map((point, index) => (
+                  <div
+                    key={`full-${point.city}`}
+                    className="flex items-center gap-1.5"
+                  >
+                    <span className="text-xs font-bold text-primary">
+                      {index + 1}
+                    </span>
+
+                    <span className="text-xs font-medium">
+                      {point.city}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
