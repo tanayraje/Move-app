@@ -12,7 +12,7 @@ import L from "leaflet";
 import {
   X,
   Maximize2,
-  ShipWheel,
+  locate,
 } from "lucide-react";
 import { Trip } from "@/lib/types";
 import "leaflet/dist/leaflet.css";
@@ -178,24 +178,21 @@ function RecenterButton({
         top-3
         right-3
         z-[1000]
-        w-10
-        h-10
+        w-9
+        h-9
         rounded-full
-        flex
-        items-center
-        justify-center
-        bg-background/75
-        backdrop-blur-md
-        border
-        border-white/40
-        shadow-lg
-        text-foreground
-        hover:bg-background/90
+        border border-white/20
+        bg-black/30
+        backdrop-blur-xl
+        flex items-center justify-center
+        text-white
+        shadow-lg shadow-black/10
+        hover:bg-black/40
         active:scale-95
         transition-all
-      "
+        "
     >
-      <ShipWheel className="w-5 h-5" strokeWidth={2} />
+      <locate className="w-5 h-5" strokeWidth={2} />
     </button>
   );
 }
