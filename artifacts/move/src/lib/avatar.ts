@@ -1,5 +1,5 @@
 export const AVATAR_BASE_URL =
-  "https://api.dicebear.com/10.x/lorelei-neutral/svg?backgroundColor=b6e3f4&eyebrowsColor=083a54&eyesColor=083a54&frecklesColor=083a54&glassesColor=083a54&mouthColor=083a54&noseColor=083a54&mouthVariant=happy01,happy02,happy03,happy04,happy05,happy06,happy07,happy08,happy09,happy10,happy11,happy12,happy13,happy14,happy15,happy16,happy17,happy18,sad01,sad02,sad03,sad04,sad05,sad06,sad08,sad09";
+  "https://api.dicebear.com/10.x/notionists-neutral/svg?eyebrowsVariant=variant01,variant02,variant04,variant05,variant07,variant08,variant09,variant10,variant12&eyesVariant=variant01,variant03,variant05&mouthVariant=variant01,variant02,variant03,variant04,variant05,variant06,variant08,variant09,variant10,variant11,variant12,variant13,variant14,variant15,variant16,variant17,variant18,variant19,variant20,variant21,variant22,variant23,variant25,variant26,variant27,variant28,variant29,variant30&backgroundColor=b6e3f4&inkColor=083a54&paperColor=";
 
 export function getAvatarUrl(seed?: string, size = 128) {
   return `${AVATAR_BASE_URL}&seed=${encodeURIComponent(
