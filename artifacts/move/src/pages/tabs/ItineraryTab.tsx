@@ -6,6 +6,7 @@ import React, {
   useEffect,
 } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { useQueryClient } from "@tanstack/react-query";
 import { format, addDays, differenceInDays } from "date-fns";
 import {
   Plus, GripVertical, MapPin, Trash2, CalendarDays,
@@ -249,6 +250,7 @@ export default function ItineraryTab({ trip }: { trip: Trip }) {
   const { data: allItems = [] } = useItinerary(trip.id);
   const { mutate: reorder } = useReorderItinerary();
 const { mutate: updateTrip } = useUpdateTrip();
+const queryClient = useQueryClient();
 const { mutate: deleteItem } = useDeleteItineraryItem();
 const { mutate: saveItem } = useSaveItineraryItem();
 const { data: documents = [] } = useDocuments(trip.id);
@@ -377,10 +379,26 @@ const handleTouchEnd = (e: React.TouchEvent) => {
     delete updatedDayCities[selectedDate];
   }
 
-  updateTrip({
-    ...trip,
-    dayCities: updatedDayCities,
-  });
+  const updatedTrip = {
+  ...trip,
+  dayCities: updatedDayCities,
+  wishlistDayCount: currentDayCount - 1,
+};
+
+queryClient.setQueryData(
+  ["trips", trip.id],
+  updatedTrip
+);
+
+queryClient.setQueryData(
+  ["trips"],
+  (trips: Trip[] | undefined) =>
+    trips?.map((t) =>
+      t.id === trip.id ? updatedTrip : t
+    ) ?? []
+);
+
+updateTrip(updatedTrip);
 
   setEditingCity(false);
 };
