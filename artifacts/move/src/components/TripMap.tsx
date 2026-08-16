@@ -636,13 +636,13 @@ return unique;
   )}
 </div>
 
-      <div
-        className={
-          fullscreen
-            ? "absolute inset-0 pt-[73px]"
-            : "h-[260px] w-full"
-        }
-      >
+        <div
+            className={
+                fullscreen
+                ? "absolute inset-0 pt-[73px] z-0"
+                : "relative h-[260px] w-full z-0"
+            }
+            >
         <MapContainer
           center={[20, 0]}
           zoom={2}
@@ -664,7 +664,7 @@ return unique;
         className={
           fullscreen
             ? "absolute bottom-5 left-4 right-4 z-[1000]"
-            : "px-4 py-3 border-t border-border/50"
+            : "relative z-10 bg-background px-4 py-3 border-t border-border/50"
         }
       >
         <div
