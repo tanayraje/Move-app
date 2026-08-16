@@ -170,30 +170,30 @@ function RecenterButton({
 
   return (
     <button
-      type="button"
-      onClick={recenter}
-      aria-label="Recenter map"
-      className="
-        absolute
-        top-3
-        right-3
-        z-[1000]
-        w-9
-        h-9
-        rounded-full
-        border border-white/20
-        bg-black/30
-        backdrop-blur-xl
-        flex items-center justify-center
-        text-white
-        shadow-lg shadow-black/10
-        hover:bg-black/40
-        active:scale-95
-        transition-all
-        "
-    >
-      <locate className="w-5 h-5" strokeWidth={2} />
-    </button>
+  type="button"
+  onClick={recenter}
+  aria-label="Recenter map"
+  className="
+    absolute
+    top-3
+    right-3
+    z-[1000]
+    w-9
+    h-9
+    rounded-full
+    border border-white/20
+    bg-black/30
+    backdrop-blur-xl
+    flex items-center justify-center
+    text-white
+    shadow-lg shadow-black/10
+    hover:bg-black/40
+    active:scale-95
+    transition-all
+  "
+>
+  <locate className="w-4 h-4" strokeWidth={2} />
+</button>
   );
 }
 
