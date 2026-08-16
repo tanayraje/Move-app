@@ -6,7 +6,7 @@ import { Link } from "wouter";
 const AVATARS = Array.from({ length: 24 }, (_, i) => `avatar-${i + 1}`);
 
 const getAvatarUrl = (seed: string, size = 128) =>
-  `https://api.dicebear.com/9.x/notionists/svg?seed=${encodeURIComponent(seed)}&size=${size}`;
+  `https://api.dicebear.com/10.x/thumbs/svg?seed=${encodeURIComponent(seed)}&size=${size}`;
 
 export default function Profile() {
   const { user } = useSupabaseAuth();
