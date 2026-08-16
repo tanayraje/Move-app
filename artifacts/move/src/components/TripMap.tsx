@@ -12,7 +12,7 @@ import L from "leaflet";
 import {
   X,
   Maximize2,
-  locate,
+  Locate,
 } from "lucide-react";
 import { Trip } from "@/lib/types";
 import "leaflet/dist/leaflet.css";
@@ -192,7 +192,7 @@ function RecenterButton({
     transition-all
   "
 >
-  <locate className="w-4 h-4" strokeWidth={2} />
+  <Locate className="w-4 h-4" strokeWidth={2} />
 </button>
   );
 }
