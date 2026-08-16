@@ -580,7 +580,7 @@ return unique;
         className={
             fullscreen
             ? "trip-map fixed inset-0 z-[9999] bg-background"
-            : "trip-map bg-card border border-border rounded-2xl overflow-hidden shadow-sm"
+            : "trip-map bg-card border border-border rounded-2xl overflow-hidden shadow-sm mb-24"
         }
         >
       <div

@@ -733,9 +733,6 @@ const dur = Math.max(
           <Check className="w-4 h-4 text-primary" />
         </button>
 
-        <button onClick={() => setEditingCity(false)}>
-          <X className="w-4 h-4 text-muted-foreground" />
-        </button>
       </div>
     ) : (
       <button
