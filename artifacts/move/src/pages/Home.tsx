@@ -363,28 +363,28 @@ const hasMembers = memberCount > 1;
   }
 
   const statusBadge = isWishlist ? (
-  <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-pink-500/20 backdrop-blur-md px-3.5 py-1.5 text-xs font-semibold text-white shadow-lg shadow-black/10">
-    <span className="w-1.5 h-1.5 rounded-full bg-pink-300" />
+  <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-pink-500/20 backdrop-blur-md px-3 py-1.5 text-xs font-semibold text-white shadow-lg shadow-black/10">
+    <span className="w-1.5 h-1.5 rounded-full bg-pink-300 shrink-0" />
     Wishlist
   </span>
 ) : status === "archived" ? (
-  <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-black/30 backdrop-blur-md px-2.5 py-1 gap-1.5 text-[11px] font-semibold text-white shadow-lg shadow-black/10">
-    <span className="w-1.5 h-1.5 rounded-full bg-gray-300" />
+  <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-black/30 backdrop-blur-md px-3 py-1.5 text-xs font-semibold text-white shadow-lg shadow-black/10">
+    <span className="w-1.5 h-1.5 rounded-full bg-gray-300 shrink-0" />
     Archived
   </span>
 ) : isPast ? (
-  <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-black/30 backdrop-blur-md px-2.5 py-1 gap-1.5 text-[11px] font-semibold text-white shadow-lg shadow-black/10">
-    <span className="w-1.5 h-1.5 rounded-full bg-gray-300" />
+  <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-black/30 backdrop-blur-md px-3 py-1.5 text-xs font-semibold text-white shadow-lg shadow-black/10">
+    <span className="w-1.5 h-1.5 rounded-full bg-gray-300 shrink-0" />
     Past
   </span>
 ) : isActiveNow ? (
-  <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-blue-500/20 backdrop-blur-md px-2.5 py-1 gap-1.5 text-[11px] font-semibold text-white shadow-lg shadow-black/10">
-    <span className="w-1.5 h-1.5 rounded-full bg-blue-300" />
+  <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-blue-500/20 backdrop-blur-md px-3 py-1.5 text-xs font-semibold text-white shadow-lg shadow-black/10">
+    <span className="w-1.5 h-1.5 rounded-full bg-blue-300 shrink-0" />
     In Progress
   </span>
 ) : (
-  <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-orange-500/20 backdrop-blur-md px-2.5 py-1 gap-1.5 text-[11px] font-semibold text-white shadow-lg shadow-black/10">
-    <span className="w-1.5 h-1.5 rounded-full bg-orange-300" />
+  <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-orange-500/20 backdrop-blur-md px-3 py-1.5 text-xs font-semibold text-white shadow-lg shadow-black/10">
+    <span className="w-1.5 h-1.5 rounded-full bg-orange-300 shrink-0" />
     In {daysUntil}d
   </span>
 );
