@@ -137,6 +137,24 @@ function formatDistance(km: number) {
   return `${Math.round(km).toLocaleString("en-IN")} km`;
 }
 
+function formatStayDate(date: string) {
+  if (!date) return "";
+
+  // Wishlist format
+  if (date.startsWith("Day ")) {
+    return date;
+  }
+
+  // Calendar format: YYYY-MM-DD → 12 Aug
+  const [year, month, day] = date.split("-").map(Number);
+
+  if (!year || !month || !day) return date;
+
+  const d = new Date(year, month - 1, day);
+
+  return format(d, "d MMM");
+}
+
 async function geocodeCity(
   city: string
 ): Promise<{ lat: number; lon: number } | null> {
@@ -261,10 +279,10 @@ function MapContent({
     </strong>
 
     <div className="mt-1 text-xs">
-      {point.startDate === point.endDate
-        ? point.startDate
-        : `${point.startDate} – ${point.endDate}`}
-    </div>
+  {point.startDate === point.endDate
+    ? formatStayDate(point.startDate)
+    : `${formatStayDate(point.startDate)} – ${formatStayDate(point.endDate)}`}
+</div>
 
     {isCurrent && (
       <div className="mt-1 text-xs font-semibold">
@@ -318,14 +336,17 @@ for (const [date, rawCity] of entries) {
 
   if (!city) continue;
 
-  const existing = unique.find(
-    item =>
-      item.city.toLowerCase() === city.toLowerCase()
-  );
+  const lastStay = unique[unique.length - 1];
 
-  if (existing) {
-    existing.endDate = date;
+  // Same city as the previous timeline day.
+  // Extend the current stay.
+  if (
+    lastStay &&
+    lastStay.city.toLowerCase() === city.toLowerCase()
+  ) {
+    lastStay.endDate = date;
   } else {
+    // City changed, so start a new stay.
     unique.push({
       city,
       startDate: date,
