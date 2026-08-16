@@ -201,21 +201,23 @@ function ZoomControls() {
   const map = useMap();
 
   return (
-    <div className="absolute top-3 left-3 z-[1000] flex flex-col gap-1">
+    <div className="absolute top-3 left-3 z-[1000] flex flex-col overflow-hidden rounded-xl border border-white/20 bg-black/30 backdrop-blur-xl shadow-lg shadow-black/10">
       <button
         type="button"
         onClick={() => map.zoomIn()}
         aria-label="Zoom in"
-        className="w-9 h-9 rounded-full border border-white/20 bg-black/30 backdrop-blur-xl flex items-center justify-center text-white shadow-lg shadow-black/10 hover:bg-black/40 active:scale-95 transition-all text-xl font-medium"
+        className="w-10 h-9 flex items-center justify-center text-white text-xl font-medium hover:bg-black/10 active:bg-black/20 transition-colors"
       >
         +
       </button>
+
+      <div className="h-px bg-white/20" />
 
       <button
         type="button"
         onClick={() => map.zoomOut()}
         aria-label="Zoom out"
-        className="w-9 h-9 rounded-full border border-white/20 bg-black/30 backdrop-blur-xl flex items-center justify-center text-white shadow-lg shadow-black/10 hover:bg-black/40 active:scale-95 transition-all text-xl font-medium"
+        className="w-10 h-9 flex items-center justify-center text-white text-xl font-medium hover:bg-black/10 active:bg-black/20 transition-colors"
       >
         −
       </button>
