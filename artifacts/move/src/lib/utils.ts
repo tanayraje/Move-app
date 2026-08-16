@@ -64,3 +64,21 @@ export function getDayNumber(str: string): number | null {
   const match = str.match(/^Day\s+(\d+)$/i);
   return match ? Number(match[1]) : null;
 }
+
+export function isDateBeforeToday(
+  str: string | undefined | null
+): boolean {
+  const date = safeParseDate(str);
+  if (!date) return false;
+
+  const today = new Date();
+
+  return (
+    date.getFullYear() < today.getFullYear() ||
+    (date.getFullYear() === today.getFullYear() &&
+      date.getMonth() < today.getMonth()) ||
+    (date.getFullYear() === today.getFullYear() &&
+      date.getMonth() === today.getMonth() &&
+      date.getDate() < today.getDate())
+  );
+}

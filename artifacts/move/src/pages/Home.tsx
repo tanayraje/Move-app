@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { Link } from "wouter";
-import { format, differenceInDays, addMonths, addDays } from "date-fns";
+import { format, differenceInDays, addDays } from "date-fns";
 import {
   Plus, MapPin, Calendar, Plane, Trash2, Search, ChevronDown, X,
   Archive, Heart, User, MoreVertical, Users, LogOut, Pencil
@@ -53,18 +53,34 @@ const [editingTrip, setEditingTrip] = useState<Trip | null>(null);
   
 
   
-  // Auto-archive trips older than 6 months
-  useEffect(() => {
-    const sixMonthsAgo = addMonths(new Date(), -6);
-    allTrips.forEach(trip => {
-      const status = getTripStatus(trip);
-      if (status !== 'active' || !trip.endDate) return;
-      const d = safeParseDate(trip.endDate);
-      if (d && d < sixMonthsAgo) {
-        updateTrip({ ...trip, status: 'archived' });
-      }
-    });
-  }, [allTrips]);
+ // Automatically archive trips once their end date has passed
+useEffect(() => {
+  const today = new Date();
+
+  allTrips.forEach((trip) => {
+    const status = getTripStatus(trip);
+
+    if (status !== "active" || !trip.endDate) return;
+
+    const endDate = safeParseDate(trip.endDate);
+    if (!endDate) return;
+
+    const isPast =
+      endDate.getFullYear() < today.getFullYear() ||
+      (endDate.getFullYear() === today.getFullYear() &&
+        endDate.getMonth() < today.getMonth()) ||
+      (endDate.getFullYear() === today.getFullYear() &&
+        endDate.getMonth() === today.getMonth() &&
+        endDate.getDate() < today.getDate());
+
+    if (isPast) {
+      updateTrip({
+        ...trip,
+        status: "archived",
+      });
+    }
+  });
+}, [allTrips, updateTrip]);
 
   const activeTrips = allTrips.filter(t => getTripStatus(t) === 'active');
   const archivedTrips = allTrips.filter(t => getTripStatus(t) === 'archived');
