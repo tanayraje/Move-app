@@ -4,6 +4,7 @@ import {
   TileLayer,
   Marker,
   Polyline,
+  Popup,
   useMap,
 } from "react-leaflet";
 import L from "leaflet";
@@ -290,13 +291,27 @@ function MapContent({
 
         return (
           <Marker
-            key={`${point.city}-${index}`}
-            position={[point.lat, point.lon]}
-            icon={createNumberIcon(
-                index + 1,
-                isCurrent
-            )}
-            />
+  key={`${point.city}-${index}`}
+  position={[point.lat, point.lon]}
+  icon={createNumberIcon(
+    index + 1,
+    isCurrent
+  )}
+>
+  <Popup>
+    <div className="text-sm">
+      <strong>
+        {index + 1}. {point.city}
+      </strong>
+
+      {isCurrent && (
+        <div className="mt-1 text-xs font-semibold">
+          Current city
+        </div>
+      )}
+    </div>
+  </Popup>
+</Marker>
         );
       })}
     </>
@@ -478,65 +493,57 @@ export default function TripMap({
       }
     >
       <div
-        className={
-          fullscreen
-            ? "absolute top-0 left-0 right-0 z-[1000] bg-background/95 backdrop-blur-md border-b border-border"
-            : "px-4 pt-4 pb-3 flex items-start justify-between"
-        }
-      >
-             <div
-        className={
-            fullscreen
-            ? "flex items-center justify-between px-5 py-4"
-            : "flex items-center justify-between"
-        }
-        >
-          <div>
-            <p
-              className={
-                fullscreen
-                  ? "text-base font-bold text-foreground"
-                  : "text-xs font-bold uppercase tracking-wider text-muted-foreground"
-              }
-            >
-              Trip Route
-            </p>
+  className={
+    fullscreen
+      ? "absolute top-0 left-0 right-0 z-[1000] bg-background/95 backdrop-blur-md border-b border-border"
+      : "px-4 pt-4 pb-3 flex items-center justify-between"
+  }
+>
+  <div>
+    <p
+      className={
+        fullscreen
+          ? "text-base font-bold text-foreground"
+          : "text-xs font-bold uppercase tracking-wider text-muted-foreground"
+      }
+    >
+      Trip Route
+    </p>
 
-            <p className="text-sm text-muted-foreground mt-1">
-              {cities.length}{" "}
-              {cities.length === 1 ? "city" : "cities"}
-              {totalDistance > 0 && (
-                <>
-                  {" · "}
-                  {formatDistance(totalDistance)}
-                </>
-              )}
-            </p>
-          </div>
+    <p className="text-sm text-muted-foreground mt-1">
+      {cities.length}{" "}
+      {cities.length === 1 ? "city" : "cities"}
+      {totalDistance > 0 && (
+        <>
+          {" · "}
+          {formatDistance(totalDistance)}
+        </>
+      )}
+    </p>
+  </div>
 
-          {!fullscreen && (
-            <button
-              type="button"
-              onClick={() => setFullscreen(true)}
-              className="flex items-center gap-1.5 text-xs font-semibold text-primary"
-            >
-              <Maximize2 className="w-3.5 h-3.5" />
-              Full map
-            </button>
-          )}
+  {!fullscreen && (
+    <button
+      type="button"
+      onClick={() => setFullscreen(true)}
+      className="flex items-center gap-1.5 text-xs font-semibold text-primary shrink-0"
+    >
+      <Maximize2 className="w-3.5 h-3.5" />
+      Full map
+    </button>
+  )}
 
-          {fullscreen && (
-            <button
-              type="button"
-              onClick={() => setFullscreen(false)}
-              className="w-10 h-10 rounded-full bg-muted flex items-center justify-center"
-              aria-label="Close map"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          )}
-        </div>
-      </div>
+  {fullscreen && (
+    <button
+      type="button"
+      onClick={() => setFullscreen(false)}
+      className="w-10 h-10 rounded-full bg-muted flex items-center justify-center shrink-0"
+      aria-label="Close map"
+    >
+      <X className="w-5 h-5" />
+    </button>
+  )}
+</div>
 
       <div
         className={
