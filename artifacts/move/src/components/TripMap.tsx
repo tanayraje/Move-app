@@ -4,7 +4,6 @@ import {
   TileLayer,
   Marker,
   Polyline,
-  Popup,
   useMap,
 } from "react-leaflet";
 import L from "leaflet";
@@ -298,24 +297,18 @@ function MapContent({
               isCurrent
             )}
           >
-            <Popup>
-              <div className="text-sm">
+             <Popup>
+            <div className="text-sm">
                 <strong>
-                  {index + 1}. {point.city}
+                {index + 1}. {point.city}
                 </strong>
 
-                {point.travelType && (
-                  <div className="mt-1 text-xs">
-                    {travelLabel(point.travelType)}
-                  </div>
-                )}
-
                 {isCurrent && (
-                  <div className="mt-1 text-xs font-semibold">
+                <div className="mt-1 text-xs font-semibold">
                     Current city
-                  </div>
+                </div>
                 )}
-              </div>
+            </div>
             </Popup>
           </Marker>
         );
@@ -505,7 +498,13 @@ export default function TripMap({
             : "px-4 pt-4 pb-3 flex items-start justify-between"
         }
       >
-        <div className="flex items-center justify-between px-5 py-4">
+             <div
+        className={
+            fullscreen
+            ? "flex items-center justify-between px-5 py-4"
+            : "flex items-center justify-between"
+        }
+        >
           <div>
             <p
               className={
