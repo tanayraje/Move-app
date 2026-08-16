@@ -13,7 +13,6 @@ import {
   Maximize2,
 } from "lucide-react";
 import { Trip, ItineraryItem, TravelType } from "@/lib/types";
-import { cn } from "@/lib/utils";
 import "leaflet/dist/leaflet.css";
 
 interface CityPoint {
@@ -491,21 +490,36 @@ export default function TripMap({
     );
   }
 
-  return (
-    <>
-      <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
-        <div className="px-4 pt-4 pb-3 flex items-start justify-between">
+    return (
+    <div
+      className={
+        fullscreen
+          ? "fixed inset-0 z-[9999] bg-background"
+          : "bg-card border border-border rounded-2xl overflow-hidden shadow-sm"
+      }
+    >
+      <div
+        className={
+          fullscreen
+            ? "absolute top-0 left-0 right-0 z-[1000] bg-background/95 backdrop-blur-md border-b border-border"
+            : "px-4 pt-4 pb-3 flex items-start justify-between"
+        }
+      >
+        <div className="flex items-center justify-between px-5 py-4">
           <div>
-            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            <p
+              className={
+                fullscreen
+                  ? "text-base font-bold text-foreground"
+                  : "text-xs font-bold uppercase tracking-wider text-muted-foreground"
+              }
+            >
               Trip Route
             </p>
 
             <p className="text-sm text-muted-foreground mt-1">
               {cities.length}{" "}
-              {cities.length === 1
-                ? "city"
-                : "cities"}
-
+              {cities.length === 1 ? "city" : "cities"}
               {totalDistance > 0 && (
                 <>
                   {" · "}
@@ -515,122 +529,86 @@ export default function TripMap({
             </p>
           </div>
 
-          <button
-            type="button"
-            onClick={() => setFullscreen(true)}
-            className="flex items-center gap-1.5 text-xs font-semibold text-primary"
-          >
-            <Maximize2 className="w-3.5 h-3.5" />
-            Full map
-          </button>
+          {!fullscreen && (
+            <button
+              type="button"
+              onClick={() => setFullscreen(true)}
+              className="flex items-center gap-1.5 text-xs font-semibold text-primary"
+            >
+              <Maximize2 className="w-3.5 h-3.5" />
+              Full map
+            </button>
+          )}
+
+          {fullscreen && (
+            <button
+              type="button"
+              onClick={() => setFullscreen(false)}
+              className="w-10 h-10 rounded-full bg-muted flex items-center justify-center"
+              aria-label="Close map"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          )}
         </div>
+      </div>
 
-        {!fullscreen && (
-  <div className="h-[260px] w-full">
-    <MapContainer
-      center={[20, 0]}
-      zoom={2}
-      scrollWheelZoom={false}
-      dragging={true}
-      zoomControl={true}
-      attributionControl={true}
-      className="h-full w-full"
-    >
-      <MapContent
-        points={points}
-        currentCity={currentCity}
-      />
-    </MapContainer>
-  </div>
-)}
+      <div
+        className={
+          fullscreen
+            ? "absolute inset-0 pt-[73px]"
+            : "h-[260px] w-full"
+        }
+      >
+        <MapContainer
+          center={[20, 0]}
+          zoom={2}
+          scrollWheelZoom={fullscreen}
+          dragging={true}
+          zoomControl={true}
+          attributionControl={true}
+          className="h-full w-full"
+        >
+          <MapContent
+            points={points}
+            currentCity={currentCity}
+            fullscreen={fullscreen}
+          />
+        </MapContainer>
+      </div>
 
-        <div className="px-4 py-3 border-t border-border/50">
+      <div
+        className={
+          fullscreen
+            ? "absolute bottom-5 left-4 right-4 z-[1000]"
+            : "px-4 py-3 border-t border-border/50"
+        }
+      >
+        <div
+          className={
+            fullscreen
+              ? "bg-background/95 backdrop-blur-md border border-border rounded-2xl p-4 shadow-lg"
+              : ""
+          }
+        >
           <div className="flex flex-wrap gap-x-4 gap-y-2">
             {points.map((point, index) => (
               <div
                 key={`${point.city}-label`}
-                className="flex items-center gap-1.5 text-xs text-muted-foreground"
+                className="flex items-center gap-1.5"
               >
-                <span className="font-bold text-primary">
+                <span className="text-xs font-bold text-primary">
                   {index + 1}
                 </span>
 
-                <span>{point.city}</span>
+                <span className="text-xs font-medium text-foreground">
+                  {point.city}
+                </span>
               </div>
             ))}
           </div>
         </div>
       </div>
-
-      {fullscreen && (
-        <div className="fixed inset-0 z-[9999] bg-background">
-          <div className="absolute top-0 left-0 right-0 z-[110] bg-background/95 backdrop-blur-md border-b border-border">
-            <div className="flex items-center justify-between px-5 py-4">
-              <div>
-                <p className="text-base font-bold text-foreground">
-                  Trip Route
-                </p>
-
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {cities.length} cities
-                  {totalDistance > 0 &&
-                    ` · ${formatDistance(
-                      totalDistance
-                    )}`}
-                </p>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setFullscreen(false)}
-                className="w-10 h-10 rounded-full bg-muted flex items-center justify-center"
-                aria-label="Close map"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
-
-          <div className="absolute inset-0 pt-[73px] z-0">
-            <MapContainer
-              center={[20, 0]}
-              zoom={2}
-              scrollWheelZoom={true}
-              dragging={true}
-              zoomControl={true}
-              attributionControl={true}
-              className="h-full w-full"
-            >
-              <MapContent
-                points={points}
-                currentCity={currentCity}
-                fullscreen
-              />
-            </MapContainer>
-          </div>
-
-          <div className="absolute bottom-5 left-4 right-4 z-[110]">
-            <div className="bg-background/95 backdrop-blur-md border border-border rounded-2xl p-4 shadow-lg">
-              <div className="flex flex-wrap gap-3">
-                {points.map((point, index) => (
-                  <div
-                    key={`full-${point.city}`}
-                    className="flex items-center gap-1.5"
-                  >
-                    <span className="text-xs font-bold text-primary">
-                      {index + 1}
-                    </span>
-
-                    <span className="text-xs font-medium">
-                      {point.city}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </>
+    </div>
   );
 }
