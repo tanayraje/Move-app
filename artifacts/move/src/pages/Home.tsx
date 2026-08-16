@@ -18,7 +18,7 @@ import { joinTripByCode } from "@/hooks/use-store";
 import { useQueryClient } from '@tanstack/react-query';
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
-
+import { getAvatarUrl } from "@/lib/avatar";
 
 export default function Home() {
   const { data: allTrips = [], isLoading } = useTrips();
@@ -128,13 +128,11 @@ useEffect(() => {
             className="w-10 h-10 rounded-full overflow-hidden bg-muted hover:opacity-90 transition-opacity"
           >
             <img
-              src={`https://api.dicebear.com/10.x/thumbs/svg?seed=${encodeURIComponent(
-                profile?.avatar || "avatar-1"
-              )}&size=128`}
-              alt="Profile"
-              className="w-full h-full"
-            />
-          </button>
+            src={getAvatarUrl(profile?.avatar, 128)}
+            alt="Profile"
+            className="w-full h-full"
+          />
+        </button>
 
           {showUserMenu && (
             <div

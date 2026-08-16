@@ -17,6 +17,7 @@ import OverviewTab from "./tabs/OverviewTab";
 import { BottomSheet, Button, Input, Label } from "@/components/ui";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
+import { getAvatarUrl } from "@/lib/avatar";
 
 export default function TripDashboard({ params }: { params: { id: string, tab?: string } }) {
   const tripId = params.id;
@@ -321,14 +322,12 @@ https://move-app-theta.vercel.app/join/${trip.inviteCode}`;
       className="flex items-center gap-3 bg-card border border-border rounded-xl px-3 py-2.5"
     >
       <div className="w-8 h-8 rounded-full overflow-hidden bg-muted shrink-0">
-  <img
-    src={`https://api.dicebear.com/10.x/thumbs/svg?seed=${encodeURIComponent(
-      member.avatar || "avatar-1"
-    )}&size=64`}
-    alt=""
-    className="w-full h-full"
-  />
-</div>
+        <img
+          src={getAvatarUrl(member.avatar, 64)}
+          alt=""
+          className="w-full h-full"
+        />
+      </div>
 
             <div className="flex-1">
         <div className="font-medium text-sm text-foreground">

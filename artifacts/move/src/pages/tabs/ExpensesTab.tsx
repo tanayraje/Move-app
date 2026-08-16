@@ -14,6 +14,7 @@ import { Button, Input, Label, Select, BottomSheet, FAB } from "@/components/ui"
 import { formatCurrency, convertFromINR } from "@/lib/countries";
 import { useSupabaseAuth } from "@/contexts/AuthContext";
 import { buildExpenseLedger } from "@/lib/expense-ledger";
+import { getAvatarUrl } from "@/lib/avatar";
 
 const EXPENSE_ICONS: Record<ExpenseCategory, React.ElementType> = {
   food: Coffee,
@@ -311,11 +312,9 @@ const paid = ledger?.paid?.[id] ?? 0;
     <tr key={id} className="border-b border-border/30 last:border-0">
               <td className="py-3">
                 <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-full overflow-hidden bg-muted shrink-0">
+                <div className="w-7 h-7 rounded-full overflow-hidden bg-muted shrink-0">
                 <img
-                  src={`https://api.dicebear.com/10.x/thumbs/svg?seed=${encodeURIComponent(
-                    m.avatar || "avatar-1"
-                  )}&size=64`}
+                  src={getAvatarUrl(m.avatar, 64)}
                   alt=""
                   className="w-full h-full"
                 />
@@ -694,11 +693,9 @@ const isSplit =
 </div>
           <div className="flex items-center gap-2 mt-1">
             <div className="flex items-center gap-1">
-              <div className="w-4 h-4 rounded-full overflow-hidden bg-muted shrink-0">
+              <div className="w-6 h-6 rounded-full overflow-hidden bg-muted shrink-0">
               <img
-                src={`https://api.dicebear.com/10.x/thumbs/svg?seed=${encodeURIComponent(
-                  payer.avatar || "avatar-1"
-                )}&size=32`}
+                src={getAvatarUrl(m.avatar, 32)}
                 alt=""
                 className="w-full h-full"
               />
@@ -1090,9 +1087,7 @@ console.log("total", total);
                           </div>
                           <div className="w-6 h-6 rounded-full overflow-hidden bg-muted shrink-0">
                           <img
-                            src={`https://api.dicebear.com/10.x/thumbs/svg?seed=${encodeURIComponent(
-                              m.avatar || "avatar-1"
-                            )}&size=48`}
+                            src={getAvatarUrl(m.avatar, 48)}
                             alt=""
                             className="w-full h-full"
                           />
