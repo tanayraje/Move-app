@@ -125,9 +125,15 @@ useEffect(() => {
               e.stopPropagation();
               setShowUserMenu(!showUserMenu);
             }}
-            className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold hover:opacity-90 transition-opacity"
+            className="w-10 h-10 rounded-full overflow-hidden bg-muted hover:opacity-90 transition-opacity"
           >
-            {profile?.username?.[0]?.toUpperCase() || "?"}
+            <img
+              src={`https://api.dicebear.com/9.x/notionists/svg?seed=${encodeURIComponent(
+                profile?.avatar || "avatar-1"
+              )}`}
+              alt="Profile"
+              className="w-full h-full"
+            />
           </button>
 
           {showUserMenu && (

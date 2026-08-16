@@ -27,15 +27,18 @@ export function useUpdateProfile(userId?: string) {
     mutationFn: async ({
       username,
       name,
+      avatar,
     }: {
       username: string;
       name: string;
+      avatar: string;
     }) => {
       const { data, error } = await supabase
         .from("profiles")
         .update({
           username,
           name,
+          avatar,
         })
         .eq("id", userId)
         .select()
