@@ -99,7 +99,7 @@ useEffect(() => {
         <img
         src="/move-logo.svg"
         alt="Move"
-        className="h-10 w-auto object-contain"
+        className="h-7 w-auto object-contain"
       />
         <p className="text-muted-foreground mt-1 text-lg">
           Where to next?
