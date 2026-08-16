@@ -525,22 +525,24 @@ export default function TripMap({
           </button>
         </div>
 
-        <div className="h-[260px] w-full">
-          <MapContainer
-            center={[20, 0]}
-            zoom={2}
-            scrollWheelZoom={false}
-            dragging={true}
-            zoomControl={true}
-            attributionControl={true}
-            className="h-full w-full"
-          >
-            <MapContent
-              points={points}
-              currentCity={currentCity}
-            />
-          </MapContainer>
-        </div>
+        {!fullscreen && (
+  <div className="h-[260px] w-full">
+    <MapContainer
+      center={[20, 0]}
+      zoom={2}
+      scrollWheelZoom={false}
+      dragging={true}
+      zoomControl={true}
+      attributionControl={true}
+      className="h-full w-full"
+    >
+      <MapContent
+        points={points}
+        currentCity={currentCity}
+      />
+    </MapContainer>
+  </div>
+)}
 
         <div className="px-4 py-3 border-t border-border/50">
           <div className="flex flex-wrap gap-x-4 gap-y-2">
@@ -561,7 +563,7 @@ export default function TripMap({
       </div>
 
       {fullscreen && (
-        <div className="fixed inset-0 z-[100] bg-background">
+        <div className="fixed inset-0 z-[9999] bg-background">
           <div className="absolute top-0 left-0 right-0 z-[110] bg-background/95 backdrop-blur-md border-b border-border">
             <div className="flex items-center justify-between px-5 py-4">
               <div>
@@ -589,7 +591,7 @@ export default function TripMap({
             </div>
           </div>
 
-          <div className="absolute inset-0 pt-[73px]">
+          <div className="absolute inset-0 pt-[73px] z-0">
             <MapContainer
               center={[20, 0]}
               zoom={2}
