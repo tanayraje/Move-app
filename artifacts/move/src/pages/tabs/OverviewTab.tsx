@@ -227,7 +227,7 @@ return (
 </div>
 
       {/* Budget summary */}
-      {budgetTotal > 0 && (
+            {budgetTotal > 0 && (
         <div className="bg-card border border-border rounded-2xl p-4">
           <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">Budget</p>
           <div className="flex items-center justify-between mb-2">
@@ -238,18 +238,23 @@ return (
               {totalSpent > budgetTotal ? 'Over budget' : formatCurrency(budgetTotal - totalSpent, 'INR') + ' left'}
             </span>
           </div>
+
           <div className="h-2 bg-muted rounded-full overflow-hidden">
-            <div className={`h-full rounded-full transition-all ${totalSpent > budgetTotal ? 'bg-red-500' : 'bg-primary'}`}
-              style={{ width: `${Math.min((totalSpent / budgetTotal) * 100, 100)}%` }} />
+            <div
+              className={`h-full rounded-full transition-all ${totalSpent > budgetTotal ? 'bg-red-500' : 'bg-primary'}`}
+              style={{
+                width: `${Math.min((totalSpent / budgetTotal) * 100, 100)}%`
+              }}
+            />
           </div>
         </div>
       )}
-    </div>
-  );
-}
 
       {/* Trip Map */}
       {!isWishlist && <TripMap trip={trip} />}
+    </div>
+  );
+}
 
 function StatCard({
   icon: Icon,
