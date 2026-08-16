@@ -12,15 +12,15 @@ import {
   X,
   Maximize2,
 } from "lucide-react";
-import { Trip, ItineraryItem, TravelType } from "@/lib/types";
+import { Trip } from "@/lib/types";
 import "leaflet/dist/leaflet.css";
 
 interface CityPoint {
   city: string;
   lat: number;
   lon: number;
-  date?: string;
-  travelType?: TravelType;
+  startDate?: string;
+  endDate?: string;
 }
 
 function createNumberIcon(
@@ -135,50 +135,6 @@ function formatDistance(km: number) {
   }
 
   return `${Math.round(km).toLocaleString("en-IN")} km`;
-}
-
-function travelLabel(type?: TravelType) {
-  switch (type) {
-    case "flight":
-      return "Flight";
-    case "train":
-      return "Train";
-    case "bus":
-      return "Bus";
-    case "car":
-      return "Car";
-    default:
-      return "";
-  }
-}
-
-function getTravelType(
-  fromCity: string,
-  toCity: string,
-  itinerary: ItineraryItem[]
-): TravelType | undefined {
-  const normalise = (value: string) =>
-    value
-      .toLowerCase()
-      .replace(/\([^)]*\)/g, "")
-      .trim();
-
-  const from = normalise(fromCity);
-  const to = normalise(toCity);
-
-  const travelItem = itinerary.find(item => {
-    if (item.elementType !== "travel") return false;
-
-    const itemFrom = normalise(item.fromLocation || "");
-    const itemTo = normalise(item.toLocation || "");
-
-    return (
-      (itemFrom.includes(from) || from.includes(itemFrom)) &&
-      (itemTo.includes(to) || to.includes(itemTo))
-    );
-  });
-
-  return travelItem?.travelType;
 }
 
 async function geocodeCity(
@@ -299,18 +255,24 @@ function MapContent({
   )}
 >
   <Popup>
-    <div className="text-sm">
-      <strong>
-        {index + 1}. {point.city}
-      </strong>
+  <div className="text-sm">
+    <strong>
+      {index + 1}. {point.city}
+    </strong>
 
-      {isCurrent && (
-        <div className="mt-1 text-xs font-semibold">
-          Current city
-        </div>
-      )}
+    <div className="mt-1 text-xs">
+      {point.startDate === point.endDate
+        ? point.startDate
+        : `${point.startDate} – ${point.endDate}`}
     </div>
-  </Popup>
+
+    {isCurrent && (
+      <div className="mt-1 text-xs font-semibold">
+        Current city
+      </div>
+    )}
+  </div>
+</Popup>
 </Marker>
         );
       })}
@@ -320,10 +282,8 @@ function MapContent({
 
 export default function TripMap({
   trip,
-  itinerary = [],
 }: {
   trip: Trip;
-  itinerary?: ItineraryItem[];
 }) {
   const [points, setPoints] = useState<CityPoint[]>([]);
   const [loading, setLoading] = useState(false);
@@ -347,10 +307,34 @@ export default function TripMap({
         return dateA.localeCompare(dateB);
       });
 
-    const unique: {
-      city: string;
-      date: string;
-    }[] = [];
+const unique: {
+  city: string;
+  startDate: string;
+  endDate: string;
+}[] = [];
+
+for (const [date, rawCity] of entries) {
+  const city = rawCity.trim();
+
+  if (!city) continue;
+
+  const existing = unique.find(
+    item =>
+      item.city.toLowerCase() === city.toLowerCase()
+  );
+
+  if (existing) {
+    existing.endDate = date;
+  } else {
+    unique.push({
+      city,
+      startDate: date,
+      endDate: date,
+    });
+  }
+}
+
+return unique;
 
     for (const [date, rawCity] of entries) {
       const city = rawCity.trim();
@@ -408,10 +392,11 @@ export default function TripMap({
         if (coordinates) {
           results.push({
             city: entry.city,
-            date: entry.date,
+            startDate: entry.startDate,
+            endDate: entry.endDate,
             lat: coordinates.lat,
             lon: coordinates.lon,
-          });
+            });
         }
 
         if (cities.length > 1) {
@@ -422,24 +407,7 @@ export default function TripMap({
       }
 
       if (!cancelled) {
-        const enriched = results.map(
-          (point, index) => {
-            if (index === 0) return point;
-
-            const previous = results[index - 1];
-
-            return {
-              ...point,
-              travelType: getTravelType(
-                previous.city,
-                point.city,
-                itinerary
-              ),
-            };
-          }
-        );
-
-        setPoints(enriched);
+        setPoints(results);
         setLoading(false);
       }
     }
@@ -449,7 +417,7 @@ export default function TripMap({
     return () => {
       cancelled = true;
     };
-  }, [cities, itinerary]);
+  }, [cities]);
 
   const totalDistance = useMemo(() => {
     return points
