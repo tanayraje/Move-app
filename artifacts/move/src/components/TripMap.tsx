@@ -197,6 +197,32 @@ function RecenterButton({
   );
 }
 
+function ZoomControls() {
+  const map = useMap();
+
+  return (
+    <div className="absolute top-3 left-3 z-[1000] flex flex-col gap-1">
+      <button
+        type="button"
+        onClick={() => map.zoomIn()}
+        aria-label="Zoom in"
+        className="w-9 h-9 rounded-full border border-white/20 bg-black/30 backdrop-blur-xl flex items-center justify-center text-white shadow-lg shadow-black/10 hover:bg-black/40 active:scale-95 transition-all text-xl font-medium"
+      >
+        +
+      </button>
+
+      <button
+        type="button"
+        onClick={() => map.zoomOut()}
+        aria-label="Zoom out"
+        className="w-9 h-9 rounded-full border border-white/20 bg-black/30 backdrop-blur-xl flex items-center justify-center text-white shadow-lg shadow-black/10 hover:bg-black/40 active:scale-95 transition-all text-xl font-medium"
+      >
+        −
+      </button>
+    </div>
+  );
+}
+
 function formatDistance(km: number) {
   if (km < 1) return "<1 km";
 
@@ -303,9 +329,11 @@ function MapContent({
         fullscreen={fullscreen}
         />
 
+         <ZoomControls />
+
         <RecenterButton
-        points={points}
-        fullscreen={fullscreen}
+          points={points}
+          fullscreen={fullscreen}
         />
 
       {points.length > 1 &&
@@ -618,7 +646,7 @@ return unique;
           zoom={2}
           scrollWheelZoom={fullscreen}
           dragging={true}
-          zoomControl={true}
+          zoomControl={false}
           attributionControl={true}
           className="h-full w-full"
         >
@@ -665,28 +693,3 @@ return unique;
     </div>
   );
 }
-
-<style>{`
-  .trip-map .leaflet-control-zoom {
-    border: none !important;
-    box-shadow: none !important;
-  }
-
-  .trip-map .leaflet-control-zoom a {
-    width: 36px !important;
-    height: 36px !important;
-    line-height: 36px !important;
-    margin-bottom: 4px;
-    border-radius: 9999px !important;
-    border: 1px solid rgba(255,255,255,0.2) !important;
-    background: rgba(0,0,0,0.30) !important;
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    color: white !important;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.10);
-  }
-
-  .trip-map .leaflet-control-zoom a:hover {
-    background: rgba(0,0,0,0.40) !important;
-  }
-`}</style>
