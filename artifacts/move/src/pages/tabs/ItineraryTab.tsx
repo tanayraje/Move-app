@@ -367,10 +367,23 @@ const handleTouchEnd = (e: React.TouchEvent) => {
   const currentCity = dayCities[selectedDate] ?? '';
 
   const saveCity = (val: string) => {
-    const trimmed = val.trim();
-    updateTrip({ ...trip, dayCities: { ...dayCities, [selectedDate]: trimmed } });
-    setEditingCity(false);
-  };
+  const trimmed = val.trim();
+
+  const updatedDayCities = { ...dayCities };
+
+  if (trimmed) {
+    updatedDayCities[selectedDate] = trimmed;
+  } else {
+    delete updatedDayCities[selectedDate];
+  }
+
+  updateTrip({
+    ...trip,
+    dayCities: updatedDayCities,
+  });
+
+  setEditingCity(false);
+};
 
   const deleteWishlistDay = (day: string) => {
   if (!isWishlist) return;
@@ -402,6 +415,28 @@ if (
 }
 
   const deletedDay = parseInt(day.replace("Day ", ""), 10);
+  const updatedDayCities: Record<string, string> = {};
+
+Object.entries(dayCities).forEach(([date, city]) => {
+  const match = date.match(/^Day\s+(\d+)$/i);
+
+  if (!match) {
+    updatedDayCities[date] = city;
+    return;
+  }
+
+  const cityDay = parseInt(match[1], 10);
+
+  if (cityDay === deletedDay) {
+    return;
+  }
+
+  if (cityDay > deletedDay) {
+    updatedDayCities[`Day ${cityDay - 1}`] = city;
+  } else {
+    updatedDayCities[date] = city;
+  }
+});
 
   allItems.forEach((item) => {
     const dayMatch = item.date.match(/^Day\s+(\d+)$/i);
@@ -447,9 +482,10 @@ if (changed) {
   });
 
   updateTrip({
-    ...trip,
-    wishlistDayCount: (trip.wishlistDayCount ?? 1) - 1,
-  });
+  ...trip,
+  dayCities: updatedDayCities,
+  wishlistDayCount: (trip.wishlistDayCount ?? 1) - 1,
+});
 
   if (selectedDate === day) {
   const newDay = Math.max(1, deletedDay - 1);
