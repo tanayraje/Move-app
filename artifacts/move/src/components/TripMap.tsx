@@ -12,6 +12,7 @@ import L from "leaflet";
 import {
   X,
   Maximize2,
+  ShipWheel,
 } from "lucide-react";
 import { Trip } from "@/lib/types";
 import "leaflet/dist/leaflet.css";
@@ -130,6 +131,75 @@ function haversineDistance(
   );
 }
 
+function RecenterButton({
+  points,
+  fullscreen = false,
+}: {
+  points: CityPoint[];
+  fullscreen?: boolean;
+}) {
+  const map = useMap();
+
+  const recenter = () => {
+    if (points.length === 0) return;
+
+    map.invalidateSize();
+
+    if (points.length === 1) {
+      map.setView(
+        [points[0].lat, points[0].lon],
+        fullscreen ? 9 : 8,
+        { animate: true }
+      );
+      return;
+    }
+
+    const bounds = L.latLngBounds(
+      points.map(point => [
+        point.lat,
+        point.lon,
+      ] as [number, number])
+    );
+
+    map.fitBounds(bounds, {
+      padding: fullscreen ? [60, 60] : [35, 35],
+      maxZoom: fullscreen ? 9 : 8,
+      animate: true,
+    });
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={recenter}
+      aria-label="Recenter map"
+      className="
+        absolute
+        top-3
+        right-3
+        z-[1000]
+        w-10
+        h-10
+        rounded-full
+        flex
+        items-center
+        justify-center
+        bg-background/75
+        backdrop-blur-md
+        border
+        border-white/40
+        shadow-lg
+        text-foreground
+        hover:bg-background/90
+        active:scale-95
+        transition-all
+      "
+    >
+      <ShipWheel className="w-5 h-5" strokeWidth={2} />
+    </button>
+  );
+}
+
 function formatDistance(km: number) {
   if (km < 1) return "<1 km";
 
@@ -229,12 +299,17 @@ function MapContent({
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-      />
+        />
 
-      <FitBounds
+        <FitBounds
         points={points}
         fullscreen={fullscreen}
-      />
+        />
+
+        <RecenterButton
+        points={points}
+        fullscreen={fullscreen}
+        />
 
       {points.length > 1 &&
         points.slice(0, -1).map((point, index) => {
