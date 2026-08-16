@@ -652,6 +652,7 @@ function ExpenseRow({
 const payer =
   members.find(m => m.id === expense.payerId) || {
     name: expense.payerName || "Unknown User",
+    avatar: "avatar-1",
     color: "#9ca3af",
   };
 
@@ -695,7 +696,7 @@ const isSplit =
             <div className="flex items-center gap-1">
               <div className="w-6 h-6 rounded-full overflow-hidden bg-muted shrink-0">
               <img
-                src={getAvatarUrl(m.avatar, 32)}
+                src={getAvatarUrl(payer.avatar, 32)}
                 alt=""
                 className="w-full h-full"
               />
