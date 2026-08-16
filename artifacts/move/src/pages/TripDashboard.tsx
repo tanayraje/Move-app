@@ -320,19 +320,15 @@ https://move-app-theta.vercel.app/join/${trip.inviteCode}`;
       key={member.user_id}
       className="flex items-center gap-3 bg-card border border-border rounded-xl px-3 py-2.5"
     >
-      <div
-        className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
-        style={{
-          backgroundColor:
-  member.role === "owner"
-    ? "#2563eb"
-    : getAvatarColour(member.user_id),
-        }}
-      >
-        {(member.name || member.username || "?")
-          .charAt(0)
-          .toUpperCase()}
-      </div>
+      <div className="w-8 h-8 rounded-full overflow-hidden bg-muted shrink-0">
+  <img
+    src={`https://api.dicebear.com/10.x/thumbs/svg?seed=${encodeURIComponent(
+      member.avatar || "avatar-1"
+    )}&size=64`}
+    alt=""
+    className="w-full h-full"
+  />
+</div>
 
             <div className="flex-1">
         <div className="font-medium text-sm text-foreground">

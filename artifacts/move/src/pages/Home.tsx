@@ -128,9 +128,9 @@ useEffect(() => {
             className="w-10 h-10 rounded-full overflow-hidden bg-muted hover:opacity-90 transition-opacity"
           >
             <img
-              src={`https://api.dicebear.com/9.x/notionists/svg?seed=${encodeURIComponent(
+              src={`https://api.dicebear.com/10.x/thumbs/svg?seed=${encodeURIComponent(
                 profile?.avatar || "avatar-1"
-              )}`}
+              )}&size=128`}
               alt="Profile"
               className="w-full h-full"
             />
