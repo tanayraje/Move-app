@@ -20,13 +20,14 @@ interface CityPoint {
   city: string;
   lat: number;
   lon: number;
-  startDate?: string;
-  endDate?: string;
+  startDate: string;
+  endDate: string;
 }
 
 function createNumberIcon(
   number: number,
-  isCurrent: boolean = false
+  isCurrent: boolean = false,
+  offsetX: number = 0
 ) {
   return L.divIcon({
     className: "",
@@ -44,6 +45,7 @@ function createNumberIcon(
         font-weight: 700;
         border: 3px solid white;
         box-shadow: 0 2px 9px rgba(0,0,0,0.25);
+        transform: translateX(${offsetX}px);
         ${isCurrent ? "outline: 3px solid hsl(var(--primary) / 0.2);" : ""}
       ">
         ${number}
@@ -259,20 +261,38 @@ function MapContent({
         })}
 
       {points.map((point, index) => {
-        const isCurrent =
-          !!currentCity &&
-          point.city.toLowerCase() ===
-            currentCity.toLowerCase();
+  const isCurrent =
+    !!currentCity &&
+    point.city.toLowerCase() ===
+      currentCity.toLowerCase();
 
-        return (
-          <Marker
-  key={`${point.city}-${index}`}
-  position={[point.lat, point.lon]}
-  icon={createNumberIcon(
-    index + 1,
-    isCurrent
-  )}
->
+  const sameCityPoints = points.filter(
+    p =>
+      p.city.toLowerCase() ===
+      point.city.toLowerCase()
+  );
+
+  const occurrenceIndex = sameCityPoints.findIndex(
+    p => p === point
+  );
+
+  const markerOffset =
+    sameCityPoints.length > 1
+      ? (occurrenceIndex -
+          (sameCityPoints.length - 1) / 2) *
+        36
+      : 0;
+
+  return (
+    <Marker
+      key={`${point.city}-${index}`}
+      position={[point.lat, point.lon]}
+      icon={createNumberIcon(
+        index + 1,
+        isCurrent,
+        markerOffset
+      )}
+    >
   <Popup>
   <div className="text-sm">
     <strong>
@@ -463,10 +483,10 @@ return unique;
     >
       <div
   className={
-    fullscreen
-      ? "absolute top-0 left-0 right-0 z-[1000] bg-background/95 backdrop-blur-md border-b border-border"
-      : "px-4 pt-4 pb-3 flex items-center justify-between"
-  }
+  fullscreen
+    ? "absolute top-0 left-0 right-0 z-[1000] bg-background/95 backdrop-blur-md border-b border-border flex items-center justify-between px-5 py-4"
+    : "px-4 pt-4 pb-3 flex items-center justify-between"
+}
 >
   <div>
     <p
