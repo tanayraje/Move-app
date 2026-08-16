@@ -293,24 +293,10 @@ function MapContent({
             key={`${point.city}-${index}`}
             position={[point.lat, point.lon]}
             icon={createNumberIcon(
-              index + 1,
-              isCurrent
+                index + 1,
+                isCurrent
             )}
-          >
-             <Popup>
-            <div className="text-sm">
-                <strong>
-                {index + 1}. {point.city}
-                </strong>
-
-                {isCurrent && (
-                <div className="mt-1 text-xs font-semibold">
-                    Current city
-                </div>
-                )}
-            </div>
-            </Popup>
-          </Marker>
+            />
         );
       })}
     </>
