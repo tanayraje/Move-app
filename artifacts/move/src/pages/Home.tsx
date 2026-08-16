@@ -100,6 +100,10 @@ useEffect(() => {
         src="/move-logo.svg"
         alt="Move"
         className="h-7 w-auto object-contain"
+        style={{
+          filter:
+            "brightness(0) saturate(100%) invert(13%) sepia(25%) saturate(2138%) hue-rotate(224deg) brightness(82%) contrast(108%)",
+        }}
       />
         <p className="text-muted-foreground mt-1 text-lg">
           Where to next?
