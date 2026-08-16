@@ -8,6 +8,7 @@ import { Calendar, FileText, Receipt, MapPin, Plane, Clock, Heart } from "lucide
 import { formatCurrency } from "@/lib/countries";
 import { safeFormatDate, safeParseDate } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
+import TripMap from "@/components/TripMap";
 
 export default function OverviewTab({ trip }: { trip: Trip }) {
   const [, navigate] = useLocation();
@@ -246,6 +247,9 @@ return (
     </div>
   );
 }
+
+      {/* Trip Map */}
+      {!isWishlist && <TripMap trip={trip} />}
 
 function StatCard({
   icon: Icon,
