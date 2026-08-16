@@ -11,10 +11,6 @@ import L from "leaflet";
 import {
   X,
   Maximize2,
-  Plane,
-  Train,
-  Bus,
-  Car,
 } from "lucide-react";
 import { Trip, ItineraryItem, TravelType } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -64,38 +60,6 @@ function createNumberIcon(
   });
 }
 
-function createTravelIcon(type?: TravelType) {
-  const symbols: Record<string, string> = {
-    flight: "✈",
-    train: "▣",
-    bus: "▰",
-    car: "●",
-  };
-
-  return L.divIcon({
-    className: "",
-    html: `
-      <div style="
-        width: 28px;
-        height: 28px;
-        border-radius: 9999px;
-        background: white;
-        color: hsl(var(--primary));
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 13px;
-        font-weight: 700;
-        border: 1px solid hsl(var(--primary) / 0.25);
-        box-shadow: 0 2px 8px rgba(0,0,0,0.12);
-      ">
-        ${symbols[type || "car"] || "●"}
-      </div>
-    `,
-    iconSize: [28, 28],
-    iconAnchor: [14, 14],
-  });
-}
 
 function FitBounds({
   points,
@@ -316,18 +280,6 @@ function MapContent({
                 }}
               />
 
-              {point.travelType && (
-                <Marker
-                  position={[
-                    (point.lat + next.lat) / 2,
-                    (point.lon + next.lon) / 2,
-                  ]}
-                  icon={createTravelIcon(
-                    point.travelType
-                  )}
-                  interactive={false}
-                />
-              )}
             </React.Fragment>
           );
         })}
