@@ -99,7 +99,7 @@ useEffect(() => {
         <img
         src="/move-logo.svg"
         alt="Move"
-        className="h-6 w-auto object-contain"
+        className="h-6.5 w-auto object-contain"
         style={{
           filter:
             "brightness(0) saturate(100%) invert(13%) sepia(25%) saturate(2138%) hue-rotate(224deg) brightness(82%) contrast(108%)",
