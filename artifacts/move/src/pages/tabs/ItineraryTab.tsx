@@ -784,8 +784,8 @@ const dur = Math.max(
       {/* Content sheet slides over the photo */}
       <div className="relative z-10 -mt-7 min-h-[60vh] rounded-t-[34px] bg-background px-4 pb-40 pt-5 shadow-[0_-12px_30px_rgba(10,20,50,0.16)]">
         {/* Day strip (solid chips, not glass) */}
-        <div data-no-swipe className="relative -mx-4 overflow-x-auto px-4 no-scrollbar">
-          <div ref={dayScrollerRef} className="flex min-w-max gap-2 pb-2 pt-1">
+        <div data-no-swipe className="relative -mx-4 -mb-3 overflow-x-auto px-4 pb-6 no-scrollbar">
+          <div ref={dayScrollerRef} className="flex min-w-max gap-2 pt-1">
             {days.map(day => {
               const isSelected = selectedDate === day;
               const hasItems = allItems.some(i => i.date === day && i.elementType !== "accommodation");
@@ -833,7 +833,7 @@ const dur = Math.max(
         </div>
 
         {/* Day summary */}
-        <div className="mb-5 mt-3 flex items-center justify-between px-0.5 text-[13px]">
+        <div className="mb-5 mt-2 flex items-center justify-between px-0.5 text-[13px]">
           <div className="flex items-center gap-4 text-muted-foreground">
             {totalDayMinutes > 0 && (
               <span className="flex items-center gap-1.5" title="Planned time">
