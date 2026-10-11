@@ -797,7 +797,6 @@ const dur = Math.max(
         <AnimatePresence mode="wait" custom={swipeDirection}>
           <motion.div
             key={selectedDate}
-            layout
             custom={swipeDirection}
             initial={{ x: swipeDirection > 0 ? 16 : -16, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
@@ -805,7 +804,6 @@ const dur = Math.max(
             transition={{
               x: { duration: 0.22, ease: "easeInOut" },
               opacity: { duration: 0.18 },
-              layout: { duration: 0.22 },
             }}
           >
             {/* Accommodation banners */}

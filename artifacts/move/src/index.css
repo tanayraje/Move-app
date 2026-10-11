@@ -77,24 +77,53 @@
   @apply mx-auto max-w-md bg-background min-h-[100dvh] relative shadow-2xl shadow-black/5 flex flex-col;
 }
 
-/* ---------- Glass surfaces ---------- */
+/* ---------- Glass surfaces ----------
+   Liquid-glass look, not a plain blur: thin blur + saturation lift, a tinted fill,
+   specular edges (bright where light hits, dim elsewhere) and a soft depth shadow.
+   Use it sparingly: floating controls, the dock and menus. Not for content cards. */
 @layer components {
-  /* Clear glass: use on top of photos / colour (white text) */
+  .glass,
+  .glass-light {
+    position: relative;
+    isolation: isolate;
+    -webkit-backdrop-filter: blur(10px) saturate(200%) brightness(1.06);
+    backdrop-filter: blur(10px) saturate(200%) brightness(1.06);
+  }
+  /* Clear glass: over photos / colour (white content) */
   .glass {
     color: #fff;
-    background: rgb(255 255 255 / 0.2);
-    -webkit-backdrop-filter: blur(22px) saturate(180%);
-    backdrop-filter: blur(22px) saturate(180%);
-    border: 1px solid rgb(255 255 255 / 0.38);
-    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.55), 0 8px 24px rgb(10 20 50 / 0.16);
+    background: linear-gradient(135deg, rgb(255 255 255 / 0.3), rgb(255 255 255 / 0.1) 60%, rgb(255 255 255 / 0.18));
+    box-shadow:
+      inset 0 0 0 1px rgb(255 255 255 / 0.22),
+      inset 1px 1px 1px -0.5px rgb(255 255 255 / 0.85),
+      inset -1px -1px 1px -0.5px rgb(255 255 255 / 0.45),
+      0 1px 2px rgb(10 20 50 / 0.12),
+      0 10px 28px -6px rgb(10 20 50 / 0.35);
   }
-  /* Light glass: use on top of the light app background (dark text) */
+  /* Light glass: over the light app background (dark content) */
   .glass-light {
-    background: rgb(255 255 255 / 0.74);
-    -webkit-backdrop-filter: blur(22px) saturate(180%);
-    backdrop-filter: blur(22px) saturate(180%);
-    border: 1px solid #fff;
-    box-shadow: 0 10px 30px rgb(15 23 42 / 0.1);
+    background: linear-gradient(135deg, rgb(255 255 255 / 0.86), rgb(255 255 255 / 0.62) 55%, rgb(255 255 255 / 0.78));
+    box-shadow:
+      inset 0 0 0 1px rgb(255 255 255 / 0.9),
+      inset 1px 1px 1px -0.5px #fff,
+      inset -1px -1px 1px -0.5px rgb(255 255 255 / 0.8),
+      0 0 0 1px rgb(15 23 42 / 0.05),
+      0 2px 4px rgb(15 23 42 / 0.05),
+      0 16px 36px -10px rgb(15 23 42 / 0.28);
+  }
+  /* Rim light: bright at top-left and bottom-right, like light catching the edge */
+  .glass::before,
+  .glass-light::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1.25px;
+    pointer-events: none;
+    background: linear-gradient(135deg, rgb(255 255 255 / 0.95), rgb(255 255 255 / 0) 38%, rgb(255 255 255 / 0) 62%, rgb(255 255 255 / 0.7));
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
   }
 }
 

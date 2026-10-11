@@ -96,7 +96,7 @@ export default function TripDashboard({ params }: { params: { id: string, tab?: 
 
       {/* Main Content Area */}
      <main
-  className="relative flex-1 overflow-x-hidden overflow-y-hidden pb-28"
+  className="relative flex-auto overflow-x-clip pb-28"
   style={{
     paddingBottom: "calc(104px + env(safe-area-inset-bottom))",
     paddingTop: heroTab ? 0 : `calc(${isArchived ? 100 : 76}px + env(safe-area-inset-top))`,

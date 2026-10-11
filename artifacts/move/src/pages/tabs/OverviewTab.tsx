@@ -121,15 +121,24 @@ return (
         }
       >
         {!trip.heroImage && <Plane className="absolute -right-6 bottom-10 h-44 w-44 text-white/10" />}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/35 via-transparent to-transparent" />
-        <div className="absolute inset-x-0 bottom-14 z-10 px-6 text-white">
-          <span className="glass inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold">
-            {isWishlist ? <Heart className="h-3.5 w-3.5 text-pink-300" /> : <span className="h-1.5 w-1.5 rounded-full bg-orange-300" />}
+        {/* Legibility: soften busy photos where the text sits (progressive blur + darkening) */}
+        <div
+          aria-hidden
+          className="absolute inset-x-0 bottom-0 h-[58%] backdrop-blur-md"
+          style={{
+            WebkitMaskImage: "linear-gradient(to top, #000 40%, transparent)",
+            maskImage: "linear-gradient(to top, #000 40%, transparent)",
+          }}
+        />
+        <div className="absolute inset-x-0 bottom-0 h-[66%] bg-gradient-to-t from-black/80 via-black/50 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-transparent" />
+        <div className="absolute inset-x-0 bottom-14 z-10 px-6 text-white [text-shadow:0_1px_14px_rgba(0,0,0,0.5)]">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-white/95 px-3 py-1.5 text-xs font-semibold text-slate-900 shadow-md [text-shadow:none]">
+            {isWishlist ? <Heart className="h-3.5 w-3.5 text-pink-500" /> : <span className="h-1.5 w-1.5 rounded-full bg-orange-500" />}
             {tripStatusLabel}
           </span>
           <h2 className="mt-3 font-display text-4xl font-bold leading-[1.05] tracking-tight">{trip.name}</h2>
-          <p className="mt-1.5 flex items-center gap-1.5 text-[13px] text-white/90">
+          <p className="mt-1.5 flex items-center gap-1.5 text-[13px] text-white">
             <MapPin className="h-3.5 w-3.5 shrink-0" />
             <span className="truncate">
               {heroLocation}
