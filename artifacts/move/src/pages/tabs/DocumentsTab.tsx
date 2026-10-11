@@ -12,6 +12,7 @@ import {
   FileText,
   FileImage,
   KeyRound,
+  UtensilsCrossed,
   Link2,
   Clock,
   ArrowRight,
@@ -32,19 +33,53 @@ import {
 import { Trip, TripDocument, DocumentCategory, ItineraryItem } from "@/lib/types";
 import { generateId, cn, getTripStatus, safeFormatDate } from "@/lib/utils";
 import { Button, Input, Label, Select, BottomSheet, FAB } from "@/components/ui";
+import { PlaceCode, TICKET_MASK, TICKET_SHADOW, TRAVEL_META } from "@/components/TicketParts";
 
-// ─── Types: five groups people actually look for (stored categories are unchanged) ───────────────
+// ─── Kinds ────────────────────────────────────────────────────────────────────────────────────────
+// A document takes its look (and colour) from the Timeline item it is attached to, so the colour code is
+// the same everywhere: travel blue, stay violet, meal amber, activity / tickets teal.
+// Documents with no link follow the type chosen at upload.
 
+type Kind = "travel" | "stay" | "meal" | "activity" | "id" | "file";
 type DocGroup = "transport" | "stay" | "id" | "tickets" | "other";
 
-const GROUP_OF: Record<DocumentCategory, DocGroup> = {
-  flight: "transport",
-  hotel: "stay",
-  visa: "id",
-  ticket: "tickets",
+function kindOf(doc: TripDocument, link?: ItineraryItem): Kind {
+  if (link) {
+    if (link.elementType === "travel") return "travel";
+    if (link.elementType === "accommodation") return "stay";
+    if (link.elementType === "meal") return "meal";
+    if (link.elementType === "activity") return "activity";
+  }
+  switch (doc.category) {
+    case "flight":
+      return "travel";
+    case "hotel":
+      return "stay";
+    case "visa":
+      return "id";
+    case "ticket":
+    case "activity":
+      return "activity";
+    default:
+      return "file";
+  }
+}
+
+const GROUP_OF_KIND: Record<Kind, DocGroup> = {
+  travel: "transport",
+  stay: "stay",
+  id: "id",
   activity: "tickets",
-  other: "other",
+  meal: "other",
+  file: "other",
 };
+
+interface Entry {
+  doc: TripDocument;
+  link?: ItineraryItem;
+  kind: Kind;
+  group: DocGroup;
+}
 
 const GROUPS: { id: DocGroup; label: string; icon: any }[] = [
   { id: "transport", label: "Transport", icon: Plane },
@@ -62,8 +97,6 @@ const CATEGORY_OPTIONS: { value: DocumentCategory; label: string }[] = [
   { value: "activity", label: "Activity booking" },
   { value: "other", label: "Other" },
 ];
-
-const groupOf = (doc: TripDocument): DocGroup => GROUP_OF[doc.category] ?? "other";
 
 // ─── Small helpers ───────────────────────────────────────────────────────────────────────────────
 
@@ -122,58 +155,65 @@ export default function DocumentsTab({ trip }: { trip: Trip }) {
     return pick;
   }, [items]);
 
+  const entries: Entry[] = useMemo(
+    () =>
+      docs.map(doc => {
+        const link = linkOf.get(doc.id);
+        const kind = kindOf(doc, link);
+        return { doc, link, kind, group: GROUP_OF_KIND[kind] };
+      }),
+    [docs, linkOf]
+  );
+
   const q = query.trim().toLowerCase();
-  const visible = docs.filter(d => {
-    if (group !== "all" && groupOf(d) !== group) return false;
+  const visible = entries.filter(e => {
+    if (group !== "all" && e.group !== group) return false;
     if (!q) return true;
-    const link = linkOf.get(d.id);
-    return [d.name, d.fileName, d.notes, link?.title].some(v => (v || "").toLowerCase().includes(q));
+    return [e.doc.name, e.doc.fileName, e.doc.notes, e.link?.title].some(v => (v || "").toLowerCase().includes(q));
   });
 
   const counts = useMemo(() => {
-    const c: Record<string, number> = { all: docs.length };
-    docs.forEach(d => (c[groupOf(d)] = (c[groupOf(d)] || 0) + 1));
+    const c: Record<string, number> = { all: entries.length };
+    entries.forEach(e => (c[e.group] = (c[e.group] || 0) + 1));
     return c;
-  }, [docs]);
+  }, [entries]);
 
   // Needed soon: documents attached to something happening today or tomorrow
   const soon = useMemo(() => {
     const today = format(new Date(), "yyyy-MM-dd");
     const tomorrow = format(addDays(new Date(), 1), "yyyy-MM-dd");
-    return docs
-      .map(d => ({ doc: d, link: linkOf.get(d.id) }))
-      .filter(x => x.link && (x.link.date === today || x.link.date === tomorrow))
+    return entries
+      .filter(e => e.link && (e.link.date === today || e.link.date === tomorrow))
       .sort((a, b) => `${a.link!.date}${a.link!.startTime}`.localeCompare(`${b.link!.date}${b.link!.startTime}`));
-  }, [docs, linkOf]);
+  }, [entries]);
 
   const sections = useMemo(() => {
-    if (group !== "all" || q) return [{ key: "flat", title: "", docs: visible }];
+    if (group !== "all" || q) return [{ key: "flat", title: "", entries: visible }];
     if (view === "type") {
       return GROUPS.map(g => ({
         key: g.id,
         title: g.label,
-        docs: visible.filter(d => groupOf(d) === g.id),
-      })).filter(s => s.docs.length > 0);
+        entries: visible.filter(e => e.group === g.id),
+      })).filter(sec => sec.entries.length > 0);
     }
-    const dated = new Map<string, TripDocument[]>();
-    const unlinked: TripDocument[] = [];
-    visible.forEach(d => {
-      const link = linkOf.get(d.id);
-      if (!link) unlinked.push(d);
-      else dated.set(link.date, [...(dated.get(link.date) || []), d]);
+    const dated = new Map<string, Entry[]>();
+    const unlinked: Entry[] = [];
+    visible.forEach(e => {
+      if (!e.link) unlinked.push(e);
+      else dated.set(e.link.date, [...(dated.get(e.link.date) || []), e]);
     });
     const out = Array.from(dated.keys())
       .sort()
       .map(date => ({
         key: date,
         title: safeFormatDate(date, d => format(d, "EEEE, MMM d"), date),
-        docs: dated.get(date)!,
+        entries: dated.get(date)!,
       }));
-    if (unlinked.length) out.push({ key: "none", title: "Not linked to the timeline", docs: unlinked });
+    if (unlinked.length) out.push({ key: "none", title: "Not linked to the timeline", entries: unlinked });
     return out;
-  }, [visible, group, q, view, linkOf]);
+  }, [visible, group, q, view]);
 
-  const open = docs.find(d => d.id === openId) ?? null;
+  const open = entries.find(e => e.doc.id === openId) ?? null;
   const readOnly = getTripStatus(trip) === "archived";
 
   return (
@@ -242,8 +282,8 @@ export default function DocumentsTab({ trip }: { trip: Trip }) {
               </p>
               <div className="-mx-4 overflow-x-auto px-4 pb-3 no-scrollbar">
                 <div className="flex min-w-max gap-3">
-                  {soon.map(({ doc, link }) => (
-                    <SoonTile key={doc.id} doc={doc} link={link!} onOpen={() => setOpenId(doc.id)} />
+                  {soon.map(entry => (
+                    <SoonTile key={entry.doc.id} entry={entry} onOpen={() => setOpenId(entry.doc.id)} />
                   ))}
                 </div>
               </div>
@@ -302,12 +342,12 @@ export default function DocumentsTab({ trip }: { trip: Trip }) {
                 {section.title && (
                   <h3 className="mb-3 flex items-center justify-between px-1 text-[13px] font-semibold text-muted-foreground">
                     <span>{section.title}</span>
-                    <span className="font-normal">{section.docs.length}</span>
+                    <span className="font-normal">{section.entries.length}</span>
                   </h3>
                 )}
                 <div className="space-y-5">
-                  {section.docs.map(doc => (
-                    <DocCard key={doc.id} doc={doc} link={linkOf.get(doc.id)} onOpen={() => setOpenId(doc.id)} />
+                  {section.entries.map(entry => (
+                    <DocCard key={entry.doc.id} entry={entry} onOpen={() => setOpenId(entry.doc.id)} />
                   ))}
                 </div>
               </section>
@@ -319,8 +359,7 @@ export default function DocumentsTab({ trip }: { trip: Trip }) {
       {!readOnly && <FAB icon={Plus} label="Upload document" onClick={() => setIsAddOpen(true)} />}
       <AddDocSheet isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} tripId={trip.id} />
       <PreviewSheet
-        doc={open}
-        link={open ? linkOf.get(open.id) : undefined}
+        entry={open}
         readOnly={readOnly}
         onClose={() => setOpenId(null)}
         onEdit={d => {
@@ -333,10 +372,10 @@ export default function DocumentsTab({ trip }: { trip: Trip }) {
   );
 }
 
-// ─── Cards: one shape per type, echoing the Timeline (ticket, key card, passport, entry pass) ────
+// ─── Cards: the same shapes as the Timeline (boarding pass, key card, receipt, ticket) ──────────────
 
-const TICKET_MASK =
-  "radial-gradient(circle 9px at 68% 0, #0000 97%, #000) top / 100% 51% no-repeat, radial-gradient(circle 9px at 68% 100%, #0000 97%, #000) bottom / 100% 51% no-repeat";
+const ZIGZAG = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='8' viewBox='0 0 16 8'%3E%3Cpath d='M0 0h16L8 8z'/%3E%3C/svg%3E")`;
+const RECEIPT_MASK = `linear-gradient(#000, #000) top / 100% calc(100% - 7px) no-repeat, ${ZIGZAG} bottom / 16px 8px repeat-x`;
 
 function Meta({ doc, className }: { doc: TripDocument; className?: string }) {
   const parts = [kindLabel(doc), sizeLabel(doc.fileSize), addedLabel(doc) && `Added ${addedLabel(doc)}`].filter(Boolean);
@@ -364,126 +403,190 @@ function Linked({ link, className }: { link?: ItineraryItem; className?: string 
   );
 }
 
-function DocCard({ doc, link, onOpen }: { doc: TripDocument; link?: ItineraryItem; onOpen: () => void }) {
-  const g = groupOf(doc);
+function DocCard({ entry, onOpen }: { entry: Entry; onOpen: () => void }) {
+  switch (entry.kind) {
+    case "travel":
+      return <BoardingPass entry={entry} onOpen={onOpen} />;
+    case "activity":
+      return <TicketCard entry={entry} onOpen={onOpen} />;
+    case "stay":
+      return <StayCard entry={entry} onOpen={onOpen} />;
+    case "meal":
+      return <ReceiptCard entry={entry} onOpen={onOpen} />;
+    case "id":
+      return <PassportCard entry={entry} onOpen={onOpen} />;
+    default:
+      return <FileCard entry={entry} onOpen={onOpen} />;
+  }
+}
 
-  if (g === "transport") {
-    const route = link?.elementType === "travel" && link.fromLocation && link.toLocation ? link : null;
-    return (
-      <button onClick={onOpen} className="block w-full text-left" style={{ filter: "drop-shadow(0 8px 14px rgba(15,23,42,0.12))" }}>
-        <div className="relative overflow-hidden rounded-[22px] bg-blue-50" style={{ WebkitMask: TICKET_MASK, mask: TICKET_MASK }}>
-          <span aria-hidden className="absolute bottom-4 left-[68%] top-4 border-l-[1.5px] border-dashed border-blue-300" />
-          <div className="grid grid-cols-[68%_32%]">
-            <div className="min-w-0 px-4 py-4">
-              <p className="flex items-center gap-1.5 text-[11px] font-semibold text-blue-700">
-                <Plane className="h-3.5 w-3.5" />
-                Transport
-              </p>
-              <h4 className="mt-2 line-clamp-2 break-words text-[17px] font-semibold leading-snug text-blue-950">{doc.name}</h4>
-              {route && (
-                <p className="mt-2 flex items-center gap-1.5 text-[12.5px] font-medium text-blue-900/70">
-                  <span className="truncate">{route.fromLocation}</span>
-                  <ArrowRight className="h-3.5 w-3.5 shrink-0" />
-                  <span className="truncate">{route.toLocation}</span>
+/** Travel: identical to the Timeline boarding pass, with the document attached to it */
+function BoardingPass({ entry, onOpen }: { entry: Entry; onOpen: () => void }) {
+  const { doc, link } = entry;
+  const travel = link?.elementType === "travel" ? link : undefined;
+  const meta = TRAVEL_META[travel?.travelType ?? "flight"];
+  const Icon = meta.icon;
+  const hasRoute = !!(travel?.fromLocation && travel?.toLocation);
+
+  return (
+    <button onClick={onOpen} className="block w-full text-left" style={{ filter: TICKET_SHADOW }}>
+      <div className="relative overflow-hidden rounded-[22px] bg-blue-50" style={{ WebkitMask: TICKET_MASK, mask: TICKET_MASK }}>
+        <span aria-hidden className="absolute bottom-4 left-[68%] top-4 border-l-[1.5px] border-dashed border-blue-300" />
+        <div className="grid grid-cols-[68%_32%]">
+          <div className="min-w-0 px-4 py-4">
+            <div className="flex items-center gap-1.5 text-[11px] font-semibold text-blue-700">
+              <Icon className="h-3.5 w-3.5" />
+              <span>{travel ? meta.label : "Transport"}</span>
+            </div>
+            {hasRoute ? (
+              <>
+                <div className="mt-3 flex items-center gap-2">
+                  <PlaceCode place={travel!.fromLocation} />
+                  <div className="flex min-w-[20px] flex-1 items-center">
+                    <div className="flex-1 border-t-[1.5px] border-dashed border-blue-300" />
+                    <Icon className="mx-1.5 h-3.5 w-3.5 shrink-0 text-blue-500" />
+                    <div className="flex-1 border-t-[1.5px] border-dashed border-blue-300" />
+                  </div>
+                  <PlaceCode place={travel!.toLocation} right />
+                </div>
+                <p className="mt-3 flex min-w-0 items-center gap-1.5 text-[12.5px] font-medium text-blue-900/75">
+                  <FileText className="h-3.5 w-3.5 shrink-0" />
+                  <span className="truncate">{doc.name}</span>
                 </p>
-              )}
-              <Meta doc={doc} className="mt-2.5 text-blue-900/55" />
-            </div>
-            <div className="flex min-w-0 flex-col items-center justify-center gap-1 bg-blue-100/60 px-2 py-4 text-center">
-              {link ? (
-                <>
-                  <span className="font-display text-[18px] font-bold leading-none text-blue-950">{dateLabel(link.date)}</span>
-                  {link.startTime && <span className="text-[12px] text-blue-900/70">{link.startTime}</span>}
-                </>
-              ) : (
-                <span className="font-display text-[18px] font-bold leading-none text-blue-950">{kindLabel(doc)}</span>
-              )}
-              <ChevronRight className="mt-1 h-4 w-4 text-blue-900/40" />
-            </div>
+              </>
+            ) : (
+              <h4 className="mt-2 line-clamp-2 break-words text-[17px] font-semibold leading-snug text-blue-950">{doc.name}</h4>
+            )}
+            <Meta doc={doc} className="mt-1.5 text-blue-900/55" />
+          </div>
+          <div className="flex min-w-0 flex-col items-center justify-center gap-1 bg-blue-100/60 px-2 py-4 text-center">
+            {travel ? (
+              <>
+                <span className="font-display text-[18px] font-bold leading-none text-blue-950">{dateLabel(travel.date)}</span>
+                {travel.startTime && <span className="text-[12px] text-blue-900/70">{travel.startTime}</span>}
+              </>
+            ) : (
+              <span className="font-display text-[18px] font-bold leading-none text-blue-950">{kindLabel(doc)}</span>
+            )}
+            <ChevronRight className="mt-1 h-4 w-4 text-blue-900/40" />
           </div>
         </div>
-      </button>
-    );
-  }
+      </div>
+    </button>
+  );
+}
 
-  if (g === "stay") {
-    return (
-      <button
-        onClick={onOpen}
-        className="mb-3 block w-full rounded-[24px] bg-violet-50 p-4 text-left ring-1 ring-violet-200/80 shadow-[0_5px_0_-1px_#E9E3FD,0_10px_0_-2px_#F2EEFE]"
-      >
-        <div className="flex items-start gap-3">
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-violet-600 text-white">
-            <KeyRound className="h-5 w-5" />
-          </span>
-          <div className="min-w-0 flex-1">
-            <p className="text-[11px] font-semibold text-violet-700">Stay</p>
-            <h4 className="line-clamp-2 break-words text-[17px] font-semibold leading-snug text-violet-950">{doc.name}</h4>
-          </div>
-          <ChevronRight className="mt-3 h-4 w-4 shrink-0 text-violet-900/40" />
-        </div>
-        {link?.elementType === "accommodation" && (
-          <p className="mt-3 text-[12.5px] font-medium text-violet-900/75">
-            {dateLabel(link.date)}
-            {link.endDate ? ` to ${dateLabel(link.endDate)}` : ""}
-          </p>
-        )}
-        <Linked link={link?.elementType === "accommodation" ? undefined : link} className="text-violet-900/70" />
-        <Meta doc={doc} className="mt-2.5 text-violet-900/55" />
-      </button>
-    );
-  }
-
-  if (g === "id") {
-    return (
-      <button
-        onClick={onOpen}
-        className="relative block w-full overflow-hidden rounded-[22px] bg-gradient-to-br from-[#0F2A5C] to-[#1B3F82] text-left text-white shadow-[0_14px_28px_-10px_rgba(15,42,92,0.55)] ring-1 ring-inset ring-white/15"
-      >
-        <span aria-hidden className="absolute inset-y-0 left-0 w-3 bg-black/20" />
-        <ShieldCheck aria-hidden className="absolute -right-5 -top-5 h-36 w-36 text-white/[0.07]" />
-        <div className="relative py-4 pl-7 pr-5">
-          <p className="flex items-center gap-1.5 text-[11px] font-semibold text-white/70">
-            <ShieldCheck className="h-3.5 w-3.5" />
-            Visa and ID
-          </p>
-          <h4 className="mt-2 line-clamp-2 break-words text-[18px] font-semibold leading-snug">{doc.name}</h4>
-          {doc.notes && <p className="mt-1 line-clamp-1 text-[12.5px] text-white/70">{doc.notes}</p>}
-          <Linked link={link} className="text-white/70" />
-          <Meta doc={doc} className="mt-3 text-white/55" />
-        </div>
-      </button>
-    );
-  }
-
-  if (g === "tickets") {
-    return (
-      <button
-        onClick={onOpen}
-        className="block w-full overflow-hidden rounded-[28px] bg-teal-50 text-left ring-1 ring-teal-200/80 shadow-[0_1px_2px_rgba(15,23,42,0.05),0_10px_26px_-6px_rgba(13,148,136,0.28)]"
-      >
-        <div className="relative bg-gradient-to-r from-teal-600 to-emerald-600 px-4 pb-2.5 pt-4 text-white">
-          <span aria-hidden className="absolute left-1/2 top-1.5 h-1.5 w-10 -translate-x-1/2 rounded-full bg-black/25" />
-          <div className="flex items-center justify-between text-[12px] font-semibold">
-            <span className="flex items-center gap-1.5">
+/** Activity tickets: the same ticket shape as the boarding pass, in the activity colour (teal) */
+function TicketCard({ entry, onOpen }: { entry: Entry; onOpen: () => void }) {
+  const { doc, link } = entry;
+  return (
+    <button onClick={onOpen} className="block w-full text-left" style={{ filter: TICKET_SHADOW }}>
+      <div className="relative overflow-hidden rounded-[22px] bg-teal-50" style={{ WebkitMask: TICKET_MASK, mask: TICKET_MASK }}>
+        <span aria-hidden className="absolute bottom-4 left-[68%] top-4 border-l-[1.5px] border-dashed border-teal-300" />
+        <div className="grid grid-cols-[68%_32%]">
+          <div className="min-w-0 px-4 py-4">
+            <p className="flex items-center gap-1.5 text-[11px] font-semibold text-teal-700">
               <Ticket className="h-3.5 w-3.5" />
               Ticket
-            </span>
-            <span>{link ? `${dateLabel(link.date)}${link.startTime ? `, ${link.startTime}` : ""}` : kindLabel(doc)}</span>
+            </p>
+            <h4 className="mt-2 line-clamp-2 break-words text-[17px] font-semibold leading-snug text-teal-950">{doc.name}</h4>
+            {link && link.title !== doc.name && <Linked link={link} className="text-teal-900/70" />}
+            <Meta doc={doc} className="mt-2 text-teal-900/55" />
+          </div>
+          <div className="flex min-w-0 flex-col items-center justify-center gap-1 bg-teal-100/60 px-2 py-4 text-center">
+            {link ? (
+              <>
+                <span className="font-display text-[18px] font-bold leading-none text-teal-950">{dateLabel(link.date)}</span>
+                {link.startTime && <span className="text-[12px] text-teal-900/70">{link.startTime}</span>}
+              </>
+            ) : (
+              <span className="font-display text-[18px] font-bold leading-none text-teal-950">{kindLabel(doc)}</span>
+            )}
+            <ChevronRight className="mt-1 h-4 w-4 text-teal-900/40" />
           </div>
         </div>
-        <div className="px-4 py-3.5">
-          <div className="flex items-start gap-3">
-            <h4 className="line-clamp-2 min-w-0 flex-1 break-words text-[17px] font-semibold leading-snug text-teal-950">{doc.name}</h4>
-            <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-teal-900/40" />
-          </div>
-          {link && link.title !== doc.name && <Linked link={link} className="text-teal-900/70" />}
-          <Meta doc={doc} className="mt-2 text-teal-900/55" />
-        </div>
-      </button>
-    );
-  }
+      </div>
+    </button>
+  );
+}
 
+function StayCard({ entry, onOpen }: { entry: Entry; onOpen: () => void }) {
+  const { doc, link } = entry;
+  return (
+    <button
+      onClick={onOpen}
+      className="mb-3 block w-full rounded-[24px] bg-violet-50 p-4 text-left ring-1 ring-violet-200/80 shadow-[0_5px_0_-1px_#E9E3FD,0_10px_0_-2px_#F2EEFE]"
+    >
+      <div className="flex items-start gap-3">
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-violet-600 text-white">
+          <KeyRound className="h-5 w-5" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-[11px] font-semibold text-violet-700">Stay</p>
+          <h4 className="line-clamp-2 break-words text-[17px] font-semibold leading-snug text-violet-950">{doc.name}</h4>
+        </div>
+        <ChevronRight className="mt-3 h-4 w-4 shrink-0 text-violet-900/40" />
+      </div>
+      {link?.elementType === "accommodation" && (
+        <p className="mt-3 text-[12.5px] font-medium text-violet-900/75">
+          {dateLabel(link.date)}
+          {link.endDate ? ` to ${dateLabel(link.endDate)}` : ""}
+        </p>
+      )}
+      <Linked link={link?.elementType === "accommodation" ? undefined : link} className="text-violet-900/70" />
+      <Meta doc={doc} className="mt-2.5 text-violet-900/55" />
+    </button>
+  );
+}
+
+/** Meals: the Timeline receipt with its torn edge, in amber */
+function ReceiptCard({ entry, onOpen }: { entry: Entry; onOpen: () => void }) {
+  const { doc, link } = entry;
+  return (
+    <button onClick={onOpen} className="block w-full text-left" style={{ filter: TICKET_SHADOW }}>
+      <div className="rounded-t-[26px] bg-amber-50 px-4 pb-4 pt-3.5" style={{ WebkitMask: RECEIPT_MASK, mask: RECEIPT_MASK }}>
+        <div className="flex items-center gap-3">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700">
+            <UtensilsCrossed className="h-5 w-5" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-[11px] font-semibold text-amber-700">Meal</p>
+            <h4 className="line-clamp-2 break-words text-[16px] font-semibold leading-snug text-amber-950">{doc.name}</h4>
+          </div>
+          <ChevronRight className="h-4 w-4 shrink-0 text-amber-900/40" />
+        </div>
+        <Linked link={link} className="text-amber-900/70" />
+        <Meta doc={doc} className="mt-2 text-amber-900/55" />
+      </div>
+    </button>
+  );
+}
+
+function PassportCard({ entry, onOpen }: { entry: Entry; onOpen: () => void }) {
+  const { doc, link } = entry;
+  return (
+    <button
+      onClick={onOpen}
+      className="relative block w-full overflow-hidden rounded-[22px] bg-gradient-to-br from-[#0F2A5C] to-[#1B3F82] text-left text-white shadow-[0_14px_28px_-10px_rgba(15,42,92,0.55)] ring-1 ring-inset ring-white/15"
+    >
+      <span aria-hidden className="absolute inset-y-0 left-0 w-3 bg-black/20" />
+      <ShieldCheck aria-hidden className="absolute -right-5 -top-5 h-36 w-36 text-white/[0.07]" />
+      <div className="relative py-4 pl-7 pr-5">
+        <p className="flex items-center gap-1.5 text-[11px] font-semibold text-white/70">
+          <ShieldCheck className="h-3.5 w-3.5" />
+          Visa and ID
+        </p>
+        <h4 className="mt-2 line-clamp-2 break-words text-[18px] font-semibold leading-snug">{doc.name}</h4>
+        {doc.notes && <p className="mt-1 line-clamp-1 text-[12.5px] text-white/70">{doc.notes}</p>}
+        <Linked link={link} className="text-white/70" />
+        <Meta doc={doc} className="mt-3 text-white/55" />
+      </div>
+    </button>
+  );
+}
+
+function FileCard({ entry, onOpen }: { entry: Entry; onOpen: () => void }) {
+  const { doc, link } = entry;
   const Icon = isImage(doc) ? FileImage : FileText;
   return (
     <button
@@ -503,30 +606,39 @@ function DocCard({ doc, link, onOpen }: { doc: TripDocument; link?: ItineraryIte
   );
 }
 
-function SoonTile({ doc, link, onOpen }: { doc: TripDocument; link: ItineraryItem; onOpen: () => void }) {
-  const g = GROUPS.find(x => x.id === groupOf(doc)) ?? GROUPS[4];
-  const Icon = g.icon;
-  const tone: Record<DocGroup, string> = {
-    transport: "bg-blue-50 text-blue-600",
+function SoonTile({ entry, onOpen }: { entry: Entry; onOpen: () => void }) {
+  const { doc, link, kind } = entry;
+  const tone: Record<Kind, string> = {
+    travel: "bg-blue-50 text-blue-600",
     stay: "bg-violet-50 text-violet-600",
+    meal: "bg-amber-50 text-amber-600",
+    activity: "bg-teal-50 text-teal-600",
     id: "bg-slate-100 text-[#1B3F82]",
-    tickets: "bg-teal-50 text-teal-600",
-    other: "bg-muted text-slate-600",
+    file: "bg-muted text-slate-600",
   };
+  const icon: Record<Kind, any> = {
+    travel: TRAVEL_META[link?.travelType ?? "flight"].icon,
+    stay: Building2,
+    meal: UtensilsCrossed,
+    activity: Ticket,
+    id: ShieldCheck,
+    file: FileText,
+  };
+  const Icon = icon[kind];
   const today = format(new Date(), "yyyy-MM-dd");
   return (
     <button
       onClick={onOpen}
       className="flex w-[240px] items-center gap-3 rounded-[22px] bg-card p-3 text-left shadow-[0_1px_2px_rgba(15,23,42,0.05),0_8px_20px_-8px_rgba(15,23,42,0.14)]"
     >
-      <span className={cn("flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl", tone[g.id])}>
+      <span className={cn("flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl", tone[kind])}>
         <Icon className="h-5 w-5" />
       </span>
       <span className="min-w-0">
         <span className="block truncate text-[14.5px] font-semibold">{doc.name}</span>
         <span className="block truncate text-[12px] text-muted-foreground">
-          {link.date === today ? "Today" : "Tomorrow"}
-          {link.startTime ? `, ${link.startTime}` : ""}
+          {link?.date === today ? "Today" : "Tomorrow"}
+          {link?.startTime ? `, ${link.startTime}` : ""}
         </span>
       </span>
     </button>
@@ -536,18 +648,18 @@ function SoonTile({ doc, link, onOpen }: { doc: TripDocument; link: ItineraryIte
 // ─── Preview ─────────────────────────────────────────────────────────────────────────────────────
 
 function PreviewSheet({
-  doc,
-  link,
+  entry,
   readOnly,
   onClose,
   onEdit,
 }: {
-  doc: TripDocument | null;
-  link?: ItineraryItem;
+  entry: Entry | null;
   readOnly: boolean;
   onClose: () => void;
   onEdit: (d: TripDocument) => void;
 }) {
+  const doc = entry?.doc ?? null;
+  const link = entry?.link;
   const { mutate: deleteDoc, isPending } = useDeleteDocument();
   const [confirming, setConfirming] = useState(false);
   const [imgFailed, setImgFailed] = useState(false);
@@ -573,7 +685,7 @@ function PreviewSheet({
     }
   };
 
-  const g = doc ? GROUPS.find(x => x.id === groupOf(doc)) : undefined;
+  const g = entry ? GROUPS.find(x => x.id === entry.group) : undefined;
   const rows: [string, string][] = doc
     ? ([
         ["Type", g?.label ?? "Other"],

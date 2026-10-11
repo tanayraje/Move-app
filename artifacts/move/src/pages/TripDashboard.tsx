@@ -4,7 +4,7 @@ import { format } from "date-fns";
 import { useTrip, useUpdateTrip } from "@/hooks/use-store";
 import {
   CalendarDays, FileText, Receipt, MapPin, LayoutDashboard,
-  ChevronLeft, Users, Settings, ArrowRight, Heart, Copy
+  ChevronLeft, Users, Settings, ArrowRight, Heart, Copy, Archive
 } from "lucide-react";
 import { cn, generateId, safeFormatDate } from "@/lib/utils";
 import type { Trip, TripStatus } from "@/lib/types";
@@ -57,8 +57,8 @@ export default function TripDashboard({ params }: { params: { id: string, tab?: 
       {/* Floating header: transparent over photos, glass once scrolled / on plain tabs */}
       <header
         className={cn(
-          "fixed left-1/2 top-0 z-40 w-full max-w-md -translate-x-1/2 px-4 pb-2.5 pt-[calc(12px+env(safe-area-inset-top))] transition-all duration-300",
-          !onPhoto && "glass-light rounded-b-[26px] border-t-0"
+          "fixed left-1/2 top-0 z-40 w-full max-w-md -translate-x-1/2 px-4 pb-3 pt-[calc(12px+env(safe-area-inset-top))] transition-colors duration-300",
+          !onPhoto && "border-b border-border/60 bg-background/95"
         )}
       >
         <div className="flex items-center gap-2.5">
@@ -86,10 +86,11 @@ export default function TripDashboard({ params }: { params: { id: string, tab?: 
         {isArchived && (
           <p
             className={cn(
-              "mt-2 text-center text-[11px] font-medium",
-              onPhoto ? "glass mx-auto w-fit rounded-full px-3 py-1" : "text-muted-foreground"
+              "mt-2.5 flex items-center justify-center gap-1.5 rounded-full px-3 py-1.5 text-[11.5px] font-medium",
+              onPhoto ? "glass mx-auto w-fit" : "bg-muted text-muted-foreground"
             )}
           >
+            <Archive className="h-3.5 w-3.5" />
             This trip is archived. View-only mode.
           </p>
         )}

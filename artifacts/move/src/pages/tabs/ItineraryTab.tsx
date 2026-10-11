@@ -8,6 +8,7 @@ import React, {
 import { AnimatePresence, motion } from "framer-motion";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchCityImage } from "@/lib/city-image";
+import { PlaceCode } from "@/components/TicketParts";
 import { format, addDays, differenceInDays } from "date-fns";
 import {
   Plus, GripVertical, MapPin, Trash2, CalendarDays,
@@ -248,37 +249,6 @@ function stayNights(checkIn: string, checkOut: string): number {
 }
 
 // ─── Card helpers ─────────────────────────────────────────────────────────────
-
-/** Splits "Delhi (DEL)" / "DEL" into a big airport-style code and a small city name. */
-function splitPlace(place?: string): { big: string; small: string; isCode: boolean } {
-  const p = (place ?? "").trim();
-  if (!p) return { big: "—", small: "", isCode: false };
-  const m = p.match(/\(([A-Za-z]{3})\)|\b([A-Z]{3})\b/);
-  const code = m ? (m[1] ?? m[2] ?? "").toUpperCase() : "";
-  if (m && code) {
-    const name = p.replace(m[0], " ").replace(/[(),-]+/g, " ").replace(/\s+/g, " ").trim();
-    return { big: code, small: name, isCode: true };
-  }
-  return { big: p, small: "", isCode: false };
-}
-
-function PlaceCode({ place, right }: { place?: string; right?: boolean }) {
-  const { big, small, isCode } = splitPlace(place);
-  return (
-    <div className={cn("min-w-0 max-w-[42%] shrink", right && "text-right")}>
-      <p
-        title={place}
-        className={cn(
-          "truncate font-display font-bold",
-          isCode ? "text-[22px] leading-none" : "text-[16px] leading-tight"
-        )}
-      >
-        {big}
-      </p>
-      {small && <p className="mt-1 truncate text-[11px] text-muted-foreground">{small}</p>}
-    </div>
-  );
-}
 
 /** Live state for a travel leg: departs in..., in transit, landed/arrived. */
 function legStatus(item: ItineraryItem): { label: string; tone: string } | null {
