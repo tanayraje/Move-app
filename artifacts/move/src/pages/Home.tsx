@@ -8,8 +8,8 @@ import {
 import { useTrips, useCreateTrip, useDeleteTrip, useUpdateTrip } from "@/hooks/use-store";
 import { useItinerary, useSaveItineraryItem } from "@/hooks/use-store";
 import { cn, generateId, safeFormatDate, safeParseDate, getTripStatus } from "@/lib/utils";
-import { Button, Input, Label, BottomSheet, FAB, HeroScrim } from "@/components/ui";
-import { DockBar, dockWidth, DockItem } from "@/components/Dock";
+import { Button, Input, Label, BottomSheet, FAB } from "@/components/ui";
+import { DockBar, DockItem } from "@/components/Dock";
 import { AddMenu } from "@/components/AddMenu";
 import { COUNTRIES, Country } from "@/lib/countries";
 import { INDIAN_STATES } from "@/lib/india-states";
@@ -88,7 +88,9 @@ useEffect(() => {
   const archivedTrips = allTrips.filter(t => getTripStatus(t) === 'archived');
   const wishlistTrips = allTrips.filter(t => getTripStatus(t) === 'wishlist');
 
-  const tripsToShow = tab === 'active' ? activeTrips : tab === 'archived' ? archivedTrips : wishlistTrips;
+  const tripsToShow = [...(tab === 'active' ? activeTrips : tab === 'archived' ? archivedTrips : wishlistTrips)].sort(
+    (a, b) => (a.startDate || "9999-12-31").localeCompare(b.startDate || "9999-12-31")
+  );
   const hasMultiple = [activeTrips.length, archivedTrips.length, wishlistTrips.length].filter(n => n > 0).length > 1;
 
   // One live line under the title: what is happening with the trips right now
@@ -178,7 +180,7 @@ useEffect(() => {
   </header>
 </div>
 
-<main className="flex flex-1 flex-col gap-3 px-4 pb-40">
+<main className="flex flex-1 flex-col gap-4 px-4 pb-40">
         {isLoading ? (
           <div className="flex flex-col gap-4">
             {[1, 2, 3].map(i => <div key={i} className="h-32 rounded-3xl bg-muted animate-pulse" />)}
@@ -187,22 +189,11 @@ useEffect(() => {
           <>
  
   {tripsToShow.length === 0 ? (
-    <EmptyState
-      tab={tab}
-      onNewTrip={() => setIsAddOpen(true)}
-      onWishlist={() => setIsWishlistOpen(true)}
-      onJoin={() => setIsJoinOpen(true)}
-    />
+    <EmptyState tab={tab} />
   ) : (
-    <>
-      <TripCard featured trip={tripsToShow[0]} onConvert={setConvertTrip} onEdit={setEditingTrip} />
-      {tripsToShow.length > 1 && (
-        <p className="mb-0.5 mt-3 px-2 text-[13px] font-semibold text-muted-foreground">Also on your list</p>
-      )}
-      {tripsToShow.slice(1).map((trip) => (
-        <TripCard key={trip.id} trip={trip} onConvert={setConvertTrip} onEdit={setEditingTrip} />
-      ))}
-    </>
+    tripsToShow.map((trip) => (
+      <TripCard key={trip.id} trip={trip} onConvert={setConvertTrip} onEdit={setEditingTrip} />
+    ))
   )}
 </>
         )}
@@ -245,12 +236,10 @@ useEffect(() => {
 
 function TripCard({
   trip,
-  featured = false,
   onConvert,
   onEdit,
 }: {
   trip: Trip;
-  featured?: boolean;
   onConvert: (trip: Trip) => void;
   onEdit: (trip: Trip) => void;
 }) {
@@ -293,123 +282,83 @@ const hasMembers = memberCount > 1;
     try { isActiveNow = differenceInDays(startD, new Date()) <= 0; } catch {}
   }
 
-  const badge = isWishlist
-    ? { label: "Wishlist", dot: "bg-pink-500", tone: "bg-pink-50 text-pink-600" }
+  // Status chip: glass tinted by state (green = active, pink = wishlist, grey = archived / past)
+  const tone = isWishlist
+    ? { label: "Wishlist", glass: "bg-pink-400/30", dot: "bg-pink-300" }
     : status === "archived"
-    ? { label: "Archived", dot: "bg-slate-400", tone: "bg-slate-100 text-slate-500" }
+    ? { label: "Archived", glass: "bg-slate-400/30", dot: "bg-slate-300" }
     : isPast
-    ? { label: "Past", dot: "bg-slate-400", tone: "bg-slate-100 text-slate-500" }
+    ? { label: "Past", glass: "bg-slate-400/30", dot: "bg-slate-300" }
     : isActiveNow
-    ? { label: "In progress", dot: "bg-blue-500", tone: "bg-blue-50 text-primary" }
-    : { label: `In ${daysUntil}d`, dot: "bg-orange-500", tone: "bg-orange-50 text-orange-600" };
+    ? { label: "In progress", glass: "bg-emerald-400/30", dot: "bg-emerald-300" }
+    : { label: `In ${daysUntil}d`, glass: "bg-emerald-400/30", dot: "bg-emerald-300" };
 
   const heroStyle = trip.heroImage
     ? { backgroundImage: `url(${trip.heroImage})`, backgroundSize: "cover", backgroundPosition: "center" }
     : { background: "linear-gradient(135deg,#2563eb 0%,#3b82f6 100%)" };
   const place = trip.state || trip.heroLocation || trip.destination;
+  const dateText = isWishlist
+    ? ""
+    : `${safeFormatDate(trip.startDate, d => format(d, "MMM d"), "")} – ${safeFormatDate(trip.endDate, d => format(d, "MMM d"), "")}`;
 
-  const confirmDelete = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (confirm("Delete trip?")) deleteTrip(trip.id);
-  };
-
-  // ---- Featured: photo first, info on a clean white strip (no glass on the content)
-  if (featured) {
-    return (
-      <div className="relative">
-        <Link
-          href={`/trip/${trip.id}/overview`}
-          className="block overflow-hidden rounded-[32px] bg-card shadow-[0_1px_2px_rgba(15,23,42,0.05),0_22px_40px_-14px_rgba(30,64,175,0.32)] transition-transform active:scale-[0.99]"
-        >
-          <div className="relative h-[240px]" style={heroStyle}>
-            <HeroScrim />
-            <span className="absolute left-4 top-4 inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-slate-900 shadow-md">
-              <span className={cn("h-1.5 w-1.5 rounded-full", badge.dot)} />
-              {badge.label}
-            </span>
-            <div className="absolute inset-x-5 bottom-4 text-white [text-shadow:0_1px_14px_rgba(0,0,0,0.5)]">
-              <h3 className="font-display text-[30px] font-bold leading-[1.05] tracking-tight">{trip.name}</h3>
-              <p className="mt-1.5 flex items-center gap-1.5 text-[13px]">
-                <MapPin className="h-3.5 w-3.5 shrink-0" />
-                <span className="truncate">{place}</span>
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center justify-between px-[18px] py-3.5">
-            <span className="flex min-w-0 items-center gap-2 text-[13px] font-medium text-muted-foreground">
-              {isWishlist ? (
-                <>
-                  <Heart className="h-4 w-4 shrink-0" />
-                  Saved for later
-                </>
-              ) : (
-                <>
-                  <Calendar className="h-4 w-4 shrink-0" />
-                  <span className="truncate">
-                    {safeFormatDate(trip.startDate, d => format(d, "MMM d"), "")} –{" "}
-                    {safeFormatDate(trip.endDate, d => format(d, "MMM d, yyyy"), "")}
-                  </span>
-                  {days !== null && <b className="shrink-0 font-semibold text-foreground">{days} days</b>}
-                </>
-              )}
-            </span>
-            {hasMembers ? (
-              <span className="flex shrink-0 items-center gap-1.5 text-[13px] font-medium text-muted-foreground">
-                <Users className="h-4 w-4" />
-                {memberCount}
-              </span>
-            ) : (
-              <User className="h-4 w-4 shrink-0 text-muted-foreground/70" />
-            )}
-          </div>
-        </Link>
-        {/* Actions: glass over the photo */}
-        <div className="absolute right-3.5 top-3.5 z-20 flex gap-2">
-          <TripMenu trip={trip} status={status} onConvert={onConvert} onEdit={onEdit} variant="photo" />
-          <button
-            aria-label="Delete trip"
-            onClick={confirmDelete}
-            className="glass flex h-9 w-9 items-center justify-center rounded-full"
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // ---- Compact row: thumbnail, name, place and dates, status
   return (
-    <div className="relative">
+    <div className="relative group">
       <Link
         href={`/trip/${trip.id}/overview`}
-        className="flex items-center gap-3.5 rounded-[26px] bg-card p-2.5 pr-14 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_rgba(15,23,42,0.06)] transition-transform active:scale-[0.99]"
+        className="block overflow-hidden rounded-[32px] shadow-[0_18px_40px_-14px_rgba(30,64,175,0.35)] transition-transform duration-300 active:scale-[0.99]"
       >
-        <div className="h-[76px] w-[76px] shrink-0 rounded-[20px]" style={heroStyle} />
-        <div className="min-w-0 flex-1">
-          <h3 className="truncate font-display text-base font-semibold">{trip.name}</h3>
-          <p className="mt-0.5 truncate text-[12.5px] text-muted-foreground">
-            {place}
-            {!isWishlist && (
-              <>
-                {", "}
-                {safeFormatDate(trip.startDate, d => format(d, "MMM d"), "")} –{" "}
-                {safeFormatDate(trip.endDate, d => format(d, "MMM d"), "")}
-              </>
+        {/* Tall photo; the glass panel is slim so the image stays the hero */}
+        <div className="relative h-[300px]" style={heroStyle}>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-transparent to-transparent" />
+
+          <span
+            className={cn(
+              "glass absolute left-4 top-4 z-10 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold",
+              tone.glass
             )}
-          </p>
-          <span className={cn("mt-1.5 inline-block rounded-[10px] px-2.5 py-0.5 text-[11px] font-semibold", badge.tone)}>
-            {badge.label}
+          >
+            <span className={cn("h-1.5 w-1.5 rounded-full", tone.dot)} />
+            {tone.label}
           </span>
+
+          <div className="glass absolute inset-x-3 bottom-3 rounded-[24px] px-4 py-3 [text-shadow:0_1px_8px_rgba(0,0,0,0.25)]">
+            <div className="flex items-center justify-between gap-3">
+              <h3 className="truncate font-display text-[22px] font-bold leading-tight">{trip.name}</h3>
+              {days !== null && <span className="shrink-0 font-display text-xl font-bold">{days}d</span>}
+            </div>
+            <div className="mt-1 flex items-center justify-between gap-3 text-[12.5px] text-white/90">
+              <span className="flex min-w-0 items-center gap-1.5">
+                <MapPin className="h-3.5 w-3.5 shrink-0" />
+                <span className="truncate">
+                  {place}
+                  {dateText ? ` · ${dateText}` : ""}
+                </span>
+              </span>
+              {hasMembers ? (
+                <span className="flex shrink-0 items-center gap-1">
+                  <Users className="h-3.5 w-3.5" />
+                  {memberCount}
+                </span>
+              ) : (
+                <User className="h-3.5 w-3.5 shrink-0 opacity-80" />
+              )}
+            </div>
+          </div>
         </div>
       </Link>
-      <div className="absolute right-3 top-1/2 z-20 flex -translate-y-1/2 flex-col gap-1.5">
-        <TripMenu trip={trip} status={status} onConvert={onConvert} onEdit={onEdit} variant="plain" />
+
+      {/* Actions */}
+      <div className="absolute right-3.5 top-3.5 z-20 flex gap-2">
+        <TripMenu trip={trip} status={status} onConvert={onConvert} onEdit={onEdit} />
         <button
           aria-label="Delete trip"
-          onClick={confirmDelete}
-          className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors hover:text-destructive"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (confirm("Delete trip?")) deleteTrip(trip.id);
+          }}
+          className="glass flex h-9 w-9 items-center justify-center rounded-full transition-all"
         >
           <Trash2 className="h-3.5 w-3.5" />
         </button>
@@ -418,7 +367,7 @@ const hasMembers = memberCount > 1;
   );
 }
 
-/** Home dock: the same compact glass pill as the trip screens (filters) + a docked "+" menu */
+/** Home dock: filters (label + count) in the same glass bar as the trip screens, and a docked "+" menu */
 function HomeDock({
   tab,
   onTab,
@@ -435,7 +384,6 @@ function HomeDock({
   onJoin: () => void;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const CELL = 72;
   const items: DockItem[] = [
     { id: "active", label: "Active", icon: Plane, badge: counts.active, onSelect: () => onTab("active") },
     { id: "wishlist", label: "Wishlist", icon: Heart, badge: counts.wishlist, onSelect: () => onTab("wishlist") },
@@ -453,105 +401,28 @@ function HomeDock({
           { id: "join", label: "Join with a code", hint: "Use an invite from a friend", icon: Users, tint: "bg-violet-50 text-violet-600", onSelect: onJoin },
         ]}
       />
-      <DockBar items={items} activeId={tab} cell={CELL} shifted />
-      <FAB
-        icon={Plus}
-        label="Add"
-        open={menuOpen}
-        onClick={() => setMenuOpen((o) => !o)}
-        barWidth={dockWidth(items.length, CELL)}
-      />
+      <DockBar mode="labels" items={items} activeId={tab} />
+      <FAB icon={Plus} label="Add" open={menuOpen} onClick={() => setMenuOpen((o) => !o)} />
     </>
   );
 }
 
-/** Empty states: friendly, with the next step one tap away */
-function EmptyState({
-  tab,
-  onNewTrip,
-  onWishlist,
-  onJoin,
-}: {
-  tab: TripStatus;
-  onNewTrip: () => void;
-  onWishlist: () => void;
-  onJoin: () => void;
-}) {
-  const primary =
-    "flex h-14 w-full items-center justify-center gap-2 rounded-full bg-gradient-to-br from-[#4F86F7] to-primary text-base font-semibold text-primary-foreground shadow-[inset_0_1px_1px_rgba(255,255,255,0.5),0_16px_28px_-8px_rgba(37,99,235,0.55)] active:scale-[0.98] transition-transform";
-
-  if (tab === "active") {
-    return (
-      <div className="flex flex-1 flex-col items-center px-4 pt-6 text-center">
-        <svg
-          width="300"
-          height="236"
-          viewBox="0 0 300 236"
-          aria-hidden="true"
-          style={{ filter: "drop-shadow(0 22px 26px rgba(37,99,235,0.22))" }}
-        >
-          <defs>
-            <linearGradient id="empty-card" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" stopColor="#4F86F7" />
-              <stop offset="1" stopColor="#2563EB" />
-            </linearGradient>
-          </defs>
-          <g transform="rotate(-9 110 120)">
-            <rect x="34" y="36" width="150" height="176" rx="28" fill="#DCE8FE" />
-          </g>
-          <g transform="rotate(8 190 120)">
-            <rect x="112" y="26" width="150" height="176" rx="28" fill="#BFD4FB" />
-            <circle cx="222" cy="76" r="14" fill="#FFF3D6" />
-            <path d="M112 176l40-46 30 30 25-20 55 56v8H112z" fill="#6D93D9" opacity="0.85" />
-          </g>
-          <rect x="72" y="44" width="156" height="184" rx="30" fill="url(#empty-card)" />
-          <path d="M104 190c26-34 62-34 92-96" fill="none" stroke="#fff" strokeOpacity="0.55" strokeWidth="2.4" strokeDasharray="3 7" strokeLinecap="round" />
-          <g transform="translate(150 118) scale(3.1) translate(-12 -12)" fill="none" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M17.8 19.2L16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z" />
-          </g>
-          <circle cx="104" cy="190" r="6" fill="#fff" />
-        </svg>
-        <h2 className="mt-2 font-display text-3xl font-bold tracking-tight">Where to next?</h2>
-        <p className="mt-2.5 max-w-[290px] text-[15px] leading-relaxed text-muted-foreground">
-          Plan a trip, save a dream destination, or join friends with an invite code.
-        </p>
-        <div className="mt-7 w-full space-y-3">
-          <button onClick={onNewTrip} className={primary}>
-            <Plus className="h-5 w-5" />
-            Plan a trip
-          </button>
-          <button
-            onClick={onJoin}
-            className="flex h-[52px] w-full items-center justify-center gap-2 rounded-full bg-card text-[15px] font-semibold shadow-[inset_0_0_0_1px_hsl(var(--border))] active:scale-[0.98] transition-transform"
-          >
-            <Users className="h-[18px] w-[18px]" />
-            Join with a code
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  const isWishlist = tab === "wishlist";
+function EmptyState({ tab }: { tab: TripStatus }) {
+  const Icon = tab === "wishlist" ? Heart : tab === "archived" ? Archive : Plane;
+  const title = tab === "active" ? "No trips yet" : tab === "wishlist" ? "No wishlist trips" : "No archived trips";
+  const hint =
+    tab === "active"
+      ? "Tap + to plan your first trip."
+      : tab === "wishlist"
+      ? "Tap + to save a destination for later."
+      : "Archived trips will appear here.";
   return (
-    <div className="flex flex-1 flex-col items-center px-4 pt-20 text-center">
-      <div className="flex h-24 w-24 items-center justify-center rounded-[32px] bg-primary/10 text-primary">
-        {isWishlist ? <Heart className="h-10 w-10" /> : <Archive className="h-10 w-10" />}
+    <div className="flex flex-1 flex-col items-center justify-center px-8 pb-24 text-center">
+      <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-[28px] bg-primary/10 text-primary">
+        <Icon className="h-9 w-9" />
       </div>
-      <h2 className="mt-6 font-display text-2xl font-bold tracking-tight">
-        {isWishlist ? "Nothing saved yet" : "No archived trips"}
-      </h2>
-      <p className="mt-2 max-w-[260px] text-[15px] leading-relaxed text-muted-foreground">
-        {isWishlist
-          ? "Keep the destinations you dream about here until you are ready to plan them."
-          : "Trips you archive after you travel will live here."}
-      </p>
-      {isWishlist && (
-        <button onClick={onWishlist} className={cn(primary, "mt-7 max-w-[260px]")}>
-          <Heart className="h-5 w-5" />
-          Save a destination
-        </button>
-      )}
+      <h2 className="font-display text-xl font-bold">{title}</h2>
+      <p className="mt-1.5 max-w-[250px] text-[15px] text-muted-foreground">{hint}</p>
     </div>
   );
 }
@@ -806,6 +677,35 @@ function CountryPicker({ value, onChange }: { value: Country | null; onChange: (
   );
 }
 
+function IndiaStateField({
+  country,
+  value,
+  onChange,
+}: {
+  country: Country | null;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  if (country?.name !== "India") return null;
+  return (
+    <div>
+      <Label>State (Optional)</Label>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="flex h-12 w-full min-w-0 rounded-xl border-2 border-border bg-card px-4 text-base focus:border-primary focus:outline-none"
+      >
+        <option value="">All of India</option>
+        {INDIAN_STATES.map((st) => (
+          <option key={st} value={st}>
+            {st}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
 function AddTripSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const { mutateAsync: createTrip, isPending } = useCreateTrip();
   const [country, setCountry] = useState<Country | null>(null);
@@ -822,6 +722,7 @@ function AddTripSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
       name: fd.get('name') as string,
       destination: country.name,
       destinationCurrency: country.currency,
+      state: country.name === "India" ? state || undefined : undefined,
       startDate: fd.get('startDate') as string,
       endDate: fd.get('endDate') as string,
       inviteCode: `MOVE-${id.slice(0, 4).toUpperCase()}`,
@@ -829,6 +730,7 @@ function AddTripSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
       createdAt: Date.now()
     });
     setCountry(null);
+    setState("");
     onClose();
   };
 
@@ -841,8 +743,15 @@ function AddTripSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
         </div>
         <div>
           <Label>Destination Country</Label>
-          <CountryPicker value={country} onChange={setCountry} />
+          <CountryPicker
+            value={country}
+            onChange={(c) => {
+              setCountry(c);
+              if (c.name !== "India") setState("");
+            }}
+          />
         </div>
+        <IndiaStateField country={country} value={state} onChange={setState} />
         <div className="grid grid-cols-2 gap-4">
           <div><Label htmlFor="startDate">Start Date</Label><Input id="startDate" name="startDate" type="date" required /></div>
           <div><Label htmlFor="endDate">End Date</Label><Input id="endDate" name="endDate" type="date" required /></div>
@@ -868,6 +777,7 @@ function AddWishlistSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
       name: fd.get('name') as string,
       destination: country.name,
       destinationCurrency: country.currency,
+      state: country.name === "India" ? state || undefined : undefined,
       startDate: '',
       endDate: '',
       inviteCode: `MOVE-${id.slice(0, 4).toUpperCase()}`,
@@ -876,6 +786,7 @@ function AddWishlistSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
       createdAt: Date.now()
     });
     setCountry(null);
+    setState("");
     onClose();
   };
 
@@ -888,8 +799,15 @@ function AddWishlistSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
         </div>
         <div>
           <Label>Destination Country</Label>
-          <CountryPicker value={country} onChange={setCountry} />
+          <CountryPicker
+            value={country}
+            onChange={(c) => {
+              setCountry(c);
+              if (c.name !== "India") setState("");
+            }}
+          />
         </div>
+        <IndiaStateField country={country} value={state} onChange={setState} />
         <Button type="submit" size="lg" className="mt-4" isLoading={isPending}>
           <Heart className="w-5 h-5 mr-2" /> Save to Wishlist
         </Button>

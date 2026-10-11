@@ -103,7 +103,7 @@ export function BottomSheet({
           }}
           >
             <div
-  className="overflow-y-auto px-6 pb-8 pt-4 no-scrollbar"
+  className="overflow-y-auto overflow-x-hidden px-6 pb-8 pt-4 no-scrollbar"
   style={{ maxHeight: "calc(85vh - 80px)" }}
 >
               <div className="mx-auto mt-2 mb-6 h-1.5 w-12 rounded-full bg-muted-foreground/20" />
@@ -136,22 +136,19 @@ export function BottomSheet({
 let dockActionCount = 0;
 
 /**
- * Docked "+" action: the same height as the dock pill, sitting right beside it.
- * Tells trip dock bars to slide left so the pair stays centred.
- * `barWidth` is the width of the bar it sits next to (default: the 5-tab trip bar).
+ * Docked "+" action: same height as the dock bar, at the right edge beside it.
+ * Tells the dock bar to make room (body.has-dock-action).
  */
 export function FAB({
   onClick,
   icon: Icon,
   label = "Add",
   open = false,
-  barWidth = 272,
 }: {
   onClick: () => void;
   icon: any;
   label?: string;
   open?: boolean;
-  barWidth?: number;
 }) {
   useEffect(() => {
     dockActionCount += 1;
@@ -168,21 +165,19 @@ export function FAB({
   return (
     <div
       className={cn(
-        "pointer-events-none fixed bottom-0 left-1/2 w-full max-w-md -translate-x-1/2 px-4 pb-[calc(18px+env(safe-area-inset-bottom))]",
+        "pointer-events-none fixed bottom-0 left-1/2 w-full max-w-md -translate-x-1/2 px-5 pb-[calc(18px+env(safe-area-inset-bottom))]",
         open ? "z-[70]" : "z-50"
       )}
     >
-      <div className="flex justify-center">
-        <div style={{ transform: `translateX(${barWidth / 2 + 6}px)` }}>
-          <motion.button
-            whileTap={{ scale: 0.94 }}
-            onClick={onClick}
-            aria-label={label}
-            className="pointer-events-auto flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-[#4F86F7] to-primary text-primary-foreground shadow-[inset_0_1px_1px_rgba(255,255,255,0.55),inset_0_-3px_8px_rgba(15,40,120,0.28),0_16px_30px_-6px_rgba(37,99,235,0.55)]"
-          >
-            <Icon className={cn("h-7 w-7 transition-transform duration-200", open && "rotate-45")} />
-          </motion.button>
-        </div>
+      <div className="flex justify-end">
+        <motion.button
+          whileTap={{ scale: 0.94 }}
+          onClick={onClick}
+          aria-label={label}
+          className="pointer-events-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[0_12px_28px_rgba(37,99,235,0.35)]"
+        >
+          <Icon className={cn("h-7 w-7 transition-transform duration-200", open && "rotate-45")} />
+        </motion.button>
       </div>
     </div>
   );

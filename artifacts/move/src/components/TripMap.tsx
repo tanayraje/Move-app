@@ -181,7 +181,7 @@ function RecenterButton({
     w-9
     h-9
     rounded-full
-    glass
+    glass-light text-slate-800
     flex items-center justify-center
     active:scale-95
     transition-all
@@ -196,23 +196,23 @@ function ZoomControls() {
   const map = useMap();
 
   return (
-    <div className="absolute top-3 left-3 z-[1000] flex flex-col overflow-hidden rounded-xl glass">
+    <div className="absolute top-3 left-3 z-[1000] flex flex-col overflow-hidden rounded-xl glass-light text-slate-800">
       <button
         type="button"
         onClick={() => map.zoomIn()}
         aria-label="Zoom in"
-        className="w-10 h-9 flex items-center justify-center text-white text-xl font-medium hover:bg-black/10 active:bg-black/20 transition-colors"
+        className="w-10 h-9 flex items-center justify-center text-slate-800 text-xl font-medium hover:bg-black/5 active:bg-black/10 transition-colors"
       >
         +
       </button>
 
-      <div className="h-px bg-white/20" />
+      <div className="h-px bg-black/10" />
 
       <button
         type="button"
         onClick={() => map.zoomOut()}
         aria-label="Zoom out"
-        className="w-10 h-9 flex items-center justify-center text-white text-xl font-medium hover:bg-black/10 active:bg-black/20 transition-colors"
+        className="w-10 h-9 flex items-center justify-center text-slate-800 text-xl font-medium hover:bg-black/5 active:bg-black/10 transition-colors"
       >
         −
       </button>

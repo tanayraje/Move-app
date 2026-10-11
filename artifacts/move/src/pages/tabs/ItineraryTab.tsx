@@ -6,14 +6,15 @@ import React, {
   useEffect,
 } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { fetchCityImage } from "@/lib/city-image";
 import { format, addDays, differenceInDays } from "date-fns";
 import {
   Plus, GripVertical, MapPin, Trash2, CalendarDays,
   Plane, Train, Bus, Car, Building2, UtensilsCrossed,
   Bike, FileText, Paperclip, Check, Square, Clock, Upload,
   ArrowLeftRight, Pencil, X, ChevronDown, ChevronRight,
-  Coffee, Wine, Sun, Sunset
+  Coffee, Wine, Sun, Sunset, Route, Wallet
 } from "lucide-react";
 
 import {
@@ -60,13 +61,13 @@ const ELEMENT_COLORS: Record<ElementType, string> = {
   travel: "from-blue-500 to-blue-600",
   accommodation: "from-violet-500 to-violet-600",
   meal: "from-amber-400 to-amber-500",
-  activity: "from-orange-500 to-orange-600",
+  activity: "from-teal-600 to-emerald-600",
 };
 const ELEMENT_BORDER: Record<ElementType, string> = {
   travel: "border-blue-200",
   accommodation: "border-violet-200",
   meal: "border-amber-200",
-  activity: "border-orange-200",
+  activity: "border-teal-200",
 };
 
 const ELEMENT_BADGES: Record<ElementType, string> = {
@@ -80,7 +81,7 @@ const ELEMENT_BADGES: Record<ElementType, string> = {
     "bg-amber-50 text-amber-700 border border-amber-100 dark:bg-amber-500/10 dark:text-amber-300 dark:border-amber-500/20",
 
   activity:
-    "bg-orange-50 text-orange-700 border border-orange-100 dark:bg-orange-500/10 dark:text-orange-300 dark:border-orange-500/20",
+    "bg-teal-50 text-teal-700 border border-teal-100 dark:bg-teal-500/10 dark:text-teal-300 dark:border-teal-500/20",
 };
 
 const ELEMENT_LABELS: Record<ElementType, string> = {
@@ -125,7 +126,7 @@ function panelGradient(type: ElementType) {
       return "bg-gradient-to-b from-amber-400 to-amber-500";
 
     default:
-      return "bg-gradient-to-b from-orange-500 to-orange-600";
+      return "bg-gradient-to-b from-teal-500 to-teal-600";
   }
 }
 
@@ -141,7 +142,7 @@ function tintSurface(type: ElementType) {
       return "bg-amber-50/30";
 
     default:
-      return "bg-orange-50/30";
+      return "bg-teal-50/30";
   }
 }
 
@@ -339,6 +340,7 @@ const { data: documents = [] } = useDocuments(trip.id);
   const [selectedDate, setSelectedDate] = useState<string>(isWishlist ? 'Day 1' : trip.startDate);
   const touchStartX = useRef(0);
 const touchStartY = useRef(0);
+  const swipeIgnored = useRef(false);
 const [swipeDirection, setSwipeDirection] = useState<1 | -1>(1);
 
 
@@ -403,9 +405,12 @@ const goToPreviousDay = useCallback(() => {
 const handleTouchStart = (e: React.TouchEvent) => {
   touchStartX.current = e.touches[0].clientX;
   touchStartY.current = e.touches[0].clientY;
+  // Scrolling the day chips sideways must not count as "swipe to the next day"
+  swipeIgnored.current = !!(e.target as HTMLElement).closest("[data-no-swipe]");
 };
 
 const handleTouchEnd = (e: React.TouchEvent) => {
+  if (swipeIgnored.current) return;
   const dx = e.changedTouches[0].clientX - touchStartX.current;
   const dy = e.changedTouches[0].clientY - touchStartY.current;
 
@@ -442,12 +447,48 @@ const handleTouchEnd = (e: React.TouchEvent) => {
     }, 0), [filteredItems]
   );
 
+  const travelMinutes = useMemo(() =>
+    filteredItems
+      .filter(item => item.elementType === 'travel')
+      .reduce((sum, item) => {
+        const st = parseTime(item.startTime);
+        const en = parseTime(item.endTime);
+        return sum + (en >= st ? en - st : 0);
+      }, 0), [filteredItems]
+  );
+
   const totalDayCost = useMemo(() =>
     filteredItems.reduce((sum, item) => sum + (item.cost ?? 0), 0), [filteredItems]
   );
 
   const dayCities = trip.dayCities ?? {};
   const currentCity = dayCities[selectedDate] ?? '';
+
+  // Timeline header photo follows the city of the selected day (everywhere else uses the trip photo)
+  const cityHint = trip.state || trip.destination;
+  const cityKey = currentCity.trim().toLowerCase();
+  const { data: cityImage, isLoading: cityImageLoading } = useQuery({
+    queryKey: ["city-image", cityKey, (cityHint ?? "").toLowerCase()],
+    queryFn: () => fetchCityImage(currentCity, cityHint),
+    enabled: !!cityKey,
+    staleTime: Infinity,
+    gcTime: Infinity,
+    retry: false,
+  });
+  // Warm the cache for the other days' cities so switching days is instant
+  const allCitiesKey = Object.values(dayCities).map(c => String(c).trim().toLowerCase()).filter(Boolean).join("|");
+  useEffect(() => {
+    const unique = Array.from(new Set(allCitiesKey.split("|").filter(Boolean)));
+    unique.forEach(name => {
+      queryClient.prefetchQuery({
+        queryKey: ["city-image", name, (cityHint ?? "").toLowerCase()],
+        queryFn: () => fetchCityImage(name, cityHint),
+        staleTime: Infinity,
+        gcTime: Infinity,
+        retry: false,
+      });
+    });
+  }, [allCitiesKey, cityHint, queryClient]);
 
   const saveCity = (val: string) => {
   const trimmed = val.trim();
@@ -680,6 +721,12 @@ const dur = Math.max(
     setCityDraft(currentCity);
     setEditingCity(true);
   };
+  // City photo when the day has a city; the trip photo only when it has none or no city photo exists.
+  // While a city photo loads we show the neutral gradient, never another city's picture.
+  const heroImage = cityKey ? cityImage ?? (cityImageLoading ? null : trip.heroImage) : trip.heroImage;
+  const heroStyle = heroImage
+    ? { backgroundImage: `url(${heroImage})`, backgroundSize: "cover", backgroundPosition: "center" }
+    : { background: "linear-gradient(135deg,#2563eb 0%,#3b82f6 100%)" };
   const chipShadow = "shadow-[0_1px_2px_rgba(15,23,42,0.05),0_6px_14px_-4px_rgba(15,23,42,0.1)]";
 
   return (
@@ -687,11 +734,7 @@ const dur = Math.max(
       {/* Photo header: city + date only (day strip lives below, no overlap) */}
       <div
         className="relative flex min-h-[262px] flex-col justify-end px-6 pb-12 pt-[calc(76px+env(safe-area-inset-top))] text-white"
-        style={
-          trip.heroImage
-            ? { backgroundImage: `url(${trip.heroImage})`, backgroundSize: "cover", backgroundPosition: "center" }
-            : { background: "linear-gradient(135deg,#2563eb 0%,#3b82f6 100%)" }
-        }
+        style={heroStyle}
       >
         <HeroScrim />
         <div className="relative flex items-end justify-between gap-3 [text-shadow:0_1px_14px_rgba(0,0,0,0.5)]">
@@ -720,7 +763,10 @@ const dur = Math.max(
                 </button>
               </div>
             ) : currentCity ? (
-              <h2 className="font-display text-[38px] font-bold leading-[1.1] tracking-tight">{currentCity}</h2>
+              <button onClick={startCityEdit} aria-label="Edit city" className="flex items-center gap-2 text-left">
+                <h2 className="font-display text-[38px] font-bold leading-[1.1] tracking-tight">{currentCity}</h2>
+                <Pencil className="h-4 w-4 shrink-0 text-white/70" />
+              </button>
             ) : (
               <button onClick={startCityEdit} className="text-left text-base italic text-white/85">
                 Tap to add city…
@@ -738,8 +784,8 @@ const dur = Math.max(
       {/* Content sheet slides over the photo */}
       <div className="relative z-10 -mt-7 min-h-[60vh] rounded-t-[34px] bg-background px-4 pb-40 pt-5 shadow-[0_-12px_30px_rgba(10,20,50,0.16)]">
         {/* Day strip (solid chips, not glass) */}
-        <div className="relative -mx-4 overflow-x-auto px-4 no-scrollbar">
-          <div ref={dayScrollerRef} className="flex min-w-max gap-1.5 pb-2 pt-1">
+        <div data-no-swipe className="relative -mx-4 overflow-x-auto px-4 no-scrollbar">
+          <div ref={dayScrollerRef} className="flex min-w-max gap-2 pb-2 pt-1">
             {days.map(day => {
               const isSelected = selectedDate === day;
               const hasItems = allItems.some(i => i.date === day && i.elementType !== "accommodation");
@@ -751,7 +797,7 @@ const dur = Math.max(
                   key={day}
                   onClick={() => setSelectedDate(day)}
                   className={cn(
-                    "flex h-[68px] w-[46px] shrink-0 flex-col items-center justify-center rounded-[20px] transition-all",
+                    "flex h-[76px] w-[58px] shrink-0 flex-col items-center justify-center rounded-[22px] transition-all",
                     isSelected
                       ? "bg-primary text-primary-foreground shadow-[0_10px_18px_-6px_hsl(var(--primary)/0.55)]"
                       : `bg-card text-foreground ${chipShadow}`
@@ -778,7 +824,7 @@ const dur = Math.max(
                   updateTrip({ ...trip, wishlistDayCount: newCount });
                   setSelectedDate(`Day ${newCount}`);
                 }}
-                className="flex h-[68px] w-[46px] shrink-0 items-center justify-center rounded-[20px] border-2 border-dashed border-border text-muted-foreground"
+                className="flex h-[76px] w-[58px] shrink-0 items-center justify-center rounded-[22px] border-2 border-dashed border-border text-muted-foreground"
               >
                 <Plus className="h-5 w-5" />
               </button>
@@ -788,23 +834,23 @@ const dur = Math.max(
 
         {/* Day summary */}
         <div className="mb-5 mt-3 flex items-center justify-between px-0.5 text-[13px]">
-          <div className="flex items-center gap-3">
-            <b className="font-semibold">
-              {filteredItems.length} {filteredItems.length === 1 ? "item" : "items"}
-            </b>
+          <div className="flex items-center gap-4 text-muted-foreground">
             {totalDayMinutes > 0 && (
-              <>
-                <i className="h-3 w-px bg-border" />
-                <span className="text-muted-foreground">
-                  {getDuration("00:00", addMinutesToTime("00:00", totalDayMinutes))}
-                </span>
-              </>
+              <span className="flex items-center gap-1.5" title="Planned time">
+                <Clock className="h-4 w-4" />
+                {getDuration("00:00", addMinutesToTime("00:00", totalDayMinutes))}
+              </span>
+            )}
+            {travelMinutes > 0 && (
+              <span className="flex items-center gap-1.5" title="Travel time">
+                <Route className="h-4 w-4 text-blue-500" />
+                {getDuration("00:00", addMinutesToTime("00:00", travelMinutes))}
+              </span>
             )}
             {totalDayCost > 0 && (
-              <>
-                <i className="h-3 w-px bg-border" />
-                <span className="text-muted-foreground">₹{Math.round(totalDayCost).toLocaleString("en-IN")}</span>
-              </>
+              <span className="flex items-center gap-1.5" title="Planned spend">
+                <Wallet className="h-4 w-4" />₹{Math.round(totalDayCost).toLocaleString("en-IN")}
+              </span>
             )}
           </div>
           <div className="flex items-center gap-2">
@@ -818,13 +864,6 @@ const dur = Math.max(
                 <Trash2 className="h-[15px] w-[15px]" />
               </button>
             )}
-            <button
-              aria-label="Edit city"
-              onClick={startCityEdit}
-              className={`flex h-[34px] w-[34px] items-center justify-center rounded-full bg-card text-primary ${chipShadow}`}
-            >
-              <Pencil className="h-[15px] w-[15px]" />
-            </button>
           </div>
         </div>
 
@@ -900,7 +939,7 @@ const dur = Math.max(
           { id: "travel", label: "Travel", hint: "Flight, train, bus or car", icon: Plane, tint: "bg-blue-50 text-blue-600" },
           { id: "accommodation", label: "Stay", hint: "Hotel or rental", icon: Building2, tint: "bg-violet-50 text-violet-600" },
           { id: "meal", label: "Meal", hint: "Breakfast to drinks", icon: UtensilsCrossed, tint: "bg-amber-50 text-amber-600" },
-          { id: "activity", label: "Activity", hint: "Sights and plans", icon: Bike, tint: "bg-orange-50 text-orange-600" },
+          { id: "activity", label: "Activity", hint: "Sights and plans", icon: Bike, tint: "bg-teal-50 text-teal-600" },
         ].map(o => ({
           ...o,
           onSelect: () => {
@@ -1546,7 +1585,7 @@ function SortableItem({
 
   const isTravel = item.elementType === "travel";
   const isMeal = item.elementType === "meal";
-  const accentBg = isTravel ? "bg-blue-500" : isMeal ? "bg-amber-400" : "bg-orange-500";
+  const accentBg = isTravel ? "bg-blue-500" : isMeal ? "bg-amber-500" : "bg-teal-500";
   const leg = isTravel ? legStatus(item) : null;
   // Ticket notches at the perforation (68% across). When expanded, only the top notch is cut.
   const notchTop = "radial-gradient(circle 9px at 68% 0, #0000 97%, #000) top / 100% 51% no-repeat";
@@ -1555,7 +1594,15 @@ function SortableItem({
     ? `${notchTop}, linear-gradient(#000, #000) bottom / 100% 49% no-repeat`
     : `${notchTop}, ${notchBottom}`;
 
-  const dotColor = isTravel ? "bg-blue-500" : isMeal ? "bg-amber-400" : "bg-orange-500";
+  const dotColor = isTravel ? "bg-blue-500" : isMeal ? "bg-amber-500" : "bg-teal-500";
+  const panelTone = isTravel
+    ? "border-blue-200 bg-white/70"
+    : isMeal
+    ? "border-amber-300/70 bg-white/60"
+    : "border-teal-200 bg-white/70";
+  // Receipt edge for meals: the bottom 8px is cut into a zig-zag
+  const zigzag = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='8' viewBox='0 0 16 8'%3E%3Cpath d='M0 0h16L8 8z'/%3E%3C/svg%3E")`;
+  const receiptMask = `linear-gradient(#000, #000) top / 100% calc(100% - 7px) no-repeat, ${zigzag} bottom / 16px 8px repeat-x`;
 
   return (
     <div className="flex">
@@ -1573,38 +1620,44 @@ function SortableItem({
         <span className={cn("absolute left-2 top-[18px] h-3 w-3 rounded-full ring-4 ring-background", dotColor)} />
       </div>
 
-      {/* Card: ticket (travel), pill (meal), event card (activity) */}
+      {/* Card: boarding pass (travel), receipt (meal), entry pass (activity) */}
       <div
         className={cn(
           "min-w-0 flex-1 self-start",
-          !isTravel && "shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_rgba(15,23,42,0.07)]",
-          isMeal ? "rounded-[30px]" : "rounded-[22px]"
+          !isTravel && !isMeal && "rounded-[28px] shadow-[0_1px_2px_rgba(15,23,42,0.05),0_10px_26px_-6px_rgba(13,148,136,0.28)]"
         )}
-        style={isTravel ? { filter: "drop-shadow(0 8px 14px rgba(15,23,42,0.10))" } : undefined}
+        style={isTravel || isMeal ? { filter: "drop-shadow(0 8px 14px rgba(15,23,42,0.12))" } : undefined}
       >
         <div
           className={cn(
-            "relative flex items-stretch overflow-hidden bg-card",
-            isMeal ? "rounded-[30px]" : "rounded-[22px]"
+            "relative overflow-hidden",
+            isTravel && "rounded-[22px] bg-blue-50",
+            isMeal && "rounded-t-[26px] bg-amber-50 pb-2",
+            !isTravel && !isMeal && "rounded-[28px] bg-teal-50 ring-1 ring-teal-200/80"
           )}
-          style={isTravel ? { WebkitMask: ticketMask, mask: ticketMask } : undefined}
+          style={
+            isTravel
+              ? { WebkitMask: ticketMask, mask: ticketMask }
+              : isMeal
+              ? { WebkitMask: receiptMask, mask: receiptMask }
+              : undefined
+          }
         >
-          {!isTravel && !isMeal && <div className={cn("w-[5px] shrink-0", accentBg)} />}
-          <div className="min-w-0 w-0 flex-1">
+          <div className="min-w-0">
             <button type="button" onClick={() => setExpanded((v) => !v)} className="w-full text-left">
               {isTravel && (
                 <div className="relative">
                   <span
                     aria-hidden
-                    className="absolute bottom-3.5 left-[68%] top-3.5 border-l-[1.5px] border-dashed border-slate-300"
+                    className="absolute bottom-4 left-[68%] top-4 border-l-[1.5px] border-dashed border-blue-300"
                   />
                   <div className="grid grid-cols-[68%_32%]">
-                    <div className="min-w-0 px-4 py-3.5">
-                      <div className="flex items-center gap-1.5 text-[11px] font-semibold text-blue-600">
+                    <div className="min-w-0 px-4 py-4">
+                      <div className="flex items-center gap-1.5 text-[11px] font-semibold text-blue-700">
                         <Icon className="h-3.5 w-3.5" />
                         <span className="truncate">{travelLabel(item.travelType)}</span>
                       </div>
-                      <div className="mt-2.5 flex items-center gap-2">
+                      <div className="mt-3 flex items-center gap-2">
                         <PlaceCode place={item.fromLocation} />
                         <div className="flex min-w-[20px] flex-1 items-center">
                           <div className="flex-1 border-t-[1.5px] border-dashed border-blue-300" />
@@ -1613,20 +1666,20 @@ function SortableItem({
                         </div>
                         <PlaceCode place={item.toLocation} right />
                       </div>
-                      <p className="mt-2.5 text-[12px] text-muted-foreground">
+                      <p className="mt-3 text-[12.5px] font-medium text-blue-900/70">
                         {item.startTime || "—"} to {item.endTime || "—"}
                       </p>
                     </div>
-                    <div className="flex min-w-0 flex-col items-center justify-center gap-1.5 px-2 py-3.5 text-center">
+                    <div className="flex min-w-0 flex-col items-center justify-center gap-2 bg-blue-100/60 px-2 py-4 text-center">
                       {leg && (
                         <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-semibold", leg.tone)}>
                           {leg.label}
                         </span>
                       )}
-                      <span className="font-display text-[17px] font-bold leading-none">{duration || "—"}</span>
+                      <span className="font-display text-[18px] font-bold leading-none text-blue-950">{duration || "—"}</span>
                       <ChevronDown
                         className={cn(
-                          "h-4 w-4 text-muted-foreground/60 transition-transform duration-300",
+                          "h-4 w-4 text-blue-900/40 transition-transform duration-300",
                           expanded && "rotate-180"
                         )}
                       />
@@ -1636,63 +1689,93 @@ function SortableItem({
               )}
 
               {isMeal && (
-                <div className="flex items-center gap-3 py-2 pl-2 pr-4">
-                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-amber-50 text-amber-600">
-                    <Icon className="h-[19px] w-[19px]" />
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <h3 className="truncate text-[14.5px] font-semibold leading-snug">{item.title}</h3>
-                    <p className="truncate text-[11.5px] text-muted-foreground">
-                      {categoryLabel(item)}
-                      {duration ? ` · ${duration}` : ""}
-                    </p>
-                  </div>
-                  <ChevronDown
-                    className={cn(
-                      "h-4 w-4 shrink-0 text-muted-foreground/60 transition-transform duration-300",
-                      expanded && "rotate-180"
-                    )}
-                  />
-                </div>
-              )}
-
-              {item.elementType === "activity" && (
-                <div className="px-4 py-3.5">
+                <div className="px-4 pb-2 pt-3.5">
                   <div className="flex items-center gap-3">
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-orange-50 text-orange-600">
-                      <Icon className="h-[17px] w-[17px]" />
+                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700">
+                      <Icon className="h-5 w-5" />
                     </span>
                     <div className="min-w-0 flex-1">
-                      <p className="text-[11px] font-semibold text-orange-600">Activity</p>
-                      <h3 className="line-clamp-2 break-words text-[15px] font-semibold leading-snug">{item.title}</h3>
+                      <p className="text-[11px] font-semibold text-amber-700">{categoryLabel(item)}</p>
+                      <h3 className="truncate text-base font-semibold leading-snug">{item.title}</h3>
                     </div>
                     <ChevronDown
                       className={cn(
-                        "h-4 w-4 shrink-0 text-muted-foreground/60 transition-transform duration-300",
+                        "h-4 w-4 shrink-0 text-amber-900/40 transition-transform duration-300",
                         expanded && "rotate-180"
                       )}
                     />
                   </div>
-                  {totalChecklist > 0 && (
-                    <div className="mt-3 flex items-center gap-2.5">
-                      <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-orange-100">
-                        <div
-                          className="h-full rounded-full bg-orange-500"
-                          style={{ width: `${(doneChecklist / totalChecklist) * 100}%` }}
-                        />
-                      </div>
-                      <span className="text-[11px] text-muted-foreground">
-                        {doneChecklist} of {totalChecklist}
+                  <div className="mt-3 flex items-center justify-between border-t border-dashed border-amber-300/80 pt-2.5 text-[12.5px]">
+                    <span className="text-amber-900/70">
+                      {item.startTime || "—"}
+                      {duration ? ` · ${duration}` : ""}
+                    </span>
+                    {item.cost ? (
+                      <span>
+                        <span className="mr-1.5 text-amber-900/60">Total</span>
+                        <b className="font-display text-amber-950">₹{Math.round(item.cost).toLocaleString("en-IN")}</b>
+                      </span>
+                    ) : null}
+                  </div>
+                </div>
+              )}
+
+              {item.elementType === "activity" && (
+                <div>
+                  <div className="relative bg-gradient-to-r from-teal-600 to-emerald-600 px-4 pb-2.5 pt-4 text-white">
+                    <span aria-hidden className="absolute left-1/2 top-1.5 h-1.5 w-10 -translate-x-1/2 rounded-full bg-black/25" />
+                    <div className="flex items-center justify-between text-[12px] font-semibold">
+                      <span className="flex items-center gap-1.5">
+                        <Icon className="h-3.5 w-3.5" />
+                        Activity
+                      </span>
+                      <span>
+                        {item.startTime || "—"}
+                        {item.endTime ? ` – ${item.endTime}` : ""}
                       </span>
                     </div>
-                  )}
+                  </div>
+                  <div className="px-4 py-3.5">
+                    <div className="flex items-start gap-3">
+                      <h3 className="line-clamp-2 min-w-0 flex-1 break-words text-[17px] font-semibold leading-snug text-teal-950">
+                        {item.title}
+                      </h3>
+                      <ChevronDown
+                        className={cn(
+                          "mt-1 h-4 w-4 shrink-0 text-teal-900/40 transition-transform duration-300",
+                          expanded && "rotate-180"
+                        )}
+                      />
+                    </div>
+                    <div className="mt-2.5 flex items-center gap-3 text-[12px] text-teal-900/70">
+                      {duration && (
+                        <span className="flex shrink-0 items-center gap-1">
+                          <Clock className="h-3.5 w-3.5" />
+                          {duration}
+                        </span>
+                      )}
+                      {totalChecklist > 0 && (
+                        <div className="flex min-w-0 flex-1 items-center gap-2">
+                          <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-teal-100">
+                            <div
+                              className="h-full rounded-full bg-teal-500"
+                              style={{ width: `${(doneChecklist / totalChecklist) * 100}%` }}
+                            />
+                          </div>
+                          <span className="shrink-0">
+                            {doneChecklist} of {totalChecklist}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               )}
             </button>
 
 
 {expanded && (
-  <div className="border-t border-border/20 bg-background py-2">
+  <div className={cn("border-t border-dashed py-2", panelTone)}>
 
   {/* Location */}
 
@@ -1813,7 +1896,7 @@ function SortableItem({
             ? "bg-violet-500"
             : item.elementType === "meal"
             ? "bg-amber-400"
-            : "bg-orange-500"
+            : "bg-teal-500"
         )}
         style={{
           width: `${
@@ -1850,7 +1933,7 @@ function SortableItem({
                     ? "bg-violet-500"
                     : item.elementType === "meal"
                     ? "bg-amber-400"
-                    : "bg-orange-500"
+                    : "bg-teal-500"
                 )}
               >
                 <Check className="h-3 w-3 text-white" />
@@ -2181,7 +2264,7 @@ function AddEditSheet({ isOpen, onClose, trip, defaultDate, documents, allItems,
         {!isEditing && (
           <div>
             <Label>Type</Label>
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-4 gap-2 [&>*]:min-w-0">
               {ELEMENT_TYPES.map(({ id, label, icon: Icon }) => (
                 <button key={id} type="button" onClick={() => setElementType(id)}
                   className={cn(
@@ -2235,7 +2318,7 @@ function AddEditSheet({ isOpen, onClose, trip, defaultDate, documents, allItems,
           <>
             <div>
               <Label>Travel Type</Label>
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-4 gap-2 [&>*]:min-w-0">
                 {(['flight', 'train', 'bus', 'car'] as TravelType[]).map(t => {
                   const TIcon = TRAVEL_ICONS[t];
                   return (
@@ -2249,7 +2332,7 @@ function AddEditSheet({ isOpen, onClose, trip, defaultDate, documents, allItems,
                 })}
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-3 [&>*]:min-w-0">
               <div>
                 <Label htmlFor="fromLocation">From</Label>
                 <Input id="fromLocation" name="fromLocation" placeholder="Delhi (DEL)" defaultValue={existingItem?.fromLocation} required />
@@ -2259,7 +2342,7 @@ function AddEditSheet({ isOpen, onClose, trip, defaultDate, documents, allItems,
                 <Input id="toLocation" name="toLocation" placeholder="Paris (CDG)" defaultValue={existingItem?.toLocation} required />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-3 [&>*]:min-w-0">
               <div>
                 <Label htmlFor="departureTime">Departure</Label>
                 <Input id="departureTime" name="departureTime" type="time" defaultValue={existingItem?.startTime || '10:00'} required />
@@ -2283,7 +2366,7 @@ function AddEditSheet({ isOpen, onClose, trip, defaultDate, documents, allItems,
               <Label htmlFor="address">Address / Location</Label>
               <Input id="address" name="address" placeholder="228 Rue de Rivoli, Paris" defaultValue={existingItem?.location} />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-3 [&>*]:min-w-0">
               <div>
                 <Label htmlFor="checkInDate">Check-in Date</Label>
                 <Input id="checkInDate" name="date" type="date" defaultValue={existingItem?.date || defaultDate} required />
@@ -2293,7 +2376,7 @@ function AddEditSheet({ isOpen, onClose, trip, defaultDate, documents, allItems,
                 <Input id="checkInTime" name="checkInTime" type="time" defaultValue={existingItem?.startTime || '14:00'} />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-3 [&>*]:min-w-0">
               <div>
                 <Label htmlFor="checkOutDate">Check-out Date</Label>
                 <Input id="checkOutDate" name="checkOutDate" type="date" defaultValue={existingItem?.endDate || defaultDate} required />
@@ -2312,7 +2395,7 @@ function AddEditSheet({ isOpen, onClose, trip, defaultDate, documents, allItems,
             {/* Meal sub-type picker */}
             <div>
               <Label>Meal Type</Label>
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-4 gap-2 [&>*]:min-w-0">
                 {MEAL_SUBTYPES.map(({ id, label, icon: MIcon }) => (
                   <button key={id} type="button" onClick={() => handleMealSubTypeChange(id)}
                     className={cn(
@@ -2360,7 +2443,7 @@ function AddEditSheet({ isOpen, onClose, trip, defaultDate, documents, allItems,
               <Label htmlFor="activityLocation">Location</Label>
               <Input id="activityLocation" name="activityLocation" placeholder="Paris, France" defaultValue={existingItem?.location} />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-3 [&>*]:min-w-0">
               <div>
                 <Label htmlFor="startTime">Start Time</Label>
                 <Input id="startTime" name="startTime" type="time" value={startTime} onChange={e => setStartTime(e.target.value)} required />

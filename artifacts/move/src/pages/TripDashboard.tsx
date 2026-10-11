@@ -115,7 +115,6 @@ export default function TripDashboard({ params }: { params: { id: string, tab?: 
 
       {/* Bottom Navigation: compact floating glass pill */}
       <DockBar
-        variant="trip"
         activeId={activeTab}
         items={tabs.map(t => ({ id: t.id, label: t.label, icon: t.icon, href: `/trip/${trip.id}/${t.id}` }))}
       />
