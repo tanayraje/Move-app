@@ -483,6 +483,38 @@ export function useAddDocument() {
   });
 }
 
+export function useUpdateDocument() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      id,
+      tripId,
+      name,
+      category,
+      notes,
+    }: {
+      id: string;
+      tripId: string;
+      name: string;
+      category: string;
+      notes: string;
+    }) => {
+      const { error } = await supabase
+        .from('documents')
+        .update({ name, category, notes })
+        .eq('id', id);
+
+      if (error) throw error;
+      return { id, tripId };
+    },
+
+    onSuccess: (_, v) => {
+      qc.invalidateQueries({ queryKey: ['documents', v.tripId] });
+    },
+  });
+}
+
 export function useDeleteDocument() {
   const qc = useQueryClient();
 

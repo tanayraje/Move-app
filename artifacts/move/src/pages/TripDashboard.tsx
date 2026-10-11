@@ -277,7 +277,7 @@ const leaveTrip = async () => {
 
   <button
     onClick={async () => {
-      const inviteText = `Join my trip on Move ✈️
+      const inviteText = `Join my trip on Move
 Let's Plan it Better!
 
 Trip: ${trip.name}
