@@ -26,7 +26,7 @@ import {
   TripDocument, ChecklistItem, ExpenseCategory
 } from "@/lib/types";
 import { generateId, cn, safeFormatDate, safeParseDate, isDayLabel, getTripStatus } from "@/lib/utils";
-import { Button, Input, Label, Select, BottomSheet, FAB } from "@/components/ui";
+import { Button, Input, Label, Select, BottomSheet, FAB, HeroScrim } from "@/components/ui";
 import { AddMenu } from "@/components/AddMenu";
 import { formatCurrency, convertFromINR, RATES_PER_INR } from "@/lib/countries";
 
@@ -269,7 +269,7 @@ function PlaceCode({ place, right }: { place?: string; right?: boolean }) {
         title={place}
         className={cn(
           "truncate font-display font-bold",
-          isCode ? "text-[24px] leading-none" : "text-[16px] leading-tight"
+          isCode ? "text-[22px] leading-none" : "text-[16px] leading-tight"
         )}
       >
         {big}
@@ -302,12 +302,23 @@ function legStatus(item: ItineraryItem): { label: string; tone: string } | null 
 
 function NowMarker({ time }: { time: string }) {
   return (
-    <div className="relative flex items-center gap-3">
-      <div className="relative flex w-9 shrink-0 justify-center">
-        <span className="absolute left-1/2 top-1/2 -bottom-[34px] w-0.5 -translate-x-1/2 bg-primary/30" />
+    <div className="relative flex h-5 items-center">
+      <span className="absolute -bottom-5 -top-5 left-[57px] w-0.5 bg-primary/30" />
+      <div className="w-11 shrink-0" />
+      <div className="relative flex w-7 shrink-0 justify-center">
         <span className="relative z-10 h-[18px] w-[18px] rounded-full bg-primary shadow-[0_0_0_6px_hsl(var(--primary)/0.18)]" />
       </div>
-      <span className="text-xs font-semibold text-primary">Now, {time}</span>
+      <span className="ml-3 text-xs font-semibold text-primary">Now, {time}</span>
+    </div>
+  );
+}
+
+/** Quiet "1h 30m free" note between two items, sitting on the rail */
+function GapLabel({ text }: { text: string }) {
+  return (
+    <div className="relative pl-[72px] text-[11px] text-muted-foreground/70">
+      <span className="absolute -bottom-5 -top-5 left-[57px] w-0.5 bg-border" />
+      {text}
     </div>
   );
 }
@@ -621,22 +632,20 @@ const dur = Math.max(
     reorder({ tripId: trip.id, items: [...allItems.filter(i => i.date !== selectedDate || i.elementType === 'accommodation'), ...repositioned] });
   }, [filteredItems, allItems, selectedDate, trip.id, reorder]);
 
+  // Centre the selected day chip. Scrolls the chip row sideways only (scrollIntoView also scrolled the
+// page, and `days` is a new array every render, so it kept dragging the page back up).
+  const daysKey = days.join(",");
   useEffect(() => {
-  const container = dayScrollerRef.current;
-  if (!container) return;
-
-  const index = days.indexOf(selectedDate);
-  if (index === -1) return;
-
-  const button = container.children[index] as HTMLElement;
-  if (!button) return;
-
-  button.scrollIntoView({
-    behavior: "smooth",
-    inline: "center",
-    block: "nearest",
-  });
-}, [selectedDate, days]);
+    const track = dayScrollerRef.current;
+    const row = track?.parentElement;
+    const chip = track?.children[days.indexOf(selectedDate)] as HTMLElement | undefined;
+    if (!row || !chip) return;
+    row.scrollTo({
+      left: chip.offsetLeft - (row.clientWidth - chip.offsetWidth) / 2,
+      behavior: "smooth",
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDate, daysKey]);
 
   const todayStr = format(new Date(), "yyyy-MM-dd");
   const nowTime = format(new Date(), "HH:mm");
@@ -647,61 +656,117 @@ const dur = Math.max(
           return idx === -1 ? filteredItems.length : idx;
         })()
       : -1;
+  const isDone = (i: ItineraryItem) =>
+    !isWishlist &&
+    (selectedDate < todayStr || (selectedDate === todayStr && (i.endTime || i.startTime || "") <= nowTime));
+  const toMinutes = (t?: string) => {
+    if (!t) return null;
+    const [h, m] = t.split(":").map(Number);
+    return Number.isNaN(h) || Number.isNaN(m) ? null : h * 60 + m;
+  };
+  const gapAfter = (a: ItineraryItem, b?: ItineraryItem) => {
+    if (!b) return "";
+    const end = toMinutes(a.endTime || a.startTime);
+    const start = toMinutes(b.startTime);
+    if (end === null || start === null) return "";
+    const g = start - end;
+    if (g < 20) return "";
+    const h = Math.floor(g / 60);
+    const m = g % 60;
+    return `${h ? `${h}h ` : ""}${m ? `${m}m` : ""}`.trim() + " free";
+  };
+  const dayIndex = days.indexOf(selectedDate);
+  const startCityEdit = () => {
+    setCityDraft(currentCity);
+    setEditingCity(true);
+  };
+  const chipShadow = "shadow-[0_1px_2px_rgba(15,23,42,0.05),0_6px_14px_-4px_rgba(15,23,42,0.1)]";
 
   return (
     <div className="relative" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
-      {/* Photo header: day strip + city */}
+      {/* Photo header: city + date only (day strip lives below, no overlap) */}
       <div
-        className="relative px-4 pb-14 pt-[calc(76px+env(safe-area-inset-top))] text-white"
+        className="relative flex min-h-[262px] flex-col justify-end px-6 pb-12 pt-[calc(76px+env(safe-area-inset-top))] text-white"
         style={
           trip.heroImage
             ? { backgroundImage: `url(${trip.heroImage})`, backgroundSize: "cover", backgroundPosition: "center" }
             : { background: "linear-gradient(135deg,#2563eb 0%,#3b82f6 100%)" }
         }
       >
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/35 via-transparent to-transparent" />
+        <HeroScrim />
+        <div className="relative flex items-end justify-between gap-3 [text-shadow:0_1px_14px_rgba(0,0,0,0.5)]">
+          <div className="min-w-0 flex-1">
+            <p className="text-[13px] font-medium text-white/90">
+              {isDayLabel(selectedDate)
+                ? selectedDate
+                : safeFormatDate(selectedDate, d => format(d, "EEEE, MMMM d"), selectedDate)}
+            </p>
+            {editingCity ? (
+              <div className="mt-1 flex items-center gap-2 [text-shadow:none]">
+                <input
+                  ref={cityInputRef}
+                  autoFocus
+                  value={cityDraft}
+                  onChange={e => setCityDraft(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === "Enter") saveCity(cityDraft);
+                    if (e.key === "Escape") setEditingCity(false);
+                  }}
+                  placeholder="City name…"
+                  className="w-48 min-w-0 border-b-2 border-white bg-transparent font-display text-3xl font-bold text-white outline-none placeholder:text-white/60"
+                />
+                <button aria-label="Save city" onClick={() => saveCity(cityDraft)}>
+                  <Check className="h-6 w-6 text-white" />
+                </button>
+              </div>
+            ) : currentCity ? (
+              <h2 className="font-display text-[38px] font-bold leading-[1.1] tracking-tight">{currentCity}</h2>
+            ) : (
+              <button onClick={startCityEdit} className="text-left text-base italic text-white/85">
+                Tap to add city…
+              </button>
+            )}
+          </div>
+          {dayIndex >= 0 && (
+            <span className="shrink-0 rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-slate-900 shadow-md [text-shadow:none]">
+              {isWishlist ? selectedDate : `Day ${dayIndex + 1} of ${days.length}`}
+            </span>
+          )}
+        </div>
+      </div>
 
-        {/* Day selector */}
+      {/* Content sheet slides over the photo */}
+      <div className="relative z-10 -mt-7 min-h-[60vh] rounded-t-[34px] bg-background px-4 pb-40 pt-5 shadow-[0_-12px_30px_rgba(10,20,50,0.16)]">
+        {/* Day strip (solid chips, not glass) */}
         <div className="relative -mx-4 overflow-x-auto px-4 no-scrollbar">
-          <div ref={dayScrollerRef} className="flex min-w-max gap-2 pb-1">
-            {days.map((day) => {
+          <div ref={dayScrollerRef} className="flex min-w-max gap-1.5 pb-2 pt-1">
+            {days.map(day => {
               const isSelected = selectedDate === day;
+              const hasItems = allItems.some(i => i.date === day && i.elementType !== "accommodation");
               const hasAccom = allItems.some(
-                i =>
-                  i.elementType === "accommodation" &&
-                  i.date <= day &&
-                  (i.endDate ?? i.date) >= day
+                i => i.elementType === "accommodation" && i.date <= day && (i.endDate ?? i.date) >= day
               );
-              const city = dayCities[day] ?? "";
               return (
                 <button
                   key={day}
                   onClick={() => setSelectedDate(day)}
                   className={cn(
-                    "flex shrink-0 flex-col items-center justify-center rounded-[22px] px-3 transition-all",
-                    city ? "h-[84px] min-w-[68px]" : "h-[76px] min-w-[62px]",
+                    "flex h-[68px] w-[46px] shrink-0 flex-col items-center justify-center rounded-[20px] transition-all",
                     isSelected
-                      ? "bg-primary text-primary-foreground shadow-lg shadow-primary/30"
-                      : "glass-light text-foreground/80"
+                      ? "bg-primary text-primary-foreground shadow-[0_10px_18px_-6px_hsl(var(--primary)/0.55)]"
+                      : `bg-card text-foreground ${chipShadow}`
                   )}
                 >
-                  {city && (
-                    <span className={cn("mb-0.5 whitespace-nowrap text-[10px] font-semibold leading-none", isSelected ? "text-primary-foreground/85" : "text-primary")}>
-                      {city}
-                    </span>
-                  )}
-                  <span className="text-[11px] opacity-80">
-                    {isDayLabel(day) ? day : safeFormatDate(day, d => format(d, "EEE"), "")}
+                  <span className="text-[10.5px] opacity-75">
+                    {isDayLabel(day) ? "Day" : safeFormatDate(day, d => format(d, "EEE"), "")}
                   </span>
-                  <span className="font-display text-xl font-bold leading-tight">
-                    {isDayLabel(day) ? day.replace("Day ", "D") : safeFormatDate(day, d => format(d, "d"), "")}
+                  <span className="font-display text-lg font-bold leading-tight">
+                    {isDayLabel(day) ? day.replace("Day ", "") : safeFormatDate(day, d => format(d, "d"), "")}
                   </span>
-                  {hasAccom && (
-                    <span className={cn("mt-0.5 text-[9px] font-semibold leading-none", isSelected ? "text-primary-foreground/70" : "text-violet-500")}>
-                      Stay
-                    </span>
-                  )}
+                  <span className="mt-1 flex h-1 items-center gap-0.5">
+                    {hasItems && <i className={cn("h-1 w-1 rounded-full", isSelected ? "bg-white" : "bg-primary")} />}
+                    {hasAccom && <i className={cn("h-1 w-1 rounded-full", isSelected ? "bg-white/70" : "bg-violet-500")} />}
+                  </span>
                 </button>
               );
             })}
@@ -713,7 +778,7 @@ const dur = Math.max(
                   updateTrip({ ...trip, wishlistDayCount: newCount });
                   setSelectedDate(`Day ${newCount}`);
                 }}
-                className="glass flex h-[76px] w-16 shrink-0 items-center justify-center rounded-[22px] border-dashed"
+                className="flex h-[68px] w-[46px] shrink-0 items-center justify-center rounded-[20px] border-2 border-dashed border-border text-muted-foreground"
               >
                 <Plus className="h-5 w-5" />
               </button>
@@ -721,79 +786,48 @@ const dur = Math.max(
           </div>
         </div>
 
-        {/* City + date header */}
-        <div className="relative mt-5 flex items-start justify-between gap-3">
-          <div className="min-w-0 flex-1">
-            <span className="text-xs font-medium text-white/85">
-              {isDayLabel(selectedDate)
-                ? selectedDate
-                : safeFormatDate(selectedDate, d => format(d, "EEEE, MMMM d"), selectedDate)}
-            </span>
-            {editingCity ? (
-              <div className="mt-1 flex items-center gap-2">
-                <input
-                  ref={cityInputRef}
-                  autoFocus
-                  value={cityDraft}
-                  onChange={e => setCityDraft(e.target.value)}
-                  onKeyDown={e => {
-                    if (e.key === "Enter") saveCity(cityDraft);
-                    if (e.key === "Escape") setEditingCity(false);
-                  }}
-                  placeholder="City name…"
-                  className="w-44 min-w-0 border-b-2 border-white bg-transparent text-xl font-bold text-white outline-none placeholder:text-white/60"
-                />
-                <button aria-label="Save city" onClick={() => saveCity(cityDraft)}>
-                  <Check className="h-5 w-5 text-white" />
-                </button>
-              </div>
-            ) : (
-              <button
-                onClick={() => {
-                  setCityDraft(currentCity);
-                  setEditingCity(true);
-                }}
-                className="group/city mt-0.5 flex items-center gap-2 text-left"
-              >
-                {currentCity ? (
-                  <span className="font-display text-[32px] font-bold leading-tight tracking-tight">{currentCity}</span>
-                ) : (
-                  <span className="text-base italic text-white/70">Tap to add city…</span>
-                )}
-                <Pencil className="h-3.5 w-3.5 text-white/60 transition-colors group-hover/city:text-white" />
-              </button>
+        {/* Day summary */}
+        <div className="mb-5 mt-3 flex items-center justify-between px-0.5 text-[13px]">
+          <div className="flex items-center gap-3">
+            <b className="font-semibold">
+              {filteredItems.length} {filteredItems.length === 1 ? "item" : "items"}
+            </b>
+            {totalDayMinutes > 0 && (
+              <>
+                <i className="h-3 w-px bg-border" />
+                <span className="text-muted-foreground">
+                  {getDuration("00:00", addMinutesToTime("00:00", totalDayMinutes))}
+                </span>
+              </>
+            )}
+            {totalDayCost > 0 && (
+              <>
+                <i className="h-3 w-px bg-border" />
+                <span className="text-muted-foreground">₹{Math.round(totalDayCost).toLocaleString("en-IN")}</span>
+              </>
             )}
           </div>
-          <div className="flex items-start gap-2">
+          <div className="flex items-center gap-2">
             {isWishlist && (trip.wishlistDayCount ?? 1) > 1 && (
               <button
                 type="button"
-                onClick={() => deleteWishlistDay(selectedDate)}
-                className="glass inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
                 aria-label="Delete day"
+                onClick={() => deleteWishlistDay(selectedDate)}
+                className={`flex h-[34px] w-[34px] items-center justify-center rounded-full bg-card text-destructive ${chipShadow}`}
               >
-                <Trash2 className="h-4 w-4" />
+                <Trash2 className="h-[15px] w-[15px]" />
               </button>
             )}
-            <div className="flex flex-col items-end gap-1.5">
-              {totalDayMinutes > 0 && (
-                <div className="glass flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold">
-                  <Clock className="h-3 w-3" />
-                  {getDuration("00:00", addMinutesToTime("00:00", totalDayMinutes))}
-                </div>
-              )}
-              {totalDayCost > 0 && (
-                <div className="glass flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold">
-                  ₹{Math.round(totalDayCost).toLocaleString("en-IN")}
-                </div>
-              )}
-            </div>
+            <button
+              aria-label="Edit city"
+              onClick={startCityEdit}
+              className={`flex h-[34px] w-[34px] items-center justify-center rounded-full bg-card text-primary ${chipShadow}`}
+            >
+              <Pencil className="h-[15px] w-[15px]" />
+            </button>
           </div>
         </div>
-      </div>
 
-      {/* Content sheet slides over the photo */}
-      <div className="relative z-10 -mt-7 min-h-[60vh] rounded-t-[34px] bg-background px-4 pb-40 pt-5 shadow-[0_-12px_30px_rgba(10,20,50,0.16)]">
         <AnimatePresence mode="wait" custom={swipeDirection}>
           <motion.div
             key={selectedDate}
@@ -806,7 +840,7 @@ const dur = Math.max(
               opacity: { duration: 0.18 },
             }}
           >
-            {/* Accommodation banners */}
+            {/* Stays */}
             {activeAccommodations.map(accom => (
               <AccommodationCard
                 key={accom.id}
@@ -817,7 +851,7 @@ const dur = Math.max(
               />
             ))}
 
-            {/* Regular items */}
+            {/* Everything else */}
             {filteredItems.length === 0 && activeAccommodations.length === 0 ? (
               <div className="mt-8 text-center text-muted-foreground">
                 <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
@@ -827,21 +861,26 @@ const dur = Math.max(
                 <p className="mt-1 text-sm opacity-70">Tap + to add something.</p>
               </div>
             ) : filteredItems.length === 0 ? null : (
-              <div className="mt-5 space-y-5">
+              <div className="space-y-5">
                 <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                   <SortableContext items={filteredItems.map(i => i.id)} strategy={verticalListSortingStrategy}>
-                    {filteredItems.map((item, index) => (
-                      <React.Fragment key={item.id}>
-                        {index === nowIndex && <NowMarker time={nowTime} />}
-                        <SortableItem
-                          item={item}
-                          documents={documents}
-                          trip={trip}
-                          onEdit={() => setEditItem(item)}
-                          isLast={index === filteredItems.length - 1}
-                        />
-                      </React.Fragment>
-                    ))}
+                    {filteredItems.map((item, index) => {
+                      const gap = gapAfter(item, filteredItems[index + 1]);
+                      return (
+                        <React.Fragment key={item.id}>
+                          {index === nowIndex && <NowMarker time={nowTime} />}
+                          <SortableItem
+                            item={item}
+                            documents={documents}
+                            trip={trip}
+                            onEdit={() => setEditItem(item)}
+                            isLast={index === filteredItems.length - 1}
+                            done={isDone(item)}
+                          />
+                          {gap && <GapLabel text={gap} />}
+                        </React.Fragment>
+                      );
+                    })}
                     {nowIndex === filteredItems.length && <NowMarker time={nowTime} />}
                   </SortableContext>
                 </DndContext>
@@ -852,12 +891,7 @@ const dur = Math.max(
       </div>
 
       {getTripStatus(trip) !== "archived" && (
-        <FAB
-          icon={Plus}
-          label="Add to timeline"
-          open={menuOpen}
-          onClick={() => setMenuOpen(o => !o)}
-        />
+        <FAB icon={Plus} label="Add to timeline" open={menuOpen} onClick={() => setMenuOpen(o => !o)} />
       )}
       <AddMenu
         open={menuOpen}
@@ -1418,12 +1452,14 @@ function SortableItem({
   trip,
   onEdit,
   isLast,
+  done = false,
 }: {
   item: ItineraryItem;
   documents: TripDocument[];
   trip: Trip;
   onEdit: () => void;
   isLast: boolean;
+  done?: boolean;
 }) {
 
   const { mutate: deleteItem } = useDeleteItineraryItem();
@@ -1519,22 +1555,22 @@ function SortableItem({
     ? `${notchTop}, linear-gradient(#000, #000) bottom / 100% 49% no-repeat`
     : `${notchTop}, ${notchBottom}`;
 
+  const dotColor = isTravel ? "bg-blue-500" : isMeal ? "bg-amber-400" : "bg-orange-500";
+
   return (
-    <div className="flex items-stretch gap-3">
-      {/* Rail */}
-      <div className="relative flex min-h-[76px] w-9 shrink-0 flex-col items-center pt-3.5">
-        <div
-          className={cn(
-            "relative z-10 flex h-9 w-9 items-center justify-center rounded-full text-white ring-4 ring-background shadow-sm",
-            accentBg
-          )}
-        >
-          <Icon className="h-4 w-4" />
-        </div>
-        <span className="mt-1.5 text-[10px] font-semibold text-muted-foreground">{item.startTime}</span>
+    <div className="flex">
+      {/* Time */}
+      <div className="w-11 shrink-0 pt-3.5 text-right">
+        <p className="text-[13px] font-bold leading-none tabular-nums">{item.startTime}</p>
+        {duration && <p className="mt-1 text-[10.5px] text-muted-foreground">{duration}</p>}
+      </div>
+
+      {/* Rail: line turns blue once the item is done */}
+      <div className="relative w-7 shrink-0">
         {!isLast && (
-          <span className="absolute -bottom-[34px] left-1/2 top-[72px] w-0.5 -translate-x-1/2 rounded-full bg-border" />
+          <span className={cn("absolute -bottom-5 left-[13px] top-0 w-0.5", done ? "bg-primary" : "bg-border")} />
         )}
+        <span className={cn("absolute left-2 top-[18px] h-3 w-3 rounded-full ring-4 ring-background", dotColor)} />
       </div>
 
       {/* Card: ticket (travel), pill (meal), event card (activity) */}
@@ -1600,12 +1636,14 @@ function SortableItem({
               )}
 
               {isMeal && (
-                <div className="flex items-center gap-3 px-5 py-3.5">
+                <div className="flex items-center gap-3 py-2 pl-2 pr-4">
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-amber-50 text-amber-600">
+                    <Icon className="h-[19px] w-[19px]" />
+                  </span>
                   <div className="min-w-0 flex-1">
-                    <p className="text-[11px] font-semibold text-amber-600">{categoryLabel(item)}</p>
-                    <h3 className="truncate text-[15px] font-semibold leading-snug">{item.title}</h3>
-                    <p className="text-xs text-muted-foreground">
-                      {item.startTime || "—"}
+                    <h3 className="truncate text-[14.5px] font-semibold leading-snug">{item.title}</h3>
+                    <p className="truncate text-[11.5px] text-muted-foreground">
+                      {categoryLabel(item)}
                       {duration ? ` · ${duration}` : ""}
                     </p>
                   </div>
@@ -1620,18 +1658,17 @@ function SortableItem({
 
               {item.elementType === "activity" && (
                 <div className="px-4 py-3.5">
-                  <div className="flex items-start gap-3">
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-orange-50 text-orange-600">
+                      <Icon className="h-[17px] w-[17px]" />
+                    </span>
                     <div className="min-w-0 flex-1">
                       <p className="text-[11px] font-semibold text-orange-600">Activity</p>
-                      <h3 className="line-clamp-2 break-words text-[16px] font-semibold leading-snug">{item.title}</h3>
-                    </div>
-                    <div className="shrink-0 text-right text-xs text-muted-foreground">
-                      <p>{item.startTime || "—"}</p>
-                      <p>{duration || ""}</p>
+                      <h3 className="line-clamp-2 break-words text-[15px] font-semibold leading-snug">{item.title}</h3>
                     </div>
                     <ChevronDown
                       className={cn(
-                        "mt-0.5 h-4 w-4 shrink-0 text-muted-foreground/60 transition-transform duration-300",
+                        "h-4 w-4 shrink-0 text-muted-foreground/60 transition-transform duration-300",
                         expanded && "rotate-180"
                       )}
                     />

@@ -15,6 +15,7 @@ import ExpensesTab from "./tabs/ExpensesTab";
 import PlacesTab from "./tabs/PlacesTab";
 import OverviewTab from "./tabs/OverviewTab";
 import { BottomSheet, Button, Input, Label } from "@/components/ui";
+import { DockBar } from "@/components/Dock";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { getAvatarUrl } from "@/lib/avatar";
@@ -112,32 +113,12 @@ export default function TripDashboard({ params }: { params: { id: string, tab?: 
         </Switch>
       </main>
 
-      {/* Bottom Navigation: floating glass dock */}
-      <nav className="pointer-events-none fixed bottom-0 left-1/2 z-50 w-full max-w-md -translate-x-1/2 px-4 pb-[calc(18px+env(safe-area-inset-bottom))]">
-        <div className="dock-bar glass-light pointer-events-auto flex h-[60px] items-center justify-between rounded-[30px] px-2">
-          {tabs.map(tab => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
-            return (
-              <Link
-                key={tab.id}
-                href={`/trip/${trip.id}/${tab.id}`}
-                aria-label={tab.label}
-                aria-current={isActive ? "page" : undefined}
-                className={cn(
-                  "flex h-11 items-center justify-center rounded-full transition-all duration-300",
-                  isActive
-                    ? "gap-1.5 bg-primary/15 px-3.5 text-primary"
-                    : "w-[38px] text-muted-foreground hover:text-foreground"
-                )}
-              >
-                <Icon className="h-[18px] w-[18px]" strokeWidth={isActive ? 2.4 : 2} />
-                {isActive && <span className="text-[13px] font-semibold">{tab.label}</span>}
-              </Link>
-            );
-          })}
-        </div>
-      </nav>
+      {/* Bottom Navigation: compact floating glass pill */}
+      <DockBar
+        variant="trip"
+        activeId={activeTab}
+        items={tabs.map(t => ({ id: t.id, label: t.label, icon: t.icon, href: `/trip/${trip.id}/${t.id}` }))}
+      />
     </div>
   );
 }

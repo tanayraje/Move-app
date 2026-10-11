@@ -4,6 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { differenceInDays, format, isBefore, isAfter, addDays } from "date-fns";
 import { useItinerary, useExpenses, useDocuments, usePlaces } from "@/hooks/use-store";
 import { Trip } from "@/lib/types";
+import { HeroScrim } from "@/components/ui";
 import { Calendar, FileText, Receipt, MapPin, Plane, Clock, Heart, Building2, UtensilsCrossed, Bike } from "lucide-react";
 import { formatCurrency } from "@/lib/countries";
 import { safeFormatDate, safeParseDate } from "@/lib/utils";
@@ -121,17 +122,7 @@ return (
         }
       >
         {!trip.heroImage && <Plane className="absolute -right-6 bottom-10 h-44 w-44 text-white/10" />}
-        {/* Legibility: soften busy photos where the text sits (progressive blur + darkening) */}
-        <div
-          aria-hidden
-          className="absolute inset-x-0 bottom-0 h-[58%] backdrop-blur-md"
-          style={{
-            WebkitMaskImage: "linear-gradient(to top, #000 40%, transparent)",
-            maskImage: "linear-gradient(to top, #000 40%, transparent)",
-          }}
-        />
-        <div className="absolute inset-x-0 bottom-0 h-[66%] bg-gradient-to-t from-black/80 via-black/50 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-transparent" />
+        <HeroScrim />
         <div className="absolute inset-x-0 bottom-14 z-10 px-6 text-white [text-shadow:0_1px_14px_rgba(0,0,0,0.5)]">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-white/95 px-3 py-1.5 text-xs font-semibold text-slate-900 shadow-md [text-shadow:none]">
             {isWishlist ? <Heart className="h-3.5 w-3.5 text-pink-500" /> : <span className="h-1.5 w-1.5 rounded-full bg-orange-500" />}

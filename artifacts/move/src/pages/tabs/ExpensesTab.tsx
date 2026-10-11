@@ -227,7 +227,7 @@ setShowSettlement(false);
           {showToggle && (
             <button
               onClick={() => setShowInDest(v => !v)}
-              className="flex items-center gap-1.5 bg-white/20 px-2.5 py-1 rounded-full text-xs font-bold backdrop-blur-sm"
+              className="glass flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold"
             >
               <ArrowLeftRight className="w-3 h-3" />
               {showInDest ? destCurrency : 'INR'} ↔ {showInDest ? 'INR' : destCurrency}

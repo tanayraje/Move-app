@@ -181,13 +181,8 @@ function RecenterButton({
     w-9
     h-9
     rounded-full
-    border border-white/20
-    bg-black/30
-    backdrop-blur-xl
+    glass
     flex items-center justify-center
-    text-white
-    shadow-lg shadow-black/10
-    hover:bg-black/40
     active:scale-95
     transition-all
   "
@@ -201,7 +196,7 @@ function ZoomControls() {
   const map = useMap();
 
   return (
-    <div className="absolute top-3 left-3 z-[1000] flex flex-col overflow-hidden rounded-xl border border-white/20 bg-black/30 backdrop-blur-xl shadow-lg shadow-black/10">
+    <div className="absolute top-3 left-3 z-[1000] flex flex-col overflow-hidden rounded-xl glass">
       <button
         type="button"
         onClick={() => map.zoomIn()}

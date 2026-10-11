@@ -127,11 +127,10 @@
   }
 }
 
-/* Floating dock: the tab bar leaves room for the docked "+" when a screen has one */
-.dock-bar {
-  margin-right: 0;
-  transition: margin-right 0.25s ease;
+/* Floating dock: compact pill, centred. When a "+" is docked beside it the pair is centred together. */
+.dock-pill {
+  transition: translate 0.25s ease;
 }
-body.has-dock-action .dock-bar {
-  margin-right: 72px;
+body.has-dock-action .dock-pill-trip {
+  translate: -38px 0;
 }

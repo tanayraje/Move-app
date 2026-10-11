@@ -136,10 +136,23 @@ export function BottomSheet({
 let dockActionCount = 0;
 
 /**
- * Docked "+" action. Sits on the same baseline as the floating tab bar
- * (right side) and tells the bar to make room for it.
+ * Docked "+" action: the same height as the dock pill, sitting right beside it.
+ * Tells trip dock bars to slide left so the pair stays centred.
+ * `barWidth` is the width of the bar it sits next to (default: the 5-tab trip bar).
  */
-export function FAB({ onClick, icon: Icon, label = "Add", open = false }: { onClick: () => void, icon: any, label?: string, open?: boolean }) {
+export function FAB({
+  onClick,
+  icon: Icon,
+  label = "Add",
+  open = false,
+  barWidth = 272,
+}: {
+  onClick: () => void;
+  icon: any;
+  label?: string;
+  open?: boolean;
+  barWidth?: number;
+}) {
   useEffect(() => {
     dockActionCount += 1;
     document.body.classList.add("has-dock-action");
@@ -153,17 +166,38 @@ export function FAB({ onClick, icon: Icon, label = "Add", open = false }: { onCl
   }, []);
 
   return (
-    <div className={cn("pointer-events-none fixed bottom-0 left-1/2 w-full max-w-md -translate-x-1/2 px-4 pb-[calc(18px+env(safe-area-inset-bottom))]", open ? "z-[70]" : "z-50")}>
-      <div className="flex justify-end">
-        <motion.button
-          whileTap={{ scale: 0.94 }}
-          onClick={onClick}
-          aria-label={label}
-          className="pointer-events-auto flex h-[60px] w-[60px] items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[0_12px_28px_rgba(37,99,235,0.42),inset_0_1px_0_rgba(255,255,255,0.35)]"
-        >
-          <Icon className={cn("h-6 w-6 transition-transform duration-200", open && "rotate-45")} />
-        </motion.button>
+    <div
+      className={cn(
+        "pointer-events-none fixed bottom-0 left-1/2 w-full max-w-md -translate-x-1/2 px-4 pb-[calc(18px+env(safe-area-inset-bottom))]",
+        open ? "z-[70]" : "z-50"
+      )}
+    >
+      <div className="flex justify-center">
+        <div style={{ transform: `translateX(${barWidth / 2 + 6}px)` }}>
+          <motion.button
+            whileTap={{ scale: 0.94 }}
+            onClick={onClick}
+            aria-label={label}
+            className="pointer-events-auto flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-[#4F86F7] to-primary text-primary-foreground shadow-[inset_0_1px_1px_rgba(255,255,255,0.55),inset_0_-3px_8px_rgba(15,40,120,0.28),0_16px_30px_-6px_rgba(37,99,235,0.55)]"
+          >
+            <Icon className={cn("h-7 w-7 transition-transform duration-200", open && "rotate-45")} />
+          </motion.button>
+        </div>
       </div>
     </div>
+  );
+}
+
+/**
+ * Gradient that keeps white text readable on any photo. Used by every photo hero
+ * (Overview, Timeline, trip cards) so they all look and read the same.
+ * Place inside a `relative` photo container.
+ */
+export function HeroScrim() {
+  return (
+    <>
+      <div className="absolute inset-x-0 top-0 h-[34%] bg-gradient-to-b from-black/40 to-transparent" />
+      <div className="absolute inset-x-0 bottom-0 h-[70%] bg-gradient-to-t from-black/80 via-black/45 to-transparent" />
+    </>
   );
 }
