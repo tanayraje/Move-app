@@ -42,9 +42,9 @@ export function AddMenu({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 z-[60] bg-slate-900/30 backdrop-blur-[6px]"
+            className="fixed inset-0 z-[110] bg-slate-900/30 backdrop-blur-[6px]"
           />
-          <div className="pointer-events-none fixed bottom-0 left-1/2 z-[65] w-full max-w-md -translate-x-1/2 px-4 pb-[calc(96px+env(safe-area-inset-bottom))]">
+          <div className="pointer-events-none fixed bottom-0 left-1/2 z-[115] w-full max-w-md -translate-x-1/2 px-4 pb-[calc(96px+env(safe-area-inset-bottom))]">
             <motion.div
               key="menu"
               role="menu"

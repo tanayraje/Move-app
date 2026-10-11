@@ -81,7 +81,7 @@
    Two recipes only, so every glass element looks and feels the same:
      .glass        over photos / colour (white content)
      .glass-light  over the light app background (dark content)
-   Tint a .glass chip with a bg-*/30 utility (e.g. bg-emerald-400/30 for active, bg-pink-400/30 for wishlist).
+   Tint a .glass chip with a background utility at 30 percent opacity (emerald for active, pink for wishlist).
    Use for floating controls only (bars, menus, buttons, chips), never for content cards. */
 @layer components {
   .glass {

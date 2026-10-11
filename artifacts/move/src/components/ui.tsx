@@ -166,7 +166,7 @@ export function FAB({
     <div
       className={cn(
         "pointer-events-none fixed bottom-0 left-1/2 w-full max-w-md -translate-x-1/2 px-5 pb-[calc(18px+env(safe-area-inset-bottom))]",
-        open ? "z-[70]" : "z-50"
+        open ? "z-[120]" : "z-50"
       )}
     >
       <div className="flex justify-end">
