@@ -314,7 +314,12 @@ const paid = ledger?.paid?.[id] ?? 0;
                 <div className="flex items-center gap-2">
                 <div className="w-7 h-7 rounded-full overflow-hidden bg-muted shrink-0">
                 <img
-                  src={getAvatarUrl(m.avatar, 64)}
+                  src={getAvatarUrl(
+  "avatar" in m && typeof m.avatar === "string"
+    ? m.avatar
+    : undefined,
+  64
+)}
                   alt=""
                   className="w-full h-full"
                 />
@@ -696,7 +701,7 @@ const isSplit =
             <div className="flex items-center gap-1">
               <div className="w-6 h-6 rounded-full overflow-hidden bg-muted shrink-0">
               <img
-                src={getAvatarUrl(payer.avatar, 32)}
+                src={getAvatarUrl("avatar" in payer ? payer.avatar : undefined, 32)}
                 alt=""
                 className="w-full h-full"
               />

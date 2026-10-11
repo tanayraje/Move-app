@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRoute, Link, Route, Switch } from "wouter";
 import { format } from "date-fns";
 import { useTrip, useUpdateTrip } from "@/hooks/use-store";
@@ -25,6 +25,17 @@ export default function TripDashboard({ params }: { params: { id: string, tab?: 
   const [, paramsActive] = useRoute("/trip/:id/:tab");
   const activeTab = paramsActive?.tab || 'overview';
 
+  // Tabs that open with a photo behind the header get a transparent, floating header
+  const heroTab = activeTab === 'overview' || activeTab === 'itinerary';
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 120);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+  const onPhoto = heroTab && !scrolled;
+
   if (isLoading) return <div className="p-8 text-center">Loading trip...</div>;
   if (!trip) return <div className="p-8 text-center text-muted-foreground">Trip not found. <Link href="/" className="text-primary ml-2">Go back</Link></div>;
 
@@ -42,36 +53,53 @@ export default function TripDashboard({ params }: { params: { id: string, tab?: 
 
   return (
     <div className="flex flex-col min-h-[100dvh] bg-background">
-      {/* Sticky Header */}
-      <header className="sticky top-0 z-30 bg-background/90 border-b border-border/50 px-4 py-4 flex items-center gap-3">
-        <Link href="/" className="p-2 -ml-2 rounded-full hover:bg-muted text-foreground">
-          <ChevronLeft className="w-6 h-6" />
-        </Link>
-        <div className="flex-1 truncate">
-          <h1 className="text-xl font-display font-bold text-foreground truncate">{trip.name}</h1>
-          <p className="text-xs text-muted-foreground font-medium truncate">
-            {trip.destination}
-            {isWishlist ? ' · Wishlist' : ` · ${safeFormatDate(trip.startDate, d => format(d, 'MMM d'), '')} – ${safeFormatDate(trip.endDate, d => format(d, 'MMM d'), '')}`}
+      {/* Floating header: transparent over photos, glass once scrolled / on plain tabs */}
+      <header
+        className={cn(
+          "fixed left-1/2 top-0 z-40 w-full max-w-md -translate-x-1/2 px-4 pb-2.5 pt-[calc(12px+env(safe-area-inset-top))] transition-all duration-300",
+          !onPhoto && "glass-light rounded-b-[26px] border-t-0"
+        )}
+      >
+        <div className="flex items-center gap-2.5">
+          <Link
+            href="/"
+            aria-label="Back to trips"
+            className={cn(
+              "flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-all",
+              onPhoto ? "glass" : "bg-black/[0.05] text-foreground"
+            )}
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </Link>
+          <div className={cn("min-w-0 flex-1 transition-opacity duration-300", onPhoto && "pointer-events-none opacity-0")}>
+            <h1 className="truncate font-display text-lg font-bold text-foreground">{trip.name}</h1>
+            <p className="truncate text-xs font-medium text-muted-foreground">
+              {trip.destination}
+              {isWishlist ? ' · Wishlist' : ` · ${safeFormatDate(trip.startDate, d => format(d, 'MMM d'), '')} – ${safeFormatDate(trip.endDate, d => format(d, 'MMM d'), '')}`}
+            </p>
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            <MembersButton trip={trip} onPhoto={onPhoto} />
+          </div>
+        </div>
+        {isArchived && (
+          <p
+            className={cn(
+              "mt-2 text-center text-[11px] font-medium",
+              onPhoto ? "glass mx-auto w-fit rounded-full px-3 py-1" : "text-muted-foreground"
+            )}
+          >
+            This trip is archived. View-only mode.
           </p>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <MembersButton trip={trip} />
-        
-        </div>
+        )}
       </header>
-
-      {/* Archived banner */}
-      {isArchived && (
-        <div className="bg-muted border-y border-border px-4 py-2 text-center text-xs font-medium text-muted-foreground">
-          This trip is archived. View-only mode.
-        </div>
-      )}
 
       {/* Main Content Area */}
      <main
   className="relative flex-1 overflow-x-hidden overflow-y-hidden pb-28"
   style={{
-    paddingBottom: "calc(88px + env(safe-area-inset-bottom))",
+    paddingBottom: "calc(104px + env(safe-area-inset-bottom))",
+    paddingTop: heroTab ? 0 : `calc(${isArchived ? 100 : 76}px + env(safe-area-inset-top))`,
   }}
 >
         <Switch>
@@ -84,28 +112,27 @@ export default function TripDashboard({ params }: { params: { id: string, tab?: 
         </Switch>
       </main>
 
-      {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-card/95 backdrop-blur-xl border-t border-border/50 pb-[env(safe-area-inset-bottom)] z-50 px-2 pt-2 shadow-[0_-8px_24px_rgba(0,0,0,0.08)]">
-        <div className="flex justify-between items-center px-1">
+      {/* Bottom Navigation: floating glass dock */}
+      <nav className="pointer-events-none fixed bottom-0 left-1/2 z-50 w-full max-w-md -translate-x-1/2 px-4 pb-[calc(18px+env(safe-area-inset-bottom))]">
+        <div className="dock-bar glass-light pointer-events-auto flex h-[60px] items-center justify-between rounded-[30px] px-2">
           {tabs.map(tab => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
             return (
-              <Link key={tab.id} href={`/trip/${trip.id}/${tab.id}`} className="relative flex flex-col items-center justify-center w-full py-2 group">
-                <div className={cn(
-                  "flex items-center justify-center w-10 h-10 rounded-2xl transition-all duration-300",
+              <Link
+                key={tab.id}
+                href={`/trip/${trip.id}/${tab.id}`}
+                aria-label={tab.label}
+                aria-current={isActive ? "page" : undefined}
+                className={cn(
+                  "flex h-11 items-center justify-center rounded-full transition-all duration-300",
                   isActive
-                    ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25 scale-110"
-                    : "text-muted-foreground group-hover:bg-muted group-hover:text-foreground"
-                )}>
-                  <Icon className={cn("w-5 h-5", isActive ? "stroke-[2.5]" : "stroke-2")} />
-                </div>
-                <span className={cn(
-                  "text-[10px] font-semibold mt-1 transition-colors duration-300",
-                  isActive ? "text-primary" : "text-muted-foreground"
-                )}>
-                  {tab.label}
-                </span>
+                    ? "gap-1.5 bg-primary/15 px-3.5 text-primary"
+                    : "w-[38px] text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <Icon className="h-[18px] w-[18px]" strokeWidth={isActive ? 2.4 : 2} />
+                {isActive && <span className="text-[13px] font-semibold">{tab.label}</span>}
               </Link>
             );
           })}
@@ -138,7 +165,7 @@ function getAvatarColour(userId: string) {
   return avatarColours[Math.abs(hash) % avatarColours.length];
 }
 
-function MembersButton({ trip }: { trip: Trip }) {
+function MembersButton({ trip, onPhoto = false }: { trip: Trip; onPhoto?: boolean }) {
   const [isOpen, setIsOpen] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
@@ -231,8 +258,10 @@ const leaveTrip = async () => {
       <button
         onClick={() => setIsOpen(true)}
         className={cn(
-          "flex items-center gap-1.5 shrink-0 px-2.5 py-1.5 rounded-full text-xs font-bold transition-colors",
-          isSolo ? "bg-muted text-muted-foreground" : "bg-blue-50 text-blue-600"
+          "flex shrink-0 items-center gap-1.5 rounded-full text-xs font-bold transition-colors",
+          onPhoto
+            ? "glass h-10 px-3.5"
+            : cn("px-2.5 py-1.5", isSolo ? "bg-muted text-muted-foreground" : "bg-blue-50 text-blue-600")
         )}
       >
         <Users className="w-3.5 h-3.5" />

@@ -27,6 +27,7 @@ import {
 } from "@/lib/types";
 import { generateId, cn, safeFormatDate, safeParseDate, isDayLabel, getTripStatus } from "@/lib/utils";
 import { Button, Input, Label, Select, BottomSheet, FAB } from "@/components/ui";
+import { AddMenu } from "@/components/AddMenu";
 import { formatCurrency, convertFromINR, RATES_PER_INR } from "@/lib/countries";
 
 import {
@@ -245,6 +246,72 @@ function stayNights(checkIn: string, checkOut: string): number {
   return Math.max(differenceInDays(d2, d1), 1);
 }
 
+// ─── Card helpers ─────────────────────────────────────────────────────────────
+
+/** Splits "Delhi (DEL)" / "DEL" into a big airport-style code and a small city name. */
+function splitPlace(place?: string): { big: string; small: string; isCode: boolean } {
+  const p = (place ?? "").trim();
+  if (!p) return { big: "—", small: "", isCode: false };
+  const m = p.match(/\(([A-Za-z]{3})\)|\b([A-Z]{3})\b/);
+  const code = m ? (m[1] ?? m[2] ?? "").toUpperCase() : "";
+  if (m && code) {
+    const name = p.replace(m[0], " ").replace(/[(),-]+/g, " ").replace(/\s+/g, " ").trim();
+    return { big: code, small: name, isCode: true };
+  }
+  return { big: p, small: "", isCode: false };
+}
+
+function PlaceCode({ place, right }: { place?: string; right?: boolean }) {
+  const { big, small, isCode } = splitPlace(place);
+  return (
+    <div className={cn("min-w-0 max-w-[42%] shrink", right && "text-right")}>
+      <p
+        title={place}
+        className={cn(
+          "truncate font-display font-bold",
+          isCode ? "text-[24px] leading-none" : "text-[16px] leading-tight"
+        )}
+      >
+        {big}
+      </p>
+      {small && <p className="mt-1 truncate text-[11px] text-muted-foreground">{small}</p>}
+    </div>
+  );
+}
+
+/** Live state for a travel leg: departs in..., in transit, landed/arrived. */
+function legStatus(item: ItineraryItem): { label: string; tone: string } | null {
+  const start = new Date(`${item.date}T${item.startTime}`);
+  const end = new Date(`${item.date}T${item.endTime || item.startTime}`);
+  if (isNaN(start.getTime()) || isNaN(end.getTime())) return null;
+  if (end < start) end.setDate(end.getDate() + 1);
+  const now = new Date();
+  if (now >= end) {
+    return { label: item.travelType === "flight" ? "Landed" : "Arrived", tone: "bg-emerald-50 text-emerald-600" };
+  }
+  if (now >= start) return { label: "In transit", tone: "bg-blue-50 text-blue-600" };
+  const mins = Math.round((start.getTime() - now.getTime()) / 60000);
+  if (mins <= 24 * 60) {
+    return {
+      label: mins >= 60 ? `Departs in ${Math.round(mins / 60)}h` : `Departs in ${mins}m`,
+      tone: "bg-amber-50 text-amber-600",
+    };
+  }
+  return { label: "Upcoming", tone: "bg-blue-50 text-blue-600" };
+}
+
+function NowMarker({ time }: { time: string }) {
+  return (
+    <div className="relative flex items-center gap-3">
+      <div className="relative flex w-9 shrink-0 justify-center">
+        <span className="absolute left-1/2 top-1/2 -bottom-[34px] w-0.5 -translate-x-1/2 bg-primary/30" />
+        <span className="relative z-10 h-[18px] w-[18px] rounded-full bg-primary shadow-[0_0_0_6px_hsl(var(--primary)/0.18)]" />
+      </div>
+      <span className="text-xs font-semibold text-primary">Now, {time}</span>
+    </div>
+  );
+}
+
 // ─── Main Tab ─────────────────────────────────────────────────────────────────
 export default function ItineraryTab({ trip }: { trip: Trip }) {
   const { data: allItems = [] } = useItinerary(trip.id);
@@ -265,6 +332,9 @@ const [swipeDirection, setSwipeDirection] = useState<1 | -1>(1);
 
 
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [addType, setAddType] = useState<ElementType | undefined>(undefined);
+  const [addKey, setAddKey] = useState(0);
   const [editItem, setEditItem] = useState<ItineraryItem | null>(null);
   const [editingCity, setEditingCity] = useState(false);
   const [cityDraft, setCityDraft] = useState('');
@@ -382,7 +452,6 @@ const handleTouchEnd = (e: React.TouchEvent) => {
   const updatedTrip = {
   ...trip,
   dayCities: updatedDayCities,
-  wishlistDayCount: currentDayCount - 1,
 };
 
 queryClient.setQueryData(
@@ -569,276 +638,253 @@ const dur = Math.max(
   });
 }, [selectedDate, days]);
 
+  const todayStr = format(new Date(), "yyyy-MM-dd");
+  const nowTime = format(new Date(), "HH:mm");
+  const nowIndex =
+    !isWishlist && selectedDate === todayStr
+      ? (() => {
+          const idx = filteredItems.findIndex(i => (i.startTime || "") > nowTime);
+          return idx === -1 ? filteredItems.length : idx;
+        })()
+      : -1;
+
   return (
-    <div className="flex flex-col h-full relative">
-      {/* Day Selector */}
-      <div className="sticky top-0 z-20 bg-background pt-3 pb-2 px-4 overflow-x-auto no-scrollbar border-b border-border/50">
+    <div className="relative" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
+      {/* Photo header: day strip + city */}
       <div
-  ref={dayScrollerRef}
-  className="flex gap-2 min-w-max pb-1"
->
-  {days.map((day) => {
-    const isSelected = selectedDate === day;
-    const hasItems = sortedItems.some(i => i.date === day);
-    const hasAccom = allItems.some(
-      i =>
-        i.elementType === "accommodation" &&
-        i.date <= day &&
-        (i.endDate ?? i.date) >= day
-    );
-
-    const city = dayCities[day] ?? "";
-
-    return (
-      <button
-  key={day}
-  onClick={() => setSelectedDate(day)}
-  className={cn(
-          "flex flex-col items-center justify-center px-3 py-2 rounded-2xl transition-all font-medium border-2 relative",
-          city ? "min-w-[68px] h-20" : "min-w-[64px] h-16",
-          isSelected
-            ? "bg-primary border-primary text-primary-foreground shadow-md shadow-primary/20"
-            : "bg-card border-border text-foreground/70 hover:border-primary/30"
-        )}
+        className="relative px-4 pb-14 pt-[calc(76px+env(safe-area-inset-top))] text-white"
+        style={
+          trip.heroImage
+            ? { backgroundImage: `url(${trip.heroImage})`, backgroundSize: "cover", backgroundPosition: "center" }
+            : { background: "linear-gradient(135deg,#2563eb 0%,#3b82f6 100%)" }
+        }
       >
-        {city && (
-          <span
-            className={cn(
-              "text-[11px] font-bold leading-none mb-0.5 whitespace-nowrap",
-              isSelected
-                ? "text-primary-foreground/80"
-                : "text-primary"
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/35 via-transparent to-transparent" />
+
+        {/* Day selector */}
+        <div className="relative -mx-4 overflow-x-auto px-4 no-scrollbar">
+          <div ref={dayScrollerRef} className="flex min-w-max gap-2 pb-1">
+            {days.map((day) => {
+              const isSelected = selectedDate === day;
+              const hasAccom = allItems.some(
+                i =>
+                  i.elementType === "accommodation" &&
+                  i.date <= day &&
+                  (i.endDate ?? i.date) >= day
+              );
+              const city = dayCities[day] ?? "";
+              return (
+                <button
+                  key={day}
+                  onClick={() => setSelectedDate(day)}
+                  className={cn(
+                    "flex shrink-0 flex-col items-center justify-center rounded-[22px] px-3 transition-all",
+                    city ? "h-[84px] min-w-[68px]" : "h-[76px] min-w-[62px]",
+                    isSelected
+                      ? "bg-primary text-primary-foreground shadow-lg shadow-primary/30"
+                      : "glass-light text-foreground/80"
+                  )}
+                >
+                  {city && (
+                    <span className={cn("mb-0.5 whitespace-nowrap text-[10px] font-semibold leading-none", isSelected ? "text-primary-foreground/85" : "text-primary")}>
+                      {city}
+                    </span>
+                  )}
+                  <span className="text-[11px] opacity-80">
+                    {isDayLabel(day) ? day : safeFormatDate(day, d => format(d, "EEE"), "")}
+                  </span>
+                  <span className="font-display text-xl font-bold leading-tight">
+                    {isDayLabel(day) ? day.replace("Day ", "D") : safeFormatDate(day, d => format(d, "d"), "")}
+                  </span>
+                  {hasAccom && (
+                    <span className={cn("mt-0.5 text-[9px] font-semibold leading-none", isSelected ? "text-primary-foreground/70" : "text-violet-500")}>
+                      Stay
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+            {isWishlist && (
+              <button
+                aria-label="Add day"
+                onClick={() => {
+                  const newCount = (trip.wishlistDayCount ?? 1) + 1;
+                  updateTrip({ ...trip, wishlistDayCount: newCount });
+                  setSelectedDate(`Day ${newCount}`);
+                }}
+                className="glass flex h-[76px] w-16 shrink-0 items-center justify-center rounded-[22px] border-dashed"
+              >
+                <Plus className="h-5 w-5" />
+              </button>
             )}
-          >
-            {city}
-          </span>
-        )}
+          </div>
+        </div>
 
-        <span className="text-xs uppercase opacity-80">
-          {isDayLabel(day)
-            ? day
-            : safeFormatDate(day, d => format(d, "EEE"), "")}
-        </span>
-
-        <span className="text-[19px] font-semibold mt-0.5">
-          {isDayLabel(day)
-            ? day.replace("Day ", "D")
-            : safeFormatDate(day, d => format(d, "d"), "")}
-        </span>
-
-        {hasAccom && (
-          <span
-            className={cn(
-              "text-[9px] font-bold mt-0.5 leading-none",
-              isSelected
-                ? "text-primary-foreground/60"
-                : "text-violet-400"
-            )}
-          >
-            STAY
-          </span>
-        )}
-      </button>
-    );
-  })}
-
-  {isWishlist && (
-  <button
-    onClick={() => {
-      const newCount = (trip.wishlistDayCount ?? 1) + 1;
-
-      updateTrip({
-        ...trip,
-        wishlistDayCount: newCount,
-      });
-
-      setSelectedDate(`Day ${newCount}`);
-    }}
-    className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border-2 border-dashed border-primary/30 bg-card text-primary hover:bg-primary/5"
-  >
-    <Plus className="w-5 h-5" />
-  </button>
-)}
-</div>
-      </div>
-
-      {/* Timeline */}
-      <div
-  className="overflow-hidden flex-1"
-  onTouchStart={handleTouchStart}
-  onTouchEnd={handleTouchEnd}
->
-  <AnimatePresence mode="wait" custom={swipeDirection}>
-   <motion.div
-  key={selectedDate}
-  layout
-  custom={swipeDirection}
-  initial={{
-    x: swipeDirection > 0 ? 16 : -16,
-    opacity: 0,
-  }}
-  animate={{
-    x: 0,
-    opacity: 1,
-  }}
-  exit={{
-    x: swipeDirection > 0 ? -16 : 16,
-    opacity: 0,
-  }}
-  transition={{
-    x: {
-      duration: 0.22,
-      ease: "easeInOut",
-    },
-    opacity: {
-      duration: 0.18,
-    },
-    layout: {
-      duration: 0.22,
-    },
-  }}
-  className="px-4 py-4 pb-40 overflow-y-auto h-full"
->
         {/* City + date header */}
-        <div className="flex items-start justify-between mb-4">
-
-  <div className="min-w-0 flex-1">
-
-    <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-      {isDayLabel(selectedDate)
-        ? selectedDate
-        : safeFormatDate(
-            selectedDate,
-            d => format(d, "EEEE, MMMM d"),
-            selectedDate
-          )}
-    </span>
-
-    {editingCity ? (
-      <div className="flex items-center gap-2 mt-1">
-        <input
-          ref={cityInputRef}
-          autoFocus
-          value={cityDraft}
-          onChange={e => setCityDraft(e.target.value)}
-          onKeyDown={e => {
-            if (e.key === "Enter") saveCity(cityDraft);
-            if (e.key === "Escape") setEditingCity(false);
-          }}
-          placeholder="City name…"
-          className="text-base font-bold bg-transparent border-b-2 border-primary outline-none text-foreground placeholder:text-muted-foreground/50 min-w-0 w-40"
-        />
-
-        <button onClick={() => saveCity(cityDraft)}>
-          <Check className="w-4 h-4 text-primary" />
-        </button>
-
-      </div>
-    ) : (
-      <button
-        onClick={() => {
-          setCityDraft(currentCity);
-          setEditingCity(true);
-        }}
-        className="mt-1 flex items-center gap-1.5 group/city"
-      >
-        {currentCity ? (
-          <span className="text-[15px] font-medium text-foreground">
-            {currentCity}
-          </span>
-        ) : (
-          <span className="text-[13px] italic text-muted-foreground/60">
-            Tap to add city...
-          </span>
-        )}
-
-        <Pencil className="w-3.5 h-3.5 text-muted-foreground/40 group-hover/city:text-primary transition-colors" />
-      </button>
-    )}
-  </div>
-
-  <div className="flex items-start">
-  {isWishlist && (trip.wishlistDayCount ?? 1) > 1 && (
-    <button
-      type="button"
-      onClick={() => deleteWishlistDay(selectedDate)}
-      className="mr-2 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-red-200 bg-red-50 text-red-600 transition-colors hover:bg-red-100"
-      aria-label="Delete day"
-    >
-      <Trash2 className="h-4 w-4" />
-    </button>
-  )}
-
-  <div className="flex flex-col items-end gap-1">
-    {totalDayMinutes > 0 && (
-      <div className="flex items-center gap-1 rounded-full bg-muted px-2.5 py-1 text-xs font-bold text-muted-foreground">
-        <Clock className="h-3 w-3" />
-        {getDuration("00:00", addMinutesToTime("00:00", totalDayMinutes))}
-      </div>
-    )}
-
-    {totalDayCost > 0 && (
-      <div className="flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary">
-        ₹{Math.round(totalDayCost).toLocaleString("en-IN")}
-      </div>
-    )}
-  </div>
-</div>
-</div>
-        {/* Accommodation banners */}
-        {activeAccommodations.map(accom => (
-          <AccommodationCard
-          key={accom.id}
-          item={accom}
-          trip={trip}
-          currentDay={selectedDate}
-          onEdit={() => setEditItem(accom)}
-        />
-        ))}
-
-        {/* Regular items */}
-        {filteredItems.length === 0 && activeAccommodations.length === 0 ? (
-          <div className="text-center text-muted-foreground mt-12">
-            <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
-              <CalendarDays className="w-8 h-8 opacity-40" />
-            </div>
-            <p className="font-medium">Nothing planned for this day.</p>
-            <p className="text-sm mt-1 opacity-70">Tap + to add something.</p>
-          </div>
-        ) : filteredItems.length === 0 ? null : (
-          <div className="space-y-5 mt-5">
-            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-              <SortableContext items={filteredItems.map(i => i.id)} strategy={verticalListSortingStrategy}>
-                {filteredItems.map((item, index) => (
-                <SortableItem
-                  key={item.id}
-                  item={item}
-                  documents={documents}
-                  trip={trip}
-                  onEdit={() => setEditItem(item)}
-                  isLast={index === filteredItems.length - 1}
+        <div className="relative mt-5 flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <span className="text-xs font-medium text-white/85">
+              {isDayLabel(selectedDate)
+                ? selectedDate
+                : safeFormatDate(selectedDate, d => format(d, "EEEE, MMMM d"), selectedDate)}
+            </span>
+            {editingCity ? (
+              <div className="mt-1 flex items-center gap-2">
+                <input
+                  ref={cityInputRef}
+                  autoFocus
+                  value={cityDraft}
+                  onChange={e => setCityDraft(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === "Enter") saveCity(cityDraft);
+                    if (e.key === "Escape") setEditingCity(false);
+                  }}
+                  placeholder="City name…"
+                  className="w-44 min-w-0 border-b-2 border-white bg-transparent text-xl font-bold text-white outline-none placeholder:text-white/60"
                 />
-              ))}
-              </SortableContext>
-            </DndContext>
+                <button aria-label="Save city" onClick={() => saveCity(cityDraft)}>
+                  <Check className="h-5 w-5 text-white" />
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => {
+                  setCityDraft(currentCity);
+                  setEditingCity(true);
+                }}
+                className="group/city mt-0.5 flex items-center gap-2 text-left"
+              >
+                {currentCity ? (
+                  <span className="font-display text-[32px] font-bold leading-tight tracking-tight">{currentCity}</span>
+                ) : (
+                  <span className="text-base italic text-white/70">Tap to add city…</span>
+                )}
+                <Pencil className="h-3.5 w-3.5 text-white/60 transition-colors group-hover/city:text-white" />
+              </button>
+            )}
           </div>
-        )}
+          <div className="flex items-start gap-2">
+            {isWishlist && (trip.wishlistDayCount ?? 1) > 1 && (
+              <button
+                type="button"
+                onClick={() => deleteWishlistDay(selectedDate)}
+                className="glass inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
+                aria-label="Delete day"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            )}
+            <div className="flex flex-col items-end gap-1.5">
+              {totalDayMinutes > 0 && (
+                <div className="glass flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold">
+                  <Clock className="h-3 w-3" />
+                  {getDuration("00:00", addMinutesToTime("00:00", totalDayMinutes))}
+                </div>
+              )}
+              {totalDayCost > 0 && (
+                <div className="glass flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold">
+                  ₹{Math.round(totalDayCost).toLocaleString("en-IN")}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Content sheet slides over the photo */}
+      <div className="relative z-10 -mt-7 min-h-[60vh] rounded-t-[34px] bg-background px-4 pb-40 pt-5 shadow-[0_-12px_30px_rgba(10,20,50,0.16)]">
+        <AnimatePresence mode="wait" custom={swipeDirection}>
+          <motion.div
+            key={selectedDate}
+            layout
+            custom={swipeDirection}
+            initial={{ x: swipeDirection > 0 ? 16 : -16, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: swipeDirection > 0 ? -16 : 16, opacity: 0 }}
+            transition={{
+              x: { duration: 0.22, ease: "easeInOut" },
+              opacity: { duration: 0.18 },
+              layout: { duration: 0.22 },
+            }}
+          >
+            {/* Accommodation banners */}
+            {activeAccommodations.map(accom => (
+              <AccommodationCard
+                key={accom.id}
+                item={accom}
+                trip={trip}
+                currentDay={selectedDate}
+                onEdit={() => setEditItem(accom)}
+              />
+            ))}
+
+            {/* Regular items */}
+            {filteredItems.length === 0 && activeAccommodations.length === 0 ? (
+              <div className="mt-8 text-center text-muted-foreground">
+                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+                  <CalendarDays className="h-8 w-8 opacity-40" />
+                </div>
+                <p className="font-medium">Nothing planned for this day.</p>
+                <p className="mt-1 text-sm opacity-70">Tap + to add something.</p>
+              </div>
+            ) : filteredItems.length === 0 ? null : (
+              <div className="mt-5 space-y-5">
+                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                  <SortableContext items={filteredItems.map(i => i.id)} strategy={verticalListSortingStrategy}>
+                    {filteredItems.map((item, index) => (
+                      <React.Fragment key={item.id}>
+                        {index === nowIndex && <NowMarker time={nowTime} />}
+                        <SortableItem
+                          item={item}
+                          documents={documents}
+                          trip={trip}
+                          onEdit={() => setEditItem(item)}
+                          isLast={index === filteredItems.length - 1}
+                        />
+                      </React.Fragment>
+                    ))}
+                    {nowIndex === filteredItems.length && <NowMarker time={nowTime} />}
+                  </SortableContext>
+                </DndContext>
+              </div>
+            )}
           </motion.div>
-  </AnimatePresence>
-</div>
+        </AnimatePresence>
+      </div>
 
-{getTripStatus(trip) !== "archived" && (
-  <FAB
-    icon={Plus}
-    onClick={() => setIsAddOpen(true)}
-  />
-)}
-
+      {getTripStatus(trip) !== "archived" && (
+        <FAB
+          icon={Plus}
+          label="Add to timeline"
+          open={menuOpen}
+          onClick={() => setMenuOpen(o => !o)}
+        />
+      )}
+      <AddMenu
+        open={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        items={[
+          { id: "travel", label: "Travel", hint: "Flight, train, bus or car", icon: Plane, tint: "bg-blue-50 text-blue-600" },
+          { id: "accommodation", label: "Stay", hint: "Hotel or rental", icon: Building2, tint: "bg-violet-50 text-violet-600" },
+          { id: "meal", label: "Meal", hint: "Breakfast to drinks", icon: UtensilsCrossed, tint: "bg-amber-50 text-amber-600" },
+          { id: "activity", label: "Activity", hint: "Sights and plans", icon: Bike, tint: "bg-orange-50 text-orange-600" },
+        ].map(o => ({
+          ...o,
+          onSelect: () => {
+            setAddType(o.id as ElementType);
+            setAddKey(k => k + 1);
+            setIsAddOpen(true);
+          },
+        }))}
+      />
       <AddEditSheet
+        key={`add-${addKey}`}
         isOpen={isAddOpen}
         onClose={() => setIsAddOpen(false)}
         trip={trip}
         defaultDate={selectedDate}
+        defaultElementType={addType}
         documents={documents}
         allItems={allItems}
       />
@@ -942,7 +988,7 @@ const toggleChecklistItem = (checkId: string) => {
   return (
     <div
       className={cn(
-        "mb-4 overflow-hidden rounded-[28px] border bg-card shadow-[0_2px_10px_rgba(0,0,0,0.05)] transition-all duration-300 hover:shadow-[0_8px_28px_rgba(0,0,0,0.08)]",
+        "mb-6 overflow-hidden rounded-[26px] border bg-violet-50/70 shadow-[0_5px_0_-1px_#E9E3FD,0_10px_0_-2px_#F2EEFE] transition-all duration-300",
         ELEMENT_BORDER.accommodation
       )}
     >
@@ -950,19 +996,7 @@ const toggleChecklistItem = (checkId: string) => {
 
         {/* Left Strip */}
 
-  <div
-    className={cn(
-      "flex w-[36px] shrink-0 flex-col",
-      panelGradient(item.elementType)
-    )}
-  >
-    <div className="flex h-[96px] items-center justify-center text-white">
-      <Building2 className="h-4 w-4 stroke-[1.8]" />
-    </div>
-
-    <div className="flex-1" />
-
-  </div>
+  <div className="w-[6px] shrink-0 bg-violet-500" />
 
   {/* Right Side */}
 
@@ -981,9 +1015,7 @@ const toggleChecklistItem = (checkId: string) => {
 
       <div className="min-w-0 flex-1">
 
-        <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-violet-600">
-          Stay
-        </p>
+        <p className="mb-1 flex items-center gap-1.5 text-[11px] font-semibold text-violet-600"><Building2 className="h-3.5 w-3.5" />Stay</p>
 
         <h3 className="min-w-0 break-words line-clamp-2 text-[18px] font-semibold leading-[1.35]">
           {item.title}
@@ -1057,7 +1089,20 @@ const toggleChecklistItem = (checkId: string) => {
     })()}
   </p>
 
-  <div className="mt-2 h-px w-8 bg-border/60" />
+  {(() => {
+                  const cd = safeParseDate(currentDay);
+                  const sd = safeParseDate(item.date);
+                  const total = stayNights(item.date, item.endDate ?? item.date);
+                  if (!cd || !sd) return null;
+                  const night = Math.min(Math.max(differenceInDays(cd, sd) + 1, 1), total);
+                  return (
+                    <div className="mt-2 flex items-center gap-1">
+                      {Array.from({ length: Math.min(total, 7) }).map((_, n) => (
+                        <span key={n} className={cn("h-1.5 w-1.5 rounded-full", n < night ? "bg-violet-500" : "bg-violet-200")} />
+                      ))}
+                    </div>
+                  );
+                })()}
 
 </div>
 
@@ -1465,341 +1510,150 @@ function SortableItem({
     });
   };
 
+  const isTravel = item.elementType === "travel";
+  const isMeal = item.elementType === "meal";
+  const accentBg = isTravel ? "bg-blue-500" : isMeal ? "bg-amber-400" : "bg-orange-500";
+  const leg = isTravel ? legStatus(item) : null;
+  // Ticket notches at the perforation (68% across). When expanded, only the top notch is cut.
+  const notchTop = "radial-gradient(circle 9px at 68% 0, #0000 97%, #000) top / 100% 51% no-repeat";
+  const notchBottom = "radial-gradient(circle 9px at 68% 100%, #0000 97%, #000) bottom / 100% 51% no-repeat";
+  const ticketMask = expanded
+    ? `${notchTop}, linear-gradient(#000, #000) bottom / 100% 49% no-repeat`
+    : `${notchTop}, ${notchBottom}`;
+
   return (
-  <div className="flex items-start gap-3">
-
-   {/* Timeline */}
-
-<div className="relative w-10 shrink-0">
-  <div className="h-[152px]" />
-
-  <div
-  className={cn(
-  "absolute left-1/2 top-[44px] z-20 flex h-8 w-8 -translate-x-1/2 items-center justify-center rounded-full bg-background shadow-sm",
-      item.elementType === "travel"
-        ? "bg-blue-500"
-        : item.elementType === "meal"
-        ? "bg-amber-400"
-        : "bg-orange-500"
-    )}
-  >
-    <Icon className="h-4 w-4 text-white stroke-[2]" />
-  </div>
-
-  <span className="absolute left-1/2 top-[84px] -translate-x-1/2 whitespace-nowrap text-[10px] font-medium text-muted-foreground">
-    {item.startTime}
-  </span>
-
-  {!isLast && (
-  <div
-    className="absolute left-1/2 top-[112px] -translate-x-1/2 rounded-full bg-border/80"
-    style={{
-      top: "116px",
-      width: "2px",
-      height: "110px",
-    }}
-  />
-)}
-
-</div>
-
-{/* Card */}
-
-<div
-  className={cn(
-    "flex-1 overflow-hidden rounded-[28px] border border-border/20 bg-card shadow-[0_10px_30px_rgba(15,23,42,0.08)] transition-[height] duration-300 hover:shadow-[0_14px_40px_rgba(15,23,42,0.12)]",
-    ELEMENT_BORDER[item.elementType]
-  )}
->
-  <div className="flex items-stretch">
-
-    {/* Thin Accent */}
-
-<div
-  className={cn(
-    "w-[8px] shrink-0",
-    item.elementType === "travel"
-      ? "bg-blue-500"
-      : item.elementType === "meal"
-      ? "bg-amber-400"
-      : "bg-orange-500"
-  )}
-/>
-
-  {/* Right Side */}
-
-  <div className="min-w-0 w-0 flex-1">
-
-          <button
-            type="button"
-            onClick={() => setExpanded((v) => !v)}
-            className="w-full text-left"
-          >
-            <div className="px-5 py-5">
-
-      {/* Individual cards go here */}
-
-        {item.elementType === "travel" && (
-  <div className="relative flex h-full flex-col">
-
-    {/* Header */}
-
-    <div className="flex items-start gap-2.5">
-
-      <div className="min-w-0 flex-1">
-
-        <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-blue-600">
-          {travelLabel(item.travelType)}
-        </p>
-
-        {!expanded ? (
-
-          <div className="mt-1 flex min-w-0 items-center gap-2">
-
-  {/* From */}
-
-  <div className="shrink-0">
-    <p
-      className="truncate text-[17px] font-semibold leading-[1.35]"
-      title={item.fromLocation}
-    >
-      {item.fromLocation || "—"}
-    </p>
-  </div>
-
-  {/* Connector */}
-
-  <div className="mx-3 flex min-w-[28px] flex-1 items-center">
-
-    <div className="flex-1 border-t-[1px] border-dashed border-blue-300" />
-
-    <Icon className="mx-2 h-4 w-4 shrink-0 text-blue-500" />
-
-    <div className="flex-1 border-t-[1px] border-dashed border-blue-300" />
-
-  </div>
-
-  {/* To */}
-
-  <div className="min-w-0 flex-1">
-    <p
-      className="truncate text-[17px] font-semibold leading-[1.35]"
-      title={item.toLocation}
-    >
-      {item.toLocation || "—"}
-    </p>
-  </div>
-
-</div>
-
-        ) : (
-
-          <div className="mt-3 flex flex-col items-start">
-
-  {/* From */}
-
-  <p
-  className="max-w-full truncate text-[18px] font-semibold leading-[1.2]"
-    title={item.fromLocation}
-  >
-    {item.fromLocation || "—"}
-  </p>
-
-  {/* Connector */}
-
-  <div className="my-2 flex w-full items-center">
-
-    <div className="flex-1 border-t-[1px] border-dashed border-blue-300" />
-
-    <Icon className="mx-2 h-4 w-4 shrink-0 text-blue-500" />
-
-    <div className="flex-1 border-t-[1px] border-dashed border-blue-300" />
-
-  </div>
-
-  {/* To */}
-
-  <p
-    className="max-w-full truncate text-[18px] font-semibold leading-[1.2]"
-    title={item.toLocation}
-  >
-    {item.toLocation || "—"}
-  </p>
-
-</div>
-
+    <div className="flex items-stretch gap-3">
+      {/* Rail */}
+      <div className="relative flex min-h-[76px] w-9 shrink-0 flex-col items-center pt-3.5">
+        <div
+          className={cn(
+            "relative z-10 flex h-9 w-9 items-center justify-center rounded-full text-white ring-4 ring-background shadow-sm",
+            accentBg
+          )}
+        >
+          <Icon className="h-4 w-4" />
+        </div>
+        <span className="mt-1.5 text-[10px] font-semibold text-muted-foreground">{item.startTime}</span>
+        {!isLast && (
+          <span className="absolute -bottom-[34px] left-1/2 top-[72px] w-0.5 -translate-x-1/2 rounded-full bg-border" />
         )}
-
       </div>
 
-      <ChevronDown
+      {/* Card: ticket (travel), pill (meal), event card (activity) */}
+      <div
         className={cn(
-          "mt-6 h-4 w-4 shrink-0 text-muted-foreground/70 transition-transform duration-300",
-          expanded && "rotate-180"
+          "min-w-0 flex-1 self-start",
+          !isTravel && "shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_rgba(15,23,42,0.07)]",
+          isMeal ? "rounded-[30px]" : "rounded-[22px]"
         )}
-      />
+        style={isTravel ? { filter: "drop-shadow(0 8px 14px rgba(15,23,42,0.10))" } : undefined}
+      >
+        <div
+          className={cn(
+            "relative flex items-stretch overflow-hidden bg-card",
+            isMeal ? "rounded-[30px]" : "rounded-[22px]"
+          )}
+          style={isTravel ? { WebkitMask: ticketMask, mask: ticketMask } : undefined}
+        >
+          {!isTravel && !isMeal && <div className={cn("w-[5px] shrink-0", accentBg)} />}
+          <div className="min-w-0 w-0 flex-1">
+            <button type="button" onClick={() => setExpanded((v) => !v)} className="w-full text-left">
+              {isTravel && (
+                <div className="relative">
+                  <span
+                    aria-hidden
+                    className="absolute bottom-3.5 left-[68%] top-3.5 border-l-[1.5px] border-dashed border-slate-300"
+                  />
+                  <div className="grid grid-cols-[68%_32%]">
+                    <div className="min-w-0 px-4 py-3.5">
+                      <div className="flex items-center gap-1.5 text-[11px] font-semibold text-blue-600">
+                        <Icon className="h-3.5 w-3.5" />
+                        <span className="truncate">{travelLabel(item.travelType)}</span>
+                      </div>
+                      <div className="mt-2.5 flex items-center gap-2">
+                        <PlaceCode place={item.fromLocation} />
+                        <div className="flex min-w-[20px] flex-1 items-center">
+                          <div className="flex-1 border-t-[1.5px] border-dashed border-blue-300" />
+                          <Icon className="mx-1.5 h-3.5 w-3.5 shrink-0 text-blue-500" />
+                          <div className="flex-1 border-t-[1.5px] border-dashed border-blue-300" />
+                        </div>
+                        <PlaceCode place={item.toLocation} right />
+                      </div>
+                      <p className="mt-2.5 text-[12px] text-muted-foreground">
+                        {item.startTime || "—"} to {item.endTime || "—"}
+                      </p>
+                    </div>
+                    <div className="flex min-w-0 flex-col items-center justify-center gap-1.5 px-2 py-3.5 text-center">
+                      {leg && (
+                        <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-semibold", leg.tone)}>
+                          {leg.label}
+                        </span>
+                      )}
+                      <span className="font-display text-[17px] font-bold leading-none">{duration || "—"}</span>
+                      <ChevronDown
+                        className={cn(
+                          "h-4 w-4 text-muted-foreground/60 transition-transform duration-300",
+                          expanded && "rotate-180"
+                        )}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
 
-    </div>
+              {isMeal && (
+                <div className="flex items-center gap-3 px-5 py-3.5">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[11px] font-semibold text-amber-600">{categoryLabel(item)}</p>
+                    <h3 className="truncate text-[15px] font-semibold leading-snug">{item.title}</h3>
+                    <p className="text-xs text-muted-foreground">
+                      {item.startTime || "—"}
+                      {duration ? ` · ${duration}` : ""}
+                    </p>
+                  </div>
+                  <ChevronDown
+                    className={cn(
+                      "h-4 w-4 shrink-0 text-muted-foreground/60 transition-transform duration-300",
+                      expanded && "rotate-180"
+                    )}
+                  />
+                </div>
+              )}
 
-    {/* Journey */}
-
-    <div className="mt-5 flex items-end gap-8">
-
-      {/* Departure */}
-
-      <div className="min-w-0">
-
-        <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-          Departure
-        </p>
-
-        <p className="mt-1 text-[15px] font-semibold">
-          {item.startTime || "—"}
-        </p>
-
-      </div>
-
-      {/* Duration */}
-
-      <div className="shrink-0">
-
-        <p className="whitespace-nowrap text-[11px] italic text-blue-600">
-          {duration || "—"}
-        </p>
-
-      </div>
-
-      {/* Arrival */}
-
-      <div className="min-w-0">
-
-        <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-          Arrival
-        </p>
-
-        <p className="mt-1 text-[15px] font-semibold">
-          {item.endTime || "—"}
-        </p>
-
-      </div>
-
-    </div>
-
-  </div>
-)}
-
-        {item.elementType === "meal" && (
-  <div className="relative flex h-full flex-col">
-
-    {/* Header */}
-
-    <div className="flex min-w-0 items-start justify-between gap-4">
-
-      <div className="min-w-0 flex-1">
-
-        <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-500">
-          {categoryLabel(item)}
-        </p>
-
-        <h3 className="min-w-0 break-words line-clamp-2 text-[18px] font-semibold leading-[1.35]">
-          {item.title}
-        </h3>
-
-      </div>
-
-      <ChevronDown
-        className={cn(
-          "mt-6 h-4 w-4 shrink-0 text-muted-foreground/70 transition-transform duration-300",
-          expanded && "rotate-180"
-        )}
-      />
-
-    </div>
-
-    {/* Time */}
-
-    <div className="mt-5">
-
-  <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-    Time
-  </p>
-
-  <p className="mt-1 text-[15px] font-semibold">
-    {item.startTime || "—"}
-  </p>
-
-</div>
-
-  </div>
-)}
-        {item.elementType === "activity" && (
-  <div className="relative flex h-full flex-col">
-
-    {/* Header */}
-
-    <div className="flex min-w-0 items-start justify-between gap-4">
-
-      <div className="min-w-0 flex-1">
-
-        <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-orange-500">
-          Activity
-        </p>
-
-        <h3 className="min-w-0 break-words line-clamp-2 text-[18px] font-semibold leading-[1.35]">
-          {item.title}
-        </h3>
-
-      </div>
-
-      <ChevronDown
-        className={cn(
-          "mt-6 h-4 w-4 shrink-0 text-muted-foreground/70 transition-transform duration-300",
-          expanded && "rotate-180"
-        )}
-      />
-
-    </div>
-
-    {/* Activity Timeline */}
-
-<div className="mt-4 flex items-end justify-between gap-6">
-
-  {/* Time */}
-
-  <div className="min-w-0 flex-1">
-
-    <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-      Time
-    </p>
-
-    <p className="mt-1 text-[15px] font-semibold">
-      {item.startTime || "—"}
-    </p>
-
-  </div>
-
-  {/* Duration */}
-
-  <div className="text-right">
-
-    <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-      Duration
-    </p>
-
-    <p className="mt-1 text-[15px] font-semibold">
-      {duration || "—"}
-    </p>
-
-  </div>
-
-</div>
-
-  </div>
-)}
-
-    </div>
-
-  </button>
+              {item.elementType === "activity" && (
+                <div className="px-4 py-3.5">
+                  <div className="flex items-start gap-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[11px] font-semibold text-orange-600">Activity</p>
+                      <h3 className="line-clamp-2 break-words text-[16px] font-semibold leading-snug">{item.title}</h3>
+                    </div>
+                    <div className="shrink-0 text-right text-xs text-muted-foreground">
+                      <p>{item.startTime || "—"}</p>
+                      <p>{duration || ""}</p>
+                    </div>
+                    <ChevronDown
+                      className={cn(
+                        "mt-0.5 h-4 w-4 shrink-0 text-muted-foreground/60 transition-transform duration-300",
+                        expanded && "rotate-180"
+                      )}
+                    />
+                  </div>
+                  {totalChecklist > 0 && (
+                    <div className="mt-3 flex items-center gap-2.5">
+                      <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-orange-100">
+                        <div
+                          className="h-full rounded-full bg-orange-500"
+                          style={{ width: `${(doneChecklist / totalChecklist) * 100}%` }}
+                        />
+                      </div>
+                      <span className="text-[11px] text-muted-foreground">
+                        {doneChecklist} of {totalChecklist}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </button>
 
 
 {expanded && (
@@ -2115,9 +1969,10 @@ interface SheetProps {
   documents: TripDocument[];
   allItems: ItineraryItem[];
   existingItem?: ItineraryItem;
+  defaultElementType?: ElementType;
 }
 
-function AddEditSheet({ isOpen, onClose, trip, defaultDate, documents, allItems, existingItem }: SheetProps) {
+function AddEditSheet({ isOpen, onClose, trip, defaultDate, documents, allItems, existingItem, defaultElementType }: SheetProps) {
   const { mutateAsync: saveItem, isPending } = useSaveItineraryItem();
   const { mutateAsync: addDocument } = useAddDocument();
   const { mutateAsync: saveExpense } = useSaveExpense();
@@ -2126,7 +1981,7 @@ function AddEditSheet({ isOpen, onClose, trip, defaultDate, documents, allItems,
   const destCurrency = trip.destinationCurrency || 'INR';
   const showCurrencyToggle = destCurrency !== 'INR';
 
-  const [elementType, setElementType] = useState<ElementType>(existingItem?.elementType || 'activity');
+  const [elementType, setElementType] = useState<ElementType>(existingItem?.elementType || defaultElementType || 'activity');
   const [travelType, setTravelType] = useState<TravelType>(existingItem?.travelType || 'flight');
   const [mealSubType, setMealSubType] = useState<MealSubType>(existingItem?.mealSubType || 'lunch');
   const [mealTime, setMealTime] = useState(existingItem?.startTime || '13:00');

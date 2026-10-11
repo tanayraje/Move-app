@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { X } from "lucide-react";
@@ -133,15 +133,37 @@ export function BottomSheet({
 }
 
 
-export function FAB({ onClick, icon: Icon }: { onClick: () => void, icon: any }) {
+let dockActionCount = 0;
+
+/**
+ * Docked "+" action. Sits on the same baseline as the floating tab bar
+ * (right side) and tells the bar to make room for it.
+ */
+export function FAB({ onClick, icon: Icon, label = "Add", open = false }: { onClick: () => void, icon: any, label?: string, open?: boolean }) {
+  useEffect(() => {
+    dockActionCount += 1;
+    document.body.classList.add("has-dock-action");
+    return () => {
+      dockActionCount -= 1;
+      if (dockActionCount <= 0) {
+        dockActionCount = 0;
+        document.body.classList.remove("has-dock-action");
+      }
+    };
+  }, []);
+
   return (
-    <motion.button
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.95 }}
-      onClick={onClick}
-      className="fixed bottom-24 right-6 z-10 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/30"
-    >
-      <Icon className="h-6 w-6" />
-    </motion.button>
+    <div className={cn("pointer-events-none fixed bottom-0 left-1/2 w-full max-w-md -translate-x-1/2 px-4 pb-[calc(18px+env(safe-area-inset-bottom))]", open ? "z-[70]" : "z-50")}>
+      <div className="flex justify-end">
+        <motion.button
+          whileTap={{ scale: 0.94 }}
+          onClick={onClick}
+          aria-label={label}
+          className="pointer-events-auto flex h-[60px] w-[60px] items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[0_12px_28px_rgba(37,99,235,0.42),inset_0_1px_0_rgba(255,255,255,0.35)]"
+        >
+          <Icon className={cn("h-6 w-6 transition-transform duration-200", open && "rotate-45")} />
+        </motion.button>
+      </div>
+    </div>
   );
 }

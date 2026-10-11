@@ -7,8 +7,9 @@ import {
 } from "lucide-react";
 import { useTrips, useCreateTrip, useDeleteTrip, useUpdateTrip } from "@/hooks/use-store";
 import { useItinerary, useSaveItineraryItem } from "@/hooks/use-store";
-import { generateId, safeFormatDate, safeParseDate, getTripStatus } from "@/lib/utils";
+import { cn, generateId, safeFormatDate, safeParseDate, getTripStatus } from "@/lib/utils";
 import { Button, Input, Label, BottomSheet } from "@/components/ui";
+import { AddMenu } from "@/components/AddMenu";
 import { COUNTRIES, Country } from "@/lib/countries";
 import { INDIAN_STATES } from "@/lib/india-states";
 import type { Trip, TripStatus } from "@/lib/types";
@@ -89,43 +90,38 @@ useEffect(() => {
   const tripsToShow = tab === 'active' ? activeTrips : tab === 'archived' ? archivedTrips : wishlistTrips;
   const hasMultiple = [activeTrips.length, archivedTrips.length, wishlistTrips.length].filter(n => n > 0).length > 1;
 
+  // One live line under the title: what is happening with the trips right now
+  const headline = (() => {
+    const today = new Date();
+    let soonest: { name: string; days: number } | null = null;
+    for (const t of activeTrips) {
+      const start = safeParseDate(t.startDate);
+      const end = safeParseDate(t.endDate);
+      if (!start || !end) continue;
+      if (differenceInDays(end, today) < 0) continue;
+      const toStart = differenceInDays(start, today);
+      if (toStart <= 0) return `${t.name} is in progress`;
+      if (!soonest || toStart < soonest.days) soonest = { name: t.name, days: toStart };
+    }
+    return soonest
+      ? `${soonest.name} starts in ${soonest.days} day${soonest.days === 1 ? "" : "s"}`
+      : "Where to next?";
+  })();
+
   return (
   <div className="flex flex-col min-h-[100dvh] pb-8 relative">
     
-      <div className="sticky top-0 z-[100] bg-background/90 backdrop-blur-xl">
-  <header className="px-6 pt-12 pb-3">
-    <div className="flex items-start justify-between gap-8">
-      <div>
-        <img
-        src="/move-logo.svg"
-        alt="Move"
-        className="h-6.5 w-auto object-contain"
-        style={{
-          filter:
-            "brightness(0) saturate(100%) invert(13%) sepia(25%) saturate(2138%) hue-rotate(224deg) brightness(82%) contrast(108%)",
-        }}
-      />
-        <p className="text-muted-foreground mt-1 text-lg">
-          Where to next?
-        </p>
-      </div>
-
-      <div className="flex items-center gap-3">
-        <button
-          onClick={() => setIsJoinOpen(true)}
-          className="p-2.5 bg-muted rounded-full hover:bg-primary/10 hover:text-primary transition-colors"
-          title="Join a trip by code"
-        >
-          <Users className="w-5 h-5" />
-        </button>
-
-        <div className="relative">
+      <div className="sticky top-0 z-[100] bg-background/80 backdrop-blur-xl">
+  <header className="px-6 pt-14 pb-3">
+    <div className="flex items-center justify-between">
+      <h1 className="font-display text-[40px] font-bold leading-none tracking-tight">Trips</h1>
+      <div className="relative">
           <button
             onClick={(e) => {
               e.stopPropagation();
               setShowUserMenu(!showUserMenu);
             }}
-            className="w-10 h-10 rounded-full overflow-hidden bg-muted hover:opacity-90 transition-opacity"
+            className="w-11 h-11 rounded-full overflow-hidden bg-muted border-2 border-white shadow-md shadow-black/10 hover:opacity-90 transition-opacity"
           >
             <img
             src={getAvatarUrl(profile?.avatar, 128)}
@@ -173,49 +169,15 @@ useEffect(() => {
             </div>
           )}
         </div>
-      </div>
     </div>
+    <p className="mt-2.5 flex items-center gap-2 text-sm text-muted-foreground">
+      <span className="h-2 w-2 shrink-0 rounded-full bg-primary shadow-[0_0_0_4px_hsl(var(--primary)/0.15)]" />
+      <span className="truncate">{headline}</span>
+    </p>
   </header>
-
-  <div className="px-6 pb-2">
-    <div className="flex bg-muted p-1.5 rounded-xl">
-      <button
-        onClick={() => setTab("active")}
-        className={`flex-1 py-2 px-2 text-xs font-semibold rounded-lg transition-all ${
-          tab === "active"
-            ? "bg-background text-foreground shadow-sm"
-            : "text-muted-foreground"
-        }`}
-      >
-        Active ({activeTrips.length})
-      </button>
-
-      <button
-        onClick={() => setTab("wishlist")}
-        className={`flex-1 py-2 px-2 text-xs font-semibold rounded-lg transition-all ${
-          tab === "wishlist"
-            ? "bg-background text-foreground shadow-sm"
-            : "text-muted-foreground"
-        }`}
-      >
-        Wishlist ({wishlistTrips.length})
-      </button>
-
-      <button
-        onClick={() => setTab("archived")}
-        className={`flex-1 py-2 px-2 text-xs font-semibold rounded-lg transition-all ${
-          tab === "archived"
-            ? "bg-background text-foreground shadow-sm"
-            : "text-muted-foreground"
-        }`}
-      >
-        Archived ({archivedTrips.length})
-      </button>
-    </div>
-  </div>
 </div>
 
-<main className="flex-1 px-6 pb-28 flex flex-col gap-4">
+<main className="flex-1 px-6 pb-32 flex flex-col gap-4">
         {isLoading ? (
           <div className="flex flex-col gap-4">
             {[1, 2, 3].map(i => <div key={i} className="h-32 rounded-3xl bg-muted animate-pulse" />)}
@@ -269,30 +231,16 @@ useEffect(() => {
         )}
       </main>
 
-  {!isAddOpen &&
- !isWishlistOpen &&
- !isJoinOpen && (
-  <div className="fixed bottom-6 left-0 right-0 flex justify-center z-20 max-w-md mx-auto gap-3">
-    <Button
-  size="lg"
-  className="rounded-full px-7 shadow-[0_10px_30px_rgba(37,99,235,0.28)] hover:shadow-[0_12px_34px_rgba(37,99,235,0.34)] transition-shadow"
-  onClick={() => setIsAddOpen(true)}
->
-  <Plus className="w-5 h-5 mr-2" />
-  New Trip
-</Button>
-
-    <Button
-  size="lg"
-  variant="outline"
-  className="rounded-full px-7 bg-white border-white shadow-[0_10px_30px_rgba(0,0,0,0.10)] hover:shadow-[0_12px_34px_rgba(0,0,0,0.14)] transition-shadow"
-  onClick={() => setIsWishlistOpen(true)}
->
-  <Heart className="w-5 h-5 mr-2" />
-  Wishlist
-</Button>
-  </div>
-)}
+  {!isAddOpen && !isWishlistOpen && !isJoinOpen && (
+    <HomeDock
+      tab={tab}
+      onTab={setTab}
+      counts={{ active: activeTrips.length, wishlist: wishlistTrips.length, archived: archivedTrips.length }}
+      onNewTrip={() => setIsAddOpen(true)}
+      onWishlist={() => setIsWishlistOpen(true)}
+      onJoin={() => setIsJoinOpen(true)}
+    />
+  )}
       <AddTripSheet
   isOpen={isAddOpen}
   onClose={() => setIsAddOpen(false)}
@@ -366,135 +314,187 @@ const hasMembers = memberCount > 1;
     try { isActiveNow = differenceInDays(startD, new Date()) <= 0; } catch {}
   }
 
-  const statusBadge = isWishlist ? (
-  <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-pink-500/20 backdrop-blur-md px-3 py-1.5 text-xs font-semibold text-white shadow-lg shadow-black/10">
-    <span className="w-1.5 h-1.5 rounded-full bg-pink-300 shrink-0" />
-    Wishlist
-  </span>
-) : status === "archived" ? (
-  <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-black/30 backdrop-blur-md px-3 py-1.5 text-xs font-semibold text-white shadow-lg shadow-black/10">
-    <span className="w-1.5 h-1.5 rounded-full bg-gray-300 shrink-0" />
-    Archived
-  </span>
-) : isPast ? (
-  <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-black/30 backdrop-blur-md px-3 py-1.5 text-xs font-semibold text-white shadow-lg shadow-black/10">
-    <span className="w-1.5 h-1.5 rounded-full bg-gray-300 shrink-0" />
-    Past
-  </span>
-) : isActiveNow ? (
-  <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-blue-500/20 backdrop-blur-md px-3 py-1.5 text-xs font-semibold text-white shadow-lg shadow-black/10">
-    <span className="w-1.5 h-1.5 rounded-full bg-blue-300 shrink-0" />
-    In Progress
-  </span>
-) : (
-  <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-orange-500/20 backdrop-blur-md px-3 py-1.5 text-xs font-semibold text-white shadow-lg shadow-black/10">
-    <span className="w-1.5 h-1.5 rounded-full bg-orange-300 shrink-0" />
-    In {daysUntil}d
-  </span>
-);
+  const badge = isWishlist
+    ? { label: "Wishlist", dot: "bg-pink-300" }
+    : status === "archived"
+    ? { label: "Archived", dot: "bg-gray-300" }
+    : isPast
+    ? { label: "Past", dot: "bg-gray-300" }
+    : isActiveNow
+    ? { label: "In progress", dot: "bg-blue-300" }
+    : { label: `In ${daysUntil}d`, dot: "bg-orange-300" };
+
+  const statusBadge = (
+    <span className="glass inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold">
+      <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", badge.dot)} />
+      {badge.label}
+    </span>
+  );
 
   return (
     <div className="relative group">
       <Link
-  href={`/trip/${trip.id}/overview`}
-  className="block overflow-hidden rounded-[2rem] bg-card shadow-lg shadow-black/5 border border-border/50 hover:shadow-xl hover:border-primary/20 transition-all duration-300 active:scale-[0.98]"
->
-  {/* Hero image */}
-  <div
-    className="relative h-48"
-    style={
-      trip.heroImage
-        ? {
-            backgroundImage: `url(${trip.heroImage})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
+        href={`/trip/${trip.id}/overview`}
+        className="block overflow-hidden rounded-[34px] shadow-[0_18px_40px_rgba(30,64,175,0.2)] transition-all duration-300 active:scale-[0.98]"
+      >
+        {/* Photo with docked glass info panel */}
+        <div
+          className="relative h-[280px]"
+          style={
+            trip.heroImage
+              ? {
+                  backgroundImage: `url(${trip.heroImage})`,
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                }
+              : { background: "linear-gradient(135deg,#2563eb 0%,#3b82f6 100%)" }
           }
-        : {
-            background:
-              "linear-gradient(135deg,#2563eb 0%,#3b82f6 100%)",
-          }
-    }
-  >
-    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
-    <div className="absolute top-3 left-4 z-20">
-  {statusBadge}
-</div>
+        >
+          <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-transparent" />
 
-    <div className="absolute inset-x-0 bottom-0 px-5 pb-4">
-      <h3 className="mt-8 text-2xl font-bold text-white leading-tight">
-        {trip.name}
-      </h3>
+          <div className="absolute left-4 top-4 z-20">{statusBadge}</div>
 
-      <div className="flex items-center text-white/90 text-sm mt-1">
-        <MapPin className="w-3.5 h-3.5 mr-1 shrink-0" />
-        <span className="truncate">
-          {trip.state || trip.heroLocation || trip.destination}
-        </span>
-      </div>
-    </div>
-  </div>
+          <div className="glass absolute inset-x-2.5 bottom-2.5 rounded-[26px] px-[18px] py-3.5">
+            <div className="flex items-end justify-between gap-3">
+              <div className="min-w-0">
+                <h3 className="truncate font-display text-2xl font-bold leading-tight">
+                  {trip.name}
+                </h3>
+                <div className="mt-0.5 flex items-center gap-1 text-[13px] text-white/90">
+                  <MapPin className="h-3.5 w-3.5 shrink-0" />
+                  <span className="truncate">
+                    {trip.state || trip.heroLocation || trip.destination}
+                  </span>
+                </div>
+              </div>
+              {days !== null && (
+                <span className="font-display text-2xl font-bold leading-none">{days}d</span>
+              )}
+            </div>
 
-  {/* Content */}
-  <div className="px-5 py-2 bg-card">
-    
-    <div className="flex items-center justify-between">
-      {isWishlist ? (
-        <div className="flex items-center text-sm font-medium text-foreground/80 bg-muted/50 px-3 py-1 rounded-xl">
-          <Heart className="w-4 h-4 mr-2 text-pink-500" />
-          Saved for later
+            <div className="mt-2.5 flex items-center justify-between border-t border-white/25 pt-2.5 text-xs font-medium">
+              {isWishlist ? (
+                <span className="flex items-center gap-1.5">
+                  <Heart className="h-3.5 w-3.5" />
+                  Saved for later
+                </span>
+              ) : (
+                <span className="flex items-center gap-1.5">
+                  <Calendar className="h-3.5 w-3.5 shrink-0" />
+                  <span className="truncate">
+                    {safeFormatDate(trip.startDate, d => format(d, "MMM d"), "")} –{" "}
+                    {safeFormatDate(trip.endDate, d => format(d, "MMM d, yyyy"), "")}
+                  </span>
+                </span>
+              )}
+              {hasMembers ? <Users className="h-4 w-4" /> : <User className="h-4 w-4 opacity-80" />}
+            </div>
+          </div>
         </div>
-      ) : (
-        <div className="flex items-center text-[13px] font-medium text-foreground/75 bg-muted/50 px-3 py-1 rounded-xl">
-        <Calendar className="w-3.5 h-3.5 mr-2 opacity-70 shrink-0" />
-        <span className="truncate">
-          {safeFormatDate(trip.startDate, d => format(d, "MMM d"), "")} –{" "}
-          {safeFormatDate(trip.endDate, d => format(d, "MMM d, yyyy"), "")}
-        </span>
-      </div>
-      )}
-
-      {days !== null && (
-  <div className="flex items-center">
-  {hasMembers ? (
-    <Users className="w-4 h-4 text-primary" />
-  ) : (
-    <User className="w-4 h-4 text-muted-foreground" />
-  )}
-
-  <div className="mx-3 h-5 w-px bg-border/70" />
-
-  <span className="text-primary text-xl font-bold leading-none">
-    {days}d
-  </span>
-</div>
-)}
-    </div>
-  </div>
-  </Link>
+      </Link>
 
       {/* Actions */}
-      <div className="absolute top-3 right-3 z-20 flex gap-1.5">
+      <div className="absolute right-3.5 top-3.5 z-20 flex gap-2">
         <TripMenu
-  trip={trip}
-  status={status}
-  onConvert={onConvert}
-  onEdit={onEdit}
-/>
+          trip={trip}
+          status={status}
+          onConvert={onConvert}
+          onEdit={onEdit}
+        />
         <button
+          aria-label="Delete trip"
           onClick={(e) => {
-  e.preventDefault();
-  e.stopPropagation();
+            e.preventDefault();
+            e.stopPropagation();
 
-  if (confirm("Delete trip?")) {
-    deleteTrip(trip.id);
-  }
-}}
-          className="w-9 h-9 rounded-full border border-white/20 bg-white/15 backdrop-blur-xl flex items-center justify-center text-white shadow-lg shadow-black/10 hover:bg-white/25 transition-all"
+            if (confirm("Delete trip?")) {
+              deleteTrip(trip.id);
+            }
+          }}
+          className="glass flex h-9 w-9 items-center justify-center rounded-full transition-all hover:bg-white/30"
         >
-          <Trash2 className="w-3.5 h-3.5" />
+          <Trash2 className="h-3.5 w-3.5" />
         </button>
       </div>
     </div>
+  );
+}
+
+/** Floating glass dock for Home: trip filters + a single "+" that opens the add menu */
+function HomeDock({
+  tab,
+  onTab,
+  counts,
+  onNewTrip,
+  onWishlist,
+  onJoin,
+}: {
+  tab: TripStatus;
+  onTab: (t: TripStatus) => void;
+  counts: { active: number; wishlist: number; archived: number };
+  onNewTrip: () => void;
+  onWishlist: () => void;
+  onJoin: () => void;
+}) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const segments: { id: TripStatus; label: string; count: number }[] = [
+    { id: "active", label: "Active", count: counts.active },
+    { id: "wishlist", label: "Wishlist", count: counts.wishlist },
+    { id: "archived", label: "Archived", count: counts.archived },
+  ];
+
+  return (
+    <>
+      <AddMenu
+        open={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        items={[
+          { id: "new", label: "New trip", hint: "Plan dates and an itinerary", icon: Plane, tint: "bg-blue-50 text-primary", onSelect: onNewTrip },
+          { id: "wishlist", label: "Save to wishlist", hint: "A destination for later", icon: Heart, tint: "bg-pink-50 text-pink-500", onSelect: onWishlist },
+          { id: "join", label: "Join with a code", hint: "Use an invite from a friend", icon: Users, tint: "bg-violet-50 text-violet-600", onSelect: onJoin },
+        ]}
+      />
+      <div
+        className={cn(
+          "pointer-events-none fixed bottom-0 left-1/2 w-full max-w-md -translate-x-1/2 px-4 pb-[calc(18px+env(safe-area-inset-bottom))]",
+          menuOpen ? "z-[70]" : "z-50"
+        )}
+      >
+        <div className="flex items-center gap-3">
+          <div
+            role="tablist"
+            className="glass-light pointer-events-auto flex h-[60px] flex-1 items-center justify-between rounded-[30px] px-2"
+          >
+            {segments.map((seg) => {
+              const isActive = tab === seg.id;
+              return (
+                <button
+                  key={seg.id}
+                  role="tab"
+                  aria-selected={isActive}
+                  onClick={() => onTab(seg.id)}
+                  className={cn(
+                    "h-11 flex-1 rounded-full text-[13px] font-semibold transition-all duration-300",
+                    isActive ? "bg-primary/15 text-primary" : "text-muted-foreground"
+                  )}
+                >
+                  {seg.label} {seg.count}
+                </button>
+              );
+            })}
+          </div>
+          <button
+            aria-label="Add"
+            aria-expanded={menuOpen}
+            onClick={() => setMenuOpen((o) => !o)}
+            className="pointer-events-auto flex h-[60px] w-[60px] shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[0_12px_28px_rgba(37,99,235,0.42),inset_0_1px_0_rgba(255,255,255,0.35)] transition-transform active:scale-95"
+          >
+            <Plus className={cn("h-6 w-6 transition-transform duration-200", menuOpen && "rotate-45")} />
+          </button>
+        </div>
+      </div>
+    </>
   );
 }
 
@@ -571,7 +571,7 @@ const handleWishlist = () => {
 
     setIsOpen(true);
   }}
-  className="w-9 h-9 rounded-full border border-white/20 bg-white/15 backdrop-blur-xl flex items-center justify-center text-white shadow-lg shadow-black/10 hover:bg-white/25 transition-all"
+  className="glass flex h-9 w-9 items-center justify-center rounded-full transition-all hover:bg-white/30"
 >
   <MoreVertical className="w-4 h-4" />
 </button>
