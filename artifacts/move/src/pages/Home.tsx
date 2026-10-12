@@ -282,7 +282,7 @@ const hasMembers = memberCount > 1;
     try { isActiveNow = differenceInDays(startD, new Date()) <= 0; } catch {}
   }
 
-  // Status chip: glass tinted by state (green = active, pink = wishlist, grey = archived / past)
+  // Status chip: glass tinted by state (green = ongoing, blue = upcoming, pink = wishlist, grey = archived / past)
   const tone = isWishlist
     ? { label: "Wishlist", glass: "bg-pink-400/30", dot: "bg-pink-300" }
     : status === "archived"
@@ -291,7 +291,7 @@ const hasMembers = memberCount > 1;
     ? { label: "Past", glass: "bg-slate-400/30", dot: "bg-slate-300" }
     : isActiveNow
     ? { label: "In progress", glass: "bg-emerald-400/30", dot: "bg-emerald-300" }
-    : { label: `In ${daysUntil}d`, glass: "bg-emerald-400/30", dot: "bg-emerald-300" };
+    : { label: `In ${daysUntil}d`, glass: "bg-blue-400/30", dot: "bg-blue-300" };
 
   const heroStyle = trip.heroImage
     ? { backgroundImage: `url(${trip.heroImage})`, backgroundSize: "cover", backgroundPosition: "center" }

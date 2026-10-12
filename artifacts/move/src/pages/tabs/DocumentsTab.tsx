@@ -248,7 +248,7 @@ export default function DocumentsTab({ trip }: { trip: Trip }) {
           </div>
 
           {/* Type filter */}
-          <div className="-mx-4 mt-3 overflow-x-auto px-4 pb-1 no-scrollbar">
+          <div className="-mx-4 -mb-3 mt-3 overflow-x-auto px-4 pb-6 no-scrollbar">
             <div className="flex min-w-max gap-2">
               {[{ id: "all" as const, label: "All" }, ...GROUPS.filter(g => counts[g.id])].map(g => {
                 const active = group === g.id;
@@ -257,7 +257,7 @@ export default function DocumentsTab({ trip }: { trip: Trip }) {
                     key={g.id}
                     onClick={() => setGroup(g.id)}
                     className={cn(
-                      "flex h-9 items-center gap-1.5 rounded-full px-3.5 text-[13px] font-semibold transition-colors",
+                      "flex h-9 items-center gap-1.5 rounded-full px-3.5 text-[13px] font-semibold outline-none transition-colors focus:outline-none",
                       active
                         ? "bg-primary text-primary-foreground shadow-[0_8px_16px_-6px_hsl(var(--primary)/0.55)]"
                         : "bg-card text-foreground/80 shadow-[0_1px_2px_rgba(15,23,42,0.05),0_4px_10px_-4px_rgba(15,23,42,0.1)]"
@@ -280,7 +280,7 @@ export default function DocumentsTab({ trip }: { trip: Trip }) {
                 <Clock className="h-3.5 w-3.5" />
                 Needed soon
               </p>
-              <div className="-mx-4 overflow-x-auto px-4 pb-3 no-scrollbar">
+              <div className="-mx-4 -mb-3 overflow-x-auto px-4 pb-6 no-scrollbar">
                 <div className="flex min-w-max gap-3">
                   {soon.map(entry => (
                     <SoonTile key={entry.doc.id} entry={entry} onOpen={() => setOpenId(entry.doc.id)} />
