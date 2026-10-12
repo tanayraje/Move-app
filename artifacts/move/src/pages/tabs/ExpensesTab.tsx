@@ -12,7 +12,7 @@ import { Trip, Expense, ExpenseCategory, TripBudget, TripMember, ExpenseSplit } 
 import { generateId, cn, safeFormatDate, getTripStatus } from "@/lib/utils";
 import { Button, Input, Label, Select, BottomSheet, FAB } from "@/components/ui";
 import { formatCurrency, convertFromINR, RATES_PER_INR } from "@/lib/countries";
-import { TICKET_MASK, TICKET_SHADOW } from "@/components/TicketParts";
+import { TICKET_MASK, TICKET_SHADOW, RECEIPT_MASK } from "@/components/TicketParts";
 import { useSupabaseAuth } from "@/contexts/AuthContext";
 import { buildExpenseLedger } from "@/lib/expense-ledger";
 import { getAvatarUrl } from "@/lib/avatar";
@@ -365,25 +365,47 @@ setShowSettlement(false);
           )}
         </div>
 
-        {multi && (
-          <div className="mt-4 flex items-center justify-between gap-3 rounded-2xl bg-white/15 px-4 py-3">
+      </div>
+
+      {/* Your balance: its own card, coloured by what it means (green = owed, red = owe) */}
+      {multi && (
+        <div
+          className={cn(
+            "mb-4 flex items-center justify-between gap-3 rounded-[22px] p-4 ring-1",
+            Math.abs(myNet) < 1 ? "bg-card ring-border" : myNet > 0 ? "bg-emerald-50 ring-emerald-100" : "bg-rose-50 ring-rose-100"
+          )}
+        >
+          <div className="flex min-w-0 items-center gap-3">
+            <span
+              className={cn(
+                "flex h-11 w-11 shrink-0 items-center justify-center rounded-full",
+                Math.abs(myNet) < 1 ? "bg-muted text-muted-foreground" : myNet > 0 ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-700"
+              )}
+            >
+              {Math.abs(myNet) < 1 ? <Check className="h-5 w-5" /> : <Handshake className="h-5 w-5" />}
+            </span>
             <div className="min-w-0">
-              <p className="text-[11px] text-primary-foreground/75">Your balance</p>
-              <p className="truncate text-[15px] font-semibold">
-                {Math.abs(myNet) < 1 ? "You are all settled" : myNet > 0 ? `You are owed ${money(myNet)}` : `You owe ${money(Math.abs(myNet))}`}
+              <p className="text-[12px] text-muted-foreground">Your balance</p>
+              <p
+                className={cn(
+                  "truncate font-display text-[18px] font-bold leading-tight",
+                  Math.abs(myNet) < 1 ? "text-foreground" : myNet > 0 ? "text-emerald-800" : "text-rose-800"
+                )}
+              >
+                {Math.abs(myNet) < 1 ? "All settled" : myNet > 0 ? `You are owed ${money(myNet)}` : `You owe ${money(Math.abs(myNet))}`}
               </p>
             </div>
-            {Math.abs(myNet) >= 1 && (
-              <button
-                onClick={() => setTab("balances")}
-                className="shrink-0 rounded-full bg-white px-4 py-2 text-[13px] font-semibold text-primary"
-              >
-                Settle up
-              </button>
-            )}
           </div>
-        )}
-      </div>
+          {Math.abs(myNet) >= 1 && (
+            <button
+              onClick={() => setTab("balances")}
+              className="shrink-0 rounded-full bg-primary px-4 py-2 text-[13px] font-semibold text-primary-foreground"
+            >
+              Settle up
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Views */}
       <div className="mb-5 flex rounded-full bg-muted p-1 text-[13px] font-semibold">
@@ -769,7 +791,9 @@ setShowSettlement(false);
   );
 }
 
-// ── Expense card: a ticket stub, colour-coded like the Timeline ───────────────────────────────
+// ── Expense cards: a shape per category, the same language as the Timeline ───────────────────
+//   transport = ticket stub, food = receipt, stay = key card, activities = entry pass,
+//   misc = plain card, settlement = transfer card
 
 function ExpenseCard({
   expense,
@@ -784,53 +808,174 @@ function ExpenseCard({
   myId?: string;
   onEdit: () => void;
 }) {
-  const tone = TONES[expense.category] ?? TONES.misc;
-  const Icon = EXPENSE_ICONS[expense.category] || CreditCard;
+  const cat: ExpenseCategory = TONES[expense.category] ? expense.category : "misc";
+  const tone = TONES[cat];
+  const Icon = EXPENSE_ICONS[cat] || CreditCard;
   const payer: any = members.find(m => m.id === expense.payerId) || {
     name: expense.payerName || "Unknown User",
     avatar: "avatar-1",
   };
   const splitCount = expense.split?.length ?? 0;
   const myShare = myId && splitCount > 1 ? expense.split?.find(sp => sp.memberId === myId)?.amount : undefined;
+  const amount = money(expense.amount);
 
-  return (
-    <button onClick={onEdit} className="block w-full text-left" style={{ filter: TICKET_SHADOW }}>
-      <div className={cn("relative overflow-hidden rounded-[20px]", tone.card)} style={{ WebkitMask: TICKET_MASK, mask: TICKET_MASK }}>
-        <span aria-hidden className={cn("absolute bottom-3.5 left-[68%] top-3.5 border-l-[1.5px] border-dashed", tone.dash)} />
-        <div className="grid grid-cols-[68%_32%]">
-          <div className="min-w-0 px-4 py-3.5">
-            <p className={cn("flex items-center gap-1.5 text-[11px] font-semibold", tone.label)}>
-              <Icon className="h-3.5 w-3.5" />
-              {EXPENSE_LABELS[expense.category]}
-            </p>
-            <h4 className={cn("mt-1.5 line-clamp-2 break-words text-[15.5px] font-semibold leading-snug", tone.title)}>
-              {expense.title}
-            </h4>
-            <div className="mt-2 flex items-center gap-2 text-[12px]">
-              <img
-                src={getAvatarUrl(payer.avatar || "avatar-1", 32)}
-                alt=""
-                className="h-5 w-5 shrink-0 rounded-full bg-muted object-cover"
-              />
-              <span className="min-w-0 truncate text-muted-foreground">{payer.name}</span>
-              {splitCount > 1 && (
-                <span className={cn("shrink-0 rounded-full px-2 py-0.5 text-[10.5px] font-semibold", tone.chip)}>
-                  Split {splitCount}
-                </span>
-              )}
+  const payerLine = (
+    <div className="mt-2 flex items-center gap-2 text-[12px]">
+      <img src={getAvatarUrl(payer.avatar || "avatar-1", 32)} alt="" className="h-5 w-5 shrink-0 rounded-full bg-muted object-cover" />
+      <span className="min-w-0 truncate text-muted-foreground">{payer.name}</span>
+      {splitCount > 1 && (
+        <span className={cn("shrink-0 rounded-full px-2 py-0.5 text-[10.5px] font-semibold", tone.chip)}>Split {splitCount}</span>
+      )}
+    </div>
+  );
+  const notes = expense.notes ? <p className="mt-1.5 truncate text-[11.5px] text-muted-foreground">{expense.notes}</p> : null;
+  const share = myShare !== undefined ? <span className="text-[11px] text-muted-foreground">Your share {money(myShare)}</span> : null;
+
+  // Transport: ticket stub, amount on the stub
+  if (cat === "transport") {
+    return (
+      <button onClick={onEdit} className="block w-full text-left" style={{ filter: TICKET_SHADOW }}>
+        <div className={cn("relative overflow-hidden rounded-[20px]", tone.card)} style={{ WebkitMask: TICKET_MASK, mask: TICKET_MASK }}>
+          <span aria-hidden className={cn("absolute bottom-3.5 left-[68%] top-3.5 border-l-[1.5px] border-dashed", tone.dash)} />
+          <div className="grid grid-cols-[68%_32%]">
+            <div className="min-w-0 px-4 py-3.5">
+              <p className={cn("flex items-center gap-1.5 text-[11px] font-semibold", tone.label)}>
+                <Icon className="h-3.5 w-3.5" />
+                {EXPENSE_LABELS[cat]}
+              </p>
+              <h4 className={cn("mt-1.5 line-clamp-2 break-words text-[15.5px] font-semibold leading-snug", tone.title)}>{expense.title}</h4>
+              {payerLine}
+              {notes}
             </div>
-            {expense.notes && <p className="mt-1.5 truncate text-[11.5px] text-muted-foreground">{expense.notes}</p>}
-          </div>
-          <div className={cn("flex min-w-0 flex-col items-center justify-center gap-1 px-2 py-3.5 text-center", tone.stub)}>
-            <span className={cn("break-words font-display text-[16px] font-bold leading-tight", tone.title)}>
-              {money(expense.amount)}
-            </span>
-            {myShare !== undefined && (
-              <span className="text-[10.5px] leading-tight text-muted-foreground">Your share {money(myShare)}</span>
-            )}
+            <div className={cn("flex min-w-0 flex-col items-center justify-center gap-1 px-2 py-3.5 text-center", tone.stub)}>
+              <span className={cn("break-words font-display text-[16px] font-bold leading-tight", tone.title)}>{amount}</span>
+              {myShare !== undefined && <span className="text-[10.5px] leading-tight text-muted-foreground">Your share {money(myShare)}</span>}
+            </div>
           </div>
         </div>
+      </button>
+    );
+  }
+
+  // Food: receipt with a torn edge and a total line
+  if (cat === "food") {
+    return (
+      <button onClick={onEdit} className="block w-full text-left" style={{ filter: TICKET_SHADOW }}>
+        <div className={cn("rounded-t-[24px] px-4 pb-4 pt-3.5", tone.card)} style={{ WebkitMask: RECEIPT_MASK, mask: RECEIPT_MASK }}>
+          <div className="flex items-center gap-3">
+            <span className={cn("flex h-11 w-11 shrink-0 items-center justify-center rounded-full", tone.tile)}>
+              <Icon className="h-5 w-5" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className={cn("text-[11px] font-semibold", tone.label)}>{EXPENSE_LABELS[cat]}</p>
+              <h4 className={cn("line-clamp-2 break-words text-[15.5px] font-semibold leading-snug", tone.title)}>{expense.title}</h4>
+            </div>
+          </div>
+          {payerLine}
+          {notes}
+          <div className="mt-3 flex items-end justify-between border-t border-dashed border-amber-300/80 pt-2.5">
+            <span className="text-[12px] text-amber-900/60">Total</span>
+            <span className="text-right">
+              <span className={cn("block font-display text-[18px] font-bold leading-tight", tone.title)}>{amount}</span>
+              {share}
+            </span>
+          </div>
+        </div>
+      </button>
+    );
+  }
+
+  // Stay: key card with a stacked edge
+  if (cat === "accommodation") {
+    return (
+      <button
+        onClick={onEdit}
+        className="mb-3 block w-full rounded-[24px] bg-violet-50 p-4 text-left ring-1 ring-violet-200/80 shadow-[0_5px_0_-1px_#E9E3FD,0_10px_0_-2px_#F2EEFE]"
+      >
+        <div className="flex items-start gap-3">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-violet-600 text-white">
+            <Icon className="h-5 w-5" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className={cn("text-[11px] font-semibold", tone.label)}>{EXPENSE_LABELS[cat]}</p>
+            <h4 className={cn("line-clamp-2 break-words text-[15.5px] font-semibold leading-snug", tone.title)}>{expense.title}</h4>
+          </div>
+          <span className="text-right">
+            <span className={cn("block font-display text-[17px] font-bold leading-tight", tone.title)}>{amount}</span>
+            {share}
+          </span>
+        </div>
+        {payerLine}
+        {notes}
+      </button>
+    );
+  }
+
+  // Activities: entry pass with a coloured band and a slot
+  if (cat === "activities") {
+    return (
+      <button
+        onClick={onEdit}
+        className="block w-full overflow-hidden rounded-[26px] bg-teal-50 text-left ring-1 ring-teal-200/80 shadow-[0_1px_2px_rgba(15,23,42,0.05),0_10px_26px_-6px_rgba(13,148,136,0.28)]"
+      >
+        <div className="relative bg-gradient-to-r from-teal-600 to-emerald-600 px-4 pb-2.5 pt-4 text-white">
+          <span aria-hidden className="absolute left-1/2 top-1.5 h-1.5 w-10 -translate-x-1/2 rounded-full bg-black/25" />
+          <p className="flex items-center gap-1.5 text-[12px] font-semibold">
+            <Icon className="h-3.5 w-3.5" />
+            {EXPENSE_LABELS[cat]}
+          </p>
+        </div>
+        <div className="px-4 py-3.5">
+          <div className="flex items-start justify-between gap-3">
+            <h4 className={cn("line-clamp-2 min-w-0 flex-1 break-words text-[16px] font-semibold leading-snug", tone.title)}>{expense.title}</h4>
+            <span className="text-right">
+              <span className={cn("block font-display text-[17px] font-bold leading-tight", tone.title)}>{amount}</span>
+              {share}
+            </span>
+          </div>
+          {payerLine}
+          {notes}
+        </div>
+      </button>
+    );
+  }
+
+  // Settlement: a transfer between two people
+  if (cat === "settlement") {
+    return (
+      <button onClick={onEdit} className="flex w-full items-center gap-3.5 rounded-[22px] bg-emerald-50 p-3.5 text-left ring-1 ring-emerald-100">
+        <span className={cn("flex h-11 w-11 shrink-0 items-center justify-center rounded-full", tone.tile)}>
+          <Icon className="h-5 w-5" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className={cn("text-[11px] font-semibold", tone.label)}>Settlement</p>
+          <h4 className={cn("line-clamp-2 break-words text-[15px] font-semibold leading-snug", tone.title)}>
+            {expense.title.replace(/^Settlement:\s*/, "")}
+          </h4>
+        </div>
+        <span className={cn("shrink-0 font-display text-[17px] font-bold", tone.title)}>{amount}</span>
+      </button>
+    );
+  }
+
+  // Misc: a plain card, nothing fancy
+  return (
+    <button
+      onClick={onEdit}
+      className="flex w-full items-center gap-3.5 rounded-[22px] bg-card p-3.5 text-left ring-1 ring-border shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_20px_-8px_rgba(15,23,42,0.12)]"
+    >
+      <span className={cn("flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl", tone.tile)}>
+        <Icon className="h-5 w-5" />
+      </span>
+      <div className="min-w-0 flex-1">
+        <h4 className="line-clamp-2 break-words text-[15.5px] font-semibold leading-snug">{expense.title}</h4>
+        {payerLine}
+        {notes}
       </div>
+      <span className="text-right">
+        <span className="block font-display text-[17px] font-bold leading-tight">{amount}</span>
+        {share}
+      </span>
     </button>
   );
 }

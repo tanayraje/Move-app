@@ -13,6 +13,10 @@ import { cn } from "@/lib/utils";
 export const TICKET_MASK =
   "radial-gradient(circle 9px at 68% 0, #0000 97%, #000) top / 100% 51% no-repeat, radial-gradient(circle 9px at 68% 100%, #0000 97%, #000) bottom / 100% 51% no-repeat";
 
+/** Torn receipt edge: the bottom 8px is cut into a zig-zag */
+const ZIGZAG = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='8' viewBox='0 0 16 8'%3E%3Cpath d='M0 0h16L8 8z'/%3E%3C/svg%3E")`;
+export const RECEIPT_MASK = `linear-gradient(#000, #000) top / 100% calc(100% - 7px) no-repeat, ${ZIGZAG} bottom / 16px 8px repeat-x`;
+
 export const TICKET_SHADOW = "drop-shadow(0 8px 14px rgba(15,23,42,0.12))";
 
 export const TRAVEL_META: Record<TravelType, { label: string; icon: React.ElementType }> = {
