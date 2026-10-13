@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useEffect } from "react";
+import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { X } from "lucide-react";
@@ -64,7 +65,19 @@ export function Label({ className, children, ...props }: React.LabelHTMLAttribut
   );
 }
 
-export function BottomSheet({
+export function BottomSheet(props: {
+  isOpen: boolean;
+  onClose: () => void;
+  title: string;
+  children: React.ReactNode;
+}) {
+  // Rendered into document.body so a transformed ancestor can never
+  // re-anchor the fixed sheet (this is what threw the members sheet off-screen).
+  if (typeof document === "undefined") return null;
+  return createPortal(<BottomSheetInner {...props} />, document.body);
+}
+
+function BottomSheetInner({
   isOpen,
   onClose,
   title,
@@ -103,7 +116,7 @@ export function BottomSheet({
           }}
           >
             <div
-  className="overflow-y-auto px-6 pb-8 pt-4 no-scrollbar"
+  className="overflow-y-auto overflow-x-hidden px-6 pb-8 pt-4 no-scrollbar"
   style={{ maxHeight: "calc(85vh - 80px)" }}
 >
               <div className="mx-auto mt-2 mb-6 h-1.5 w-12 rounded-full bg-muted-foreground/20" />
@@ -133,15 +146,66 @@ export function BottomSheet({
 }
 
 
-export function FAB({ onClick, icon: Icon }: { onClick: () => void, icon: any }) {
+let dockActionCount = 0;
+
+/**
+ * Docked "+" action: same height as the dock bar, at the right edge beside it.
+ * Tells the dock bar to make room (body.has-dock-action).
+ */
+export function FAB({
+  onClick,
+  icon: Icon,
+  label = "Add",
+  open = false,
+}: {
+  onClick: () => void;
+  icon: any;
+  label?: string;
+  open?: boolean;
+}) {
+  useEffect(() => {
+    dockActionCount += 1;
+    document.body.classList.add("has-dock-action");
+    return () => {
+      dockActionCount -= 1;
+      if (dockActionCount <= 0) {
+        dockActionCount = 0;
+        document.body.classList.remove("has-dock-action");
+      }
+    };
+  }, []);
+
   return (
-    <motion.button
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.95 }}
-      onClick={onClick}
-      className="fixed bottom-24 right-6 z-10 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/30"
+    <div
+      className={cn(
+        "pointer-events-none fixed bottom-0 left-1/2 w-full max-w-md -translate-x-1/2 px-5 pb-[calc(18px+env(safe-area-inset-bottom))]",
+        open ? "z-[120]" : "z-50"
+      )}
     >
-      <Icon className="h-6 w-6" />
-    </motion.button>
+      <div className="flex justify-end">
+        <motion.button
+          whileTap={{ scale: 0.94 }}
+          onClick={onClick}
+          aria-label={label}
+          className="pointer-events-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[0_12px_28px_rgba(37,99,235,0.35)]"
+        >
+          <Icon className={cn("h-7 w-7 transition-transform duration-200", open && "rotate-45")} />
+        </motion.button>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Gradient that keeps white text readable on any photo. Used by every photo hero
+ * (Overview, Timeline, trip cards) so they all look and read the same.
+ * Place inside a `relative` photo container.
+ */
+export function HeroScrim() {
+  return (
+    <>
+      <div className="absolute inset-x-0 top-0 h-[34%] bg-gradient-to-b from-black/40 to-transparent" />
+      <div className="absolute inset-x-0 bottom-0 h-[70%] bg-gradient-to-t from-black/80 via-black/45 to-transparent" />
+    </>
   );
 }

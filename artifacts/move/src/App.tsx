@@ -1,7 +1,8 @@
 import { useEffect } from "react";
-import { Switch, Route, Router as WouterRouter } from "wouter";
+import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
+import { ConfirmHost } from "@/components/ConfirmHost";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useSupabaseAuth } from "@/contexts/AuthContext";
 import { LogIn } from "lucide-react";
@@ -62,6 +63,7 @@ function App() {
           </AuthGate>
         </WouterRouter>
         <Toaster />
+        <ConfirmHost />
       </TooltipProvider>
     </AuthProvider>
   </QueryClientProvider>
@@ -74,6 +76,19 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     loading,
     signInWithGoogle,
   } = useSupabaseAuth();
+  const [, setLocation] = useLocation();
+
+  // After Google sign-in the browser lands on "/"; send an invitee back to the link they opened.
+  useEffect(() => {
+    if (!user) return;
+    try {
+      const raw = localStorage.getItem("move-return-to");
+      if (!raw) return;
+      localStorage.removeItem("move-return-to");
+      const { path, at } = JSON.parse(raw);
+      if (path && Date.now() - at < 60 * 60 * 1000) setLocation(path);
+    } catch {}
+  }, [user, setLocation]);
 
   if (loading) {
     return (

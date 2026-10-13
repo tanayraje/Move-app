@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+import { notify, confirmDialog } from "@/lib/dialogs";
+import React, { useState, useEffect } from "react";
 import { useRoute, Link, Route, Switch } from "wouter";
 import { format } from "date-fns";
 import { useTrip, useUpdateTrip } from "@/hooks/use-store";
 import {
   CalendarDays, FileText, Receipt, MapPin, LayoutDashboard,
-  ChevronLeft, Users, Settings, ArrowRight, Heart, Copy
+  ChevronLeft, Users, Settings, ArrowRight, Heart, Copy, Archive
 } from "lucide-react";
 import { cn, generateId, safeFormatDate } from "@/lib/utils";
 import type { Trip, TripStatus } from "@/lib/types";
@@ -15,6 +16,7 @@ import ExpensesTab from "./tabs/ExpensesTab";
 import PlacesTab from "./tabs/PlacesTab";
 import OverviewTab from "./tabs/OverviewTab";
 import { BottomSheet, Button, Input, Label } from "@/components/ui";
+import { DockBar } from "@/components/Dock";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { getAvatarUrl } from "@/lib/avatar";
@@ -24,6 +26,17 @@ export default function TripDashboard({ params }: { params: { id: string, tab?: 
   const { data: trip, isLoading } = useTrip(tripId);
   const [, paramsActive] = useRoute("/trip/:id/:tab");
   const activeTab = paramsActive?.tab || 'overview';
+
+  // Tabs that open with a photo behind the header get a transparent, floating header
+  const heroTab = activeTab === 'overview' || activeTab === 'itinerary';
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 120);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+  const onPhoto = heroTab && !scrolled;
 
   if (isLoading) return <div className="p-8 text-center">Loading trip...</div>;
   if (!trip) return <div className="p-8 text-center text-muted-foreground">Trip not found. <Link href="/" className="text-primary ml-2">Go back</Link></div>;
@@ -42,36 +55,54 @@ export default function TripDashboard({ params }: { params: { id: string, tab?: 
 
   return (
     <div className="flex flex-col min-h-[100dvh] bg-background">
-      {/* Sticky Header */}
-      <header className="sticky top-0 z-30 bg-background/90 border-b border-border/50 px-4 py-4 flex items-center gap-3">
-        <Link href="/" className="p-2 -ml-2 rounded-full hover:bg-muted text-foreground">
-          <ChevronLeft className="w-6 h-6" />
-        </Link>
-        <div className="flex-1 truncate">
-          <h1 className="text-xl font-display font-bold text-foreground truncate">{trip.name}</h1>
-          <p className="text-xs text-muted-foreground font-medium truncate">
-            {trip.destination}
-            {isWishlist ? ' · Wishlist' : ` · ${safeFormatDate(trip.startDate, d => format(d, 'MMM d'), '')} – ${safeFormatDate(trip.endDate, d => format(d, 'MMM d'), '')}`}
+      {/* Floating header: transparent over photos, glass once scrolled / on plain tabs */}
+      <header
+        className={cn(
+          "fixed inset-x-0 top-0 z-40 mx-auto w-full max-w-md px-4 pb-3 pt-[calc(12px+env(safe-area-inset-top))] transition-colors duration-300",
+          !onPhoto && "border-b border-border/60 bg-background/95"
+        )}
+      >
+        <div className="flex items-center gap-2.5">
+          <Link
+            href="/"
+            aria-label="Back to trips"
+            className={cn(
+              "flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-all",
+              onPhoto ? "glass" : "bg-black/[0.05] text-foreground"
+            )}
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </Link>
+          <div className={cn("min-w-0 flex-1 transition-opacity duration-300", onPhoto && "pointer-events-none opacity-0")}>
+            <h1 className="truncate font-display text-lg font-bold text-foreground">{trip.name}</h1>
+            <p className="truncate text-xs font-medium text-muted-foreground">
+              {trip.destination}
+              {isWishlist ? ' · Wishlist' : ` · ${safeFormatDate(trip.startDate, d => format(d, 'MMM d'), '')} – ${safeFormatDate(trip.endDate, d => format(d, 'MMM d'), '')}`}
+            </p>
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            <MembersButton trip={trip} onPhoto={onPhoto} />
+          </div>
+        </div>
+        {isArchived && (
+          <p
+            className={cn(
+              "mt-2.5 flex items-center justify-center gap-1.5 rounded-full px-3 py-1.5 text-[11.5px] font-medium",
+              onPhoto ? "glass mx-auto w-fit" : "bg-muted text-muted-foreground"
+            )}
+          >
+            <Archive className="h-3.5 w-3.5" />
+            This trip is archived. View-only mode.
           </p>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <MembersButton trip={trip} />
-        
-        </div>
+        )}
       </header>
-
-      {/* Archived banner */}
-      {isArchived && (
-        <div className="bg-muted border-y border-border px-4 py-2 text-center text-xs font-medium text-muted-foreground">
-          This trip is archived. View-only mode.
-        </div>
-      )}
 
       {/* Main Content Area */}
      <main
-  className="relative flex-1 overflow-x-hidden overflow-y-hidden pb-28"
+  className="relative flex-auto overflow-x-clip pb-28"
   style={{
-    paddingBottom: "calc(88px + env(safe-area-inset-bottom))",
+    paddingBottom: "calc(104px + env(safe-area-inset-bottom))",
+    paddingTop: heroTab ? 0 : `calc(${isArchived ? 100 : 76}px + env(safe-area-inset-top))`,
   }}
 >
         <Switch>
@@ -84,33 +115,11 @@ export default function TripDashboard({ params }: { params: { id: string, tab?: 
         </Switch>
       </main>
 
-      {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-card/95 backdrop-blur-xl border-t border-border/50 pb-[env(safe-area-inset-bottom)] z-50 px-2 pt-2 shadow-[0_-8px_24px_rgba(0,0,0,0.08)]">
-        <div className="flex justify-between items-center px-1">
-          {tabs.map(tab => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
-            return (
-              <Link key={tab.id} href={`/trip/${trip.id}/${tab.id}`} className="relative flex flex-col items-center justify-center w-full py-2 group">
-                <div className={cn(
-                  "flex items-center justify-center w-10 h-10 rounded-2xl transition-all duration-300",
-                  isActive
-                    ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25 scale-110"
-                    : "text-muted-foreground group-hover:bg-muted group-hover:text-foreground"
-                )}>
-                  <Icon className={cn("w-5 h-5", isActive ? "stroke-[2.5]" : "stroke-2")} />
-                </div>
-                <span className={cn(
-                  "text-[10px] font-semibold mt-1 transition-colors duration-300",
-                  isActive ? "text-primary" : "text-muted-foreground"
-                )}>
-                  {tab.label}
-                </span>
-              </Link>
-            );
-          })}
-        </div>
-      </nav>
+      {/* Bottom Navigation: compact floating glass pill */}
+      <DockBar
+        activeId={activeTab}
+        items={tabs.map(t => ({ id: t.id, label: t.label, icon: t.icon, href: `/trip/${trip.id}/${t.id}` }))}
+      />
     </div>
   );
 }
@@ -138,7 +147,7 @@ function getAvatarColour(userId: string) {
   return avatarColours[Math.abs(hash) % avatarColours.length];
 }
 
-function MembersButton({ trip }: { trip: Trip }) {
+function MembersButton({ trip, onPhoto = false }: { trip: Trip; onPhoto?: boolean }) {
   const [isOpen, setIsOpen] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
@@ -158,14 +167,8 @@ React.useEffect(() => {
   { p_trip_id: trip.id }
 );
 
-console.log("TRIP ID", trip.id);
-console.log("RPC DATA", data);
 
-if (data?.length) {
-
-}
-console.log("RPC ERROR FULL", JSON.stringify(error, null, 2));
-
+    if (error) throw error;
     return data || [];
   },
 });
@@ -178,9 +181,12 @@ const removeMember = async (
   memberId: string,
   memberName: string
 ) => {
-  const confirmed = window.confirm(
-    `Remove ${memberName} from this trip?\n\nThey will lose access to the trip.\nExisting expenses and splits will remain unchanged.`
-  );
+  const confirmed = await confirmDialog({
+    title: `Remove ${memberName}?`,
+    message: "They will lose access to the trip. Existing expenses and splits will remain unchanged.",
+    confirmLabel: "Remove",
+    destructive: true,
+  });
 
   if (!confirmed) return;
 
@@ -193,7 +199,7 @@ const removeMember = async (
 );
 
 if (error) {
-  alert(error.message);
+  notify(error.message, "error");
   return;
 }
 
@@ -201,13 +207,16 @@ await queryClient.invalidateQueries({
   queryKey: ["trip-members", trip.id],
 });
 
-alert("Member removed");
+notify("Member removed");
 };
 
 const leaveTrip = async () => {
-  const confirmed = window.confirm(
-    `Leave this trip?\n\nYou will lose access to the trip.\nYour expenses and splits will remain in the trip history.`
-  );
+  const confirmed = await confirmDialog({
+    title: "Leave this trip?",
+    message: "You will lose access to the trip. Your expenses and splits will remain in the trip history.",
+    confirmLabel: "Leave",
+    destructive: true,
+  });
 
   if (!confirmed) return;
 
@@ -218,7 +227,7 @@ const leaveTrip = async () => {
     .eq("user_id", currentUserId);
 
   if (error) {
-    alert(error.message);
+    notify(error.message, "error");
     return;
   }
 
@@ -231,8 +240,10 @@ const leaveTrip = async () => {
       <button
         onClick={() => setIsOpen(true)}
         className={cn(
-          "flex items-center gap-1.5 shrink-0 px-2.5 py-1.5 rounded-full text-xs font-bold transition-colors",
-          isSolo ? "bg-muted text-muted-foreground" : "bg-blue-50 text-blue-600"
+          "flex shrink-0 items-center gap-1.5 rounded-full text-xs font-bold transition-colors",
+          onPhoto
+            ? "glass h-10 px-3.5"
+            : cn("px-2.5 py-1.5", isSolo ? "bg-muted text-muted-foreground" : "bg-blue-50 text-blue-600")
         )}
       >
         <Users className="w-3.5 h-3.5" />
@@ -254,7 +265,7 @@ const leaveTrip = async () => {
                     navigator.clipboard?.writeText(
   trip.inviteCode!.replace('MOVE-', '')
 );
-                    alert('Copied to clipboard!');
+                    notify('Code copied');
                   }}
                   className="text-xs font-bold bg-primary text-primary-foreground px-3 py-2.5 rounded-lg shrink-0"
                 >
@@ -268,7 +279,7 @@ const leaveTrip = async () => {
 
   <button
     onClick={async () => {
-      const inviteText = `Join my trip on Move ✈️
+      const inviteText = `Join my trip on Move
 Let's Plan it Better!
 
 Trip: ${trip.name}
@@ -276,10 +287,10 @@ Trip: ${trip.name}
 Code: ${trip.inviteCode}
 
 Open Move:
-https://move-app-theta.vercel.app
+${window.location.origin}
 
 Or join directly:
-https://move-app-theta.vercel.app/join/${trip.inviteCode}`;
+${window.location.origin}/join/${trip.inviteCode}`;
 
       if (navigator.share) {
         await navigator.share({
@@ -288,7 +299,7 @@ https://move-app-theta.vercel.app/join/${trip.inviteCode}`;
         });
       } else {
         await navigator.clipboard.writeText(inviteText);
-        alert('Invite copied to clipboard!');
+        notify('Invite copied');
       }
     }}
     className="text-xs font-bold bg-primary text-primary-foreground px-3 py-2 rounded-lg shrink-0"

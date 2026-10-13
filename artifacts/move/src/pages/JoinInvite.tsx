@@ -1,3 +1,4 @@
+import { notify } from "@/lib/dialogs";
 import { useRoute, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
@@ -66,7 +67,7 @@ const handleJoin = async () => {
     setLocation(`/trip/${tripId}`);
   } catch (err) {
     console.error(err);
-    alert("Failed to join trip");
+    notify("Could not join this trip. Try again.", "error");
   }
 };
 

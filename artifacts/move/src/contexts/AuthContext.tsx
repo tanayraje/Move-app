@@ -48,7 +48,7 @@ export function AuthProvider({
         .maybeSingle();
 
       if (!existingProfile) {
-        const { data, error } = await supabase
+        const { error } = await supabase
           .from('profiles')
           .insert({
   id: session.user.id,
@@ -63,8 +63,7 @@ export function AuthProvider({
 })
           .select();
 
-        console.log('PROFILE INSERT DATA', data);
-        console.log('PROFILE INSERT ERROR', error);
+        if (error) console.error('Profile create failed', error);
       }
     }
 
@@ -76,6 +75,12 @@ return () => subscription.unsubscribe();
   }, []);
 
   const signInWithGoogle = async () => {
+  try {
+    const path = window.location.pathname + window.location.search;
+    if (window.location.pathname !== "/") {
+      localStorage.setItem("move-return-to", JSON.stringify({ path, at: Date.now() }));
+    }
+  } catch {}
   await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {

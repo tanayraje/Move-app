@@ -1,14 +1,18 @@
+import { notify, confirmDialog } from "@/lib/dialogs";
 import React, { useState, useMemo, useEffect } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { format, differenceInDays, addDays } from "date-fns";
 import {
   Plus, MapPin, Calendar, Plane, Trash2, Search, ChevronDown, X,
-  Archive, Heart, User, MoreVertical, Users, LogOut, Pencil
+  Archive, Heart, User, Check, MoreVertical, Users, LogOut, Pencil
 } from "lucide-react";
 import { useTrips, useCreateTrip, useDeleteTrip, useUpdateTrip } from "@/hooks/use-store";
 import { useItinerary, useSaveItineraryItem } from "@/hooks/use-store";
-import { generateId, safeFormatDate, safeParseDate, getTripStatus } from "@/lib/utils";
-import { Button, Input, Label, BottomSheet } from "@/components/ui";
+import { cn, generateId, safeFormatDate, safeParseDate, getTripStatus } from "@/lib/utils";
+import { Button, Input, Label, BottomSheet, FAB } from "@/components/ui";
+import { DockBar, DockItem } from "@/components/Dock";
+import { AddMenu } from "@/components/AddMenu";
+import { ProfileMenu } from "@/components/ProfileMenu";
 import { COUNTRIES, Country } from "@/lib/countries";
 import { INDIAN_STATES } from "@/lib/india-states";
 import type { Trip, TripStatus } from "@/lib/types";
@@ -35,19 +39,6 @@ const { data: profile } = useProfile(user?.id);
   const [convertTrip, setConvertTrip] = useState<Trip | null>(null);
 const [editingTrip, setEditingTrip] = useState<Trip | null>(null);
   const [showUserMenu, setShowUserMenu] = useState(false);
-  useEffect(() => {
-  if (!showUserMenu) return;
-
-  const handleClickOutside = () => {
-    setShowUserMenu(false);
-  };
-
-  window.addEventListener("click", handleClickOutside);
-
-  return () => {
-    window.removeEventListener("click", handleClickOutside);
-  };
-}, [showUserMenu]);
   const [tab, setTab] = useState<TripStatus>('active');
   
   
@@ -86,136 +77,52 @@ useEffect(() => {
   const archivedTrips = allTrips.filter(t => getTripStatus(t) === 'archived');
   const wishlistTrips = allTrips.filter(t => getTripStatus(t) === 'wishlist');
 
-  const tripsToShow = tab === 'active' ? activeTrips : tab === 'archived' ? archivedTrips : wishlistTrips;
+  const tripsToShow = [...(tab === 'active' ? activeTrips : tab === 'archived' ? archivedTrips : wishlistTrips)].sort(
+    (a, b) => (a.startDate || "9999-12-31").localeCompare(b.startDate || "9999-12-31")
+  );
   const hasMultiple = [activeTrips.length, archivedTrips.length, wishlistTrips.length].filter(n => n > 0).length > 1;
+
+  // One live line under the title: what is happening with the trips right now
+  const headline = (() => {
+    const today = new Date();
+    let soonest: { name: string; days: number } | null = null;
+    for (const t of activeTrips) {
+      const start = safeParseDate(t.startDate);
+      const end = safeParseDate(t.endDate);
+      if (!start || !end) continue;
+      if (differenceInDays(end, today) < 0) continue;
+      const toStart = differenceInDays(start, today);
+      if (toStart <= 0) return `${t.name} is in progress`;
+      if (!soonest || toStart < soonest.days) soonest = { name: t.name, days: toStart };
+    }
+    return soonest
+      ? `${soonest.name} starts in ${soonest.days} day${soonest.days === 1 ? "" : "s"}`
+      : "Where to next?";
+  })();
 
   return (
   <div className="flex flex-col min-h-[100dvh] pb-8 relative">
     
-      <div className="sticky top-0 z-[100] bg-background/90 backdrop-blur-xl">
-  <header className="px-6 pt-12 pb-3">
-    <div className="flex items-start justify-between gap-8">
-      <div>
-        <img
-        src="/move-logo.svg"
-        alt="Move"
-        className="h-6.5 w-auto object-contain"
-        style={{
-          filter:
-            "brightness(0) saturate(100%) invert(13%) sepia(25%) saturate(2138%) hue-rotate(224deg) brightness(82%) contrast(108%)",
-        }}
-      />
-        <p className="text-muted-foreground mt-1 text-lg">
-          Where to next?
-        </p>
-      </div>
-
-      <div className="flex items-center gap-3">
-        <button
-          onClick={() => setIsJoinOpen(true)}
-          className="p-2.5 bg-muted rounded-full hover:bg-primary/10 hover:text-primary transition-colors"
-          title="Join a trip by code"
-        >
-          <Users className="w-5 h-5" />
-        </button>
-
-        <div className="relative">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setShowUserMenu(!showUserMenu);
-            }}
-            className="w-10 h-10 rounded-full overflow-hidden bg-muted hover:opacity-90 transition-opacity"
-          >
-            <img
-            src={getAvatarUrl(profile?.avatar, 128)}
-            alt="Profile"
-            className="w-full h-full"
-          />
-        </button>
-
-          {showUserMenu && (
-            <div
-              className="absolute right-0 top-12 bg-card border border-border rounded-2xl shadow-2xl p-2 min-w-[220px] z-[9999]"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="px-3 py-1 border-b border-border mb-1">
-                <p className="text-sm font-semibold text-foreground">
-                  {profile?.username || "User"}
-                </p>
-
-                {profile?.name && (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {profile.name}
-                  </p>
-                )}
-              </div>
-
-              <Link href="/profile">
-                <button
-                  onClick={() => setShowUserMenu(false)}
-                  className="w-full text-left px-3 py-1.5 text-sm font-medium hover:bg-muted rounded-xl"
-                >
-                  Profile
-                </button>
-              </Link>
-
-              <button
-                onClick={() => {
-                  setShowUserMenu(false);
-                  logout();
-                }}
-                className="w-full text-left px-3 py-1.5 text-sm font-medium text-red-500 hover:bg-red-50 rounded-xl flex items-center gap-2"
-              >
-                <LogOut className="w-4 h-4" />
-                Log out
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
+      <div className="sticky top-0 z-[100] bg-background/95">
+  <header className="px-6 pt-14 pb-3">
+    <div className="flex items-center justify-between">
+      <h1 className="font-display text-[40px] font-bold leading-none tracking-tight">Trips</h1>
+      <button
+        onClick={() => setShowUserMenu(true)}
+        aria-label="Account menu"
+        className="h-11 w-11 overflow-hidden rounded-full border-2 border-white bg-muted shadow-md shadow-black/10 transition-opacity hover:opacity-90"
+      >
+        <img src={getAvatarUrl(profile?.avatar, 128)} alt="Profile" className="h-full w-full" />
+      </button>
     </div>
+    <p className="mt-2.5 flex items-center gap-2 text-sm text-muted-foreground">
+      <Plane className="h-4 w-4 shrink-0 text-primary" />
+      <span className="truncate">{headline}</span>
+    </p>
   </header>
-
-  <div className="px-6 pb-2">
-    <div className="flex bg-muted p-1.5 rounded-xl">
-      <button
-        onClick={() => setTab("active")}
-        className={`flex-1 py-2 px-2 text-xs font-semibold rounded-lg transition-all ${
-          tab === "active"
-            ? "bg-background text-foreground shadow-sm"
-            : "text-muted-foreground"
-        }`}
-      >
-        Active ({activeTrips.length})
-      </button>
-
-      <button
-        onClick={() => setTab("wishlist")}
-        className={`flex-1 py-2 px-2 text-xs font-semibold rounded-lg transition-all ${
-          tab === "wishlist"
-            ? "bg-background text-foreground shadow-sm"
-            : "text-muted-foreground"
-        }`}
-      >
-        Wishlist ({wishlistTrips.length})
-      </button>
-
-      <button
-        onClick={() => setTab("archived")}
-        className={`flex-1 py-2 px-2 text-xs font-semibold rounded-lg transition-all ${
-          tab === "archived"
-            ? "bg-background text-foreground shadow-sm"
-            : "text-muted-foreground"
-        }`}
-      >
-        Archived ({archivedTrips.length})
-      </button>
-    </div>
-  </div>
 </div>
 
-<main className="flex-1 px-6 pb-28 flex flex-col gap-4">
+<main className="flex flex-1 flex-col gap-4 px-4 pb-40">
         {isLoading ? (
           <div className="flex flex-col gap-4">
             {[1, 2, 3].map(i => <div key={i} className="h-32 rounded-3xl bg-muted animate-pulse" />)}
@@ -224,75 +131,26 @@ useEffect(() => {
           <>
  
   {tripsToShow.length === 0 ? (
-  <div className="flex-1 flex items-center justify-center">
-    <div className="text-center">
-      {tab === "active" && (
-        <Plane className="w-12 h-12 mx-auto mb-4 opacity-30" />
-      )}
-
-      {tab === "wishlist" && (
-        <Heart className="w-12 h-12 mx-auto mb-4 opacity-30" />
-      )}
-
-      {tab === "archived" && (
-        <Archive className="w-12 h-12 mx-auto mb-4 opacity-30" />
-      )}
-
-      <h2 className="text-xl font-semibold mb-2">
-        {tab === "active"
-          ? "No trips yet"
-          : tab === "wishlist"
-          ? "No wishlist trips"
-          : "No archived trips"}
-      </h2>
-
-      <p className="text-muted-foreground">
-        {tab === "active"
-          ? "Create your first trip."
-          : tab === "wishlist"
-          ? "Save destinations for later."
-          : "Archived trips will appear here."}
-      </p>
-    </div>
-  </div>
-) : (
+    <EmptyState tab={tab} />
+  ) : (
     tripsToShow.map((trip) => (
-      <TripCard
-  key={trip.id}
-  trip={trip}
-  onConvert={setConvertTrip}
-  onEdit={setEditingTrip}
-/>
+      <TripCard key={trip.id} trip={trip} onConvert={setConvertTrip} onEdit={setEditingTrip} />
     ))
   )}
 </>
         )}
       </main>
 
-  {!isAddOpen &&
- !isWishlistOpen &&
- !isJoinOpen && (
-  <div className="fixed bottom-6 left-0 right-0 flex justify-center z-20 max-w-md mx-auto gap-3">
-    <Button
-  size="lg"
-  className="rounded-full px-7 shadow-[0_10px_30px_rgba(37,99,235,0.28)] hover:shadow-[0_12px_34px_rgba(37,99,235,0.34)] transition-shadow"
-  onClick={() => setIsAddOpen(true)}
->
-  <Plus className="w-5 h-5 mr-2" />
-  New Trip
-</Button>
-
-    <Button
-  size="lg"
-  variant="outline"
-  className="rounded-full px-7 bg-white border-white shadow-[0_10px_30px_rgba(0,0,0,0.10)] hover:shadow-[0_12px_34px_rgba(0,0,0,0.14)] transition-shadow"
-  onClick={() => setIsWishlistOpen(true)}
->
-  <Heart className="w-5 h-5 mr-2" />
-  Wishlist
-</Button>
-  </div>
-)}
+  {!isAddOpen && !isWishlistOpen && !isJoinOpen && (
+    <HomeDock
+      tab={tab}
+      onTab={setTab}
+      counts={{ active: activeTrips.length, wishlist: wishlistTrips.length, archived: archivedTrips.length }}
+      onNewTrip={() => setIsAddOpen(true)}
+      onWishlist={() => setIsWishlistOpen(true)}
+      onJoin={() => setIsJoinOpen(true)}
+    />
+  )}
       <AddTripSheet
   isOpen={isAddOpen}
   onClose={() => setIsAddOpen(false)}
@@ -302,6 +160,15 @@ useEffect(() => {
   isOpen={isWishlistOpen}
   onClose={() => setIsWishlistOpen(false)}
 />
+      <ProfileMenu
+        open={showUserMenu}
+        onClose={() => setShowUserMenu(false)}
+        avatar={profile?.avatar}
+        name={profile?.name}
+        username={profile?.username}
+        onJoin={() => setIsJoinOpen(true)}
+        onSignOut={logout}
+      />
       <JoinTripSheet isOpen={isJoinOpen} onClose={() => setIsJoinOpen(false)} />
         <EditTripSheet
   trip={editingTrip}
@@ -366,134 +233,153 @@ const hasMembers = memberCount > 1;
     try { isActiveNow = differenceInDays(startD, new Date()) <= 0; } catch {}
   }
 
-  const statusBadge = isWishlist ? (
-  <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-pink-500/20 backdrop-blur-md px-3 py-1.5 text-xs font-semibold text-white shadow-lg shadow-black/10">
-    <span className="w-1.5 h-1.5 rounded-full bg-pink-300 shrink-0" />
-    Wishlist
-  </span>
-) : status === "archived" ? (
-  <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-black/30 backdrop-blur-md px-3 py-1.5 text-xs font-semibold text-white shadow-lg shadow-black/10">
-    <span className="w-1.5 h-1.5 rounded-full bg-gray-300 shrink-0" />
-    Archived
-  </span>
-) : isPast ? (
-  <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-black/30 backdrop-blur-md px-3 py-1.5 text-xs font-semibold text-white shadow-lg shadow-black/10">
-    <span className="w-1.5 h-1.5 rounded-full bg-gray-300 shrink-0" />
-    Past
-  </span>
-) : isActiveNow ? (
-  <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-blue-500/20 backdrop-blur-md px-3 py-1.5 text-xs font-semibold text-white shadow-lg shadow-black/10">
-    <span className="w-1.5 h-1.5 rounded-full bg-blue-300 shrink-0" />
-    In Progress
-  </span>
-) : (
-  <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-orange-500/20 backdrop-blur-md px-3 py-1.5 text-xs font-semibold text-white shadow-lg shadow-black/10">
-    <span className="w-1.5 h-1.5 rounded-full bg-orange-300 shrink-0" />
-    In {daysUntil}d
-  </span>
-);
+  // Status chip: glass tinted by state (green = ongoing, blue = upcoming, pink = wishlist, grey = archived / past)
+  const tone = isWishlist
+    ? { label: "Wishlist", glass: "bg-pink-400/30", dot: "bg-pink-300" }
+    : status === "archived"
+    ? { label: "Archived", glass: "bg-slate-400/30", dot: "bg-slate-300" }
+    : isPast
+    ? { label: "Past", glass: "bg-slate-400/30", dot: "bg-slate-300" }
+    : isActiveNow
+    ? { label: "In progress", glass: "bg-emerald-400/30", dot: "bg-emerald-300" }
+    : { label: `In ${daysUntil}d`, glass: "bg-blue-400/30", dot: "bg-blue-300" };
+
+  const heroStyle = trip.heroImage
+    ? { backgroundImage: `url(${trip.heroImage})`, backgroundSize: "cover", backgroundPosition: "center" }
+    : { background: "linear-gradient(135deg,#2563eb 0%,#3b82f6 100%)" };
+  const place = trip.state || trip.heroLocation || trip.destination;
+  const dateText = isWishlist
+    ? ""
+    : `${safeFormatDate(trip.startDate, d => format(d, "MMM d"), "")} – ${safeFormatDate(trip.endDate, d => format(d, "MMM d"), "")}`;
 
   return (
     <div className="relative group">
       <Link
-  href={`/trip/${trip.id}/overview`}
-  className="block overflow-hidden rounded-[2rem] bg-card shadow-lg shadow-black/5 border border-border/50 hover:shadow-xl hover:border-primary/20 transition-all duration-300 active:scale-[0.98]"
->
-  {/* Hero image */}
-  <div
-    className="relative h-48"
-    style={
-      trip.heroImage
-        ? {
-            backgroundImage: `url(${trip.heroImage})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-          }
-        : {
-            background:
-              "linear-gradient(135deg,#2563eb 0%,#3b82f6 100%)",
-          }
-    }
-  >
-    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
-    <div className="absolute top-3 left-4 z-20">
-  {statusBadge}
-</div>
+        href={`/trip/${trip.id}/overview`}
+        className="block overflow-hidden rounded-[32px] shadow-[0_18px_40px_-14px_rgba(30,64,175,0.35)] transition-transform duration-300 active:scale-[0.99]"
+      >
+        {/* Tall photo; the glass panel is slim so the image stays the hero */}
+        <div className="relative h-[300px]" style={heroStyle}>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-transparent to-transparent" />
 
-    <div className="absolute inset-x-0 bottom-0 px-5 pb-4">
-      <h3 className="mt-8 text-2xl font-bold text-white leading-tight">
-        {trip.name}
-      </h3>
+          <span
+            className={cn(
+              "glass absolute left-4 top-4 z-10 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold",
+              tone.glass
+            )}
+          >
+            <span className={cn("h-1.5 w-1.5 rounded-full", tone.dot)} />
+            {tone.label}
+          </span>
 
-      <div className="flex items-center text-white/90 text-sm mt-1">
-        <MapPin className="w-3.5 h-3.5 mr-1 shrink-0" />
-        <span className="truncate">
-          {trip.state || trip.heroLocation || trip.destination}
-        </span>
-      </div>
-    </div>
-  </div>
-
-  {/* Content */}
-  <div className="px-5 py-2 bg-card">
-    
-    <div className="flex items-center justify-between">
-      {isWishlist ? (
-        <div className="flex items-center text-sm font-medium text-foreground/80 bg-muted/50 px-3 py-1 rounded-xl">
-          <Heart className="w-4 h-4 mr-2 text-pink-500" />
-          Saved for later
+          <div className="glass absolute inset-x-3 bottom-3 rounded-[24px] px-4 py-3 [text-shadow:0_1px_8px_rgba(0,0,0,0.25)]">
+            <div className="flex items-center justify-between gap-3">
+              <h3 className="truncate font-display text-[22px] font-bold leading-tight">{trip.name}</h3>
+              {days !== null && <span className="shrink-0 font-display text-xl font-bold">{days}d</span>}
+            </div>
+            <div className="mt-1 flex items-center justify-between gap-3 text-[12.5px] text-white/90">
+              <span className="flex min-w-0 items-center gap-1.5">
+                <MapPin className="h-3.5 w-3.5 shrink-0" />
+                <span className="truncate">
+                  {place}
+                  {dateText ? ` · ${dateText}` : ""}
+                </span>
+              </span>
+              {hasMembers ? (
+                <span className="flex shrink-0 items-center gap-1">
+                  <Users className="h-3.5 w-3.5" />
+                  {memberCount}
+                </span>
+              ) : (
+                <User className="h-3.5 w-3.5 shrink-0 opacity-80" />
+              )}
+            </div>
+          </div>
         </div>
-      ) : (
-        <div className="flex items-center text-[13px] font-medium text-foreground/75 bg-muted/50 px-3 py-1 rounded-xl">
-        <Calendar className="w-3.5 h-3.5 mr-2 opacity-70 shrink-0" />
-        <span className="truncate">
-          {safeFormatDate(trip.startDate, d => format(d, "MMM d"), "")} –{" "}
-          {safeFormatDate(trip.endDate, d => format(d, "MMM d, yyyy"), "")}
-        </span>
-      </div>
-      )}
-
-      {days !== null && (
-  <div className="flex items-center">
-  {hasMembers ? (
-    <Users className="w-4 h-4 text-primary" />
-  ) : (
-    <User className="w-4 h-4 text-muted-foreground" />
-  )}
-
-  <div className="mx-3 h-5 w-px bg-border/70" />
-
-  <span className="text-primary text-xl font-bold leading-none">
-    {days}d
-  </span>
-</div>
-)}
-    </div>
-  </div>
-  </Link>
+      </Link>
 
       {/* Actions */}
-      <div className="absolute top-3 right-3 z-20 flex gap-1.5">
-        <TripMenu
-  trip={trip}
-  status={status}
-  onConvert={onConvert}
-  onEdit={onEdit}
-/>
+      <div className="absolute right-3.5 top-3.5 z-20 flex gap-2">
+        <TripMenu trip={trip} status={status} onConvert={onConvert} onEdit={onEdit} />
         <button
-          onClick={(e) => {
-  e.preventDefault();
-  e.stopPropagation();
-
-  if (confirm("Delete trip?")) {
-    deleteTrip(trip.id);
-  }
-}}
-          className="w-9 h-9 rounded-full border border-white/20 bg-white/15 backdrop-blur-xl flex items-center justify-center text-white shadow-lg shadow-black/10 hover:bg-white/25 transition-all"
+          aria-label="Delete trip"
+          onClick={async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const ok = await confirmDialog({
+              title: "Delete this trip?",
+              message: `${trip.name} and everything in it will be removed for you and every member.`,
+              confirmLabel: "Delete",
+              destructive: true,
+            });
+            if (ok) deleteTrip(trip.id);
+          }}
+          className="glass flex h-9 w-9 items-center justify-center rounded-full transition-all"
         >
-          <Trash2 className="w-3.5 h-3.5" />
+          <Trash2 className="h-3.5 w-3.5" />
         </button>
       </div>
+    </div>
+  );
+}
+
+/** Home dock: filters (label + count) in the same glass bar as the trip screens, and a docked "+" menu */
+function HomeDock({
+  tab,
+  onTab,
+  counts,
+  onNewTrip,
+  onWishlist,
+  onJoin,
+}: {
+  tab: TripStatus;
+  onTab: (t: TripStatus) => void;
+  counts: { active: number; wishlist: number; archived: number };
+  onNewTrip: () => void;
+  onWishlist: () => void;
+  onJoin: () => void;
+}) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const items: DockItem[] = [
+    { id: "active", label: "Active", icon: Plane, badge: counts.active, onSelect: () => onTab("active") },
+    { id: "wishlist", label: "Wishlist", icon: Heart, badge: counts.wishlist, onSelect: () => onTab("wishlist") },
+    { id: "archived", label: "Archived", icon: Archive, badge: counts.archived, onSelect: () => onTab("archived") },
+  ];
+
+  return (
+    <>
+      <AddMenu
+        open={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        items={[
+          { id: "new", label: "New trip", hint: "Plan dates and an itinerary", icon: Plane, tint: "bg-blue-50 text-primary", onSelect: onNewTrip },
+          { id: "wishlist", label: "Save to wishlist", hint: "A destination for later", icon: Heart, tint: "bg-pink-50 text-pink-500", onSelect: onWishlist },
+          { id: "join", label: "Join with a code", hint: "Use an invite from a friend", icon: Users, tint: "bg-violet-50 text-violet-600", onSelect: onJoin },
+        ]}
+      />
+      <DockBar mode="labels" items={items} activeId={tab} />
+      <FAB icon={Plus} label="Add" open={menuOpen} onClick={() => setMenuOpen((o) => !o)} />
+    </>
+  );
+}
+
+function EmptyState({ tab }: { tab: TripStatus }) {
+  const Icon = tab === "wishlist" ? Heart : tab === "archived" ? Archive : Plane;
+  const title = tab === "active" ? "No trips yet" : tab === "wishlist" ? "No wishlist trips" : "No archived trips";
+  const hint =
+    tab === "active"
+      ? "Tap + to plan your first trip."
+      : tab === "wishlist"
+      ? "Tap + to save a destination for later."
+      : "Archived trips will appear here.";
+  return (
+    <div className="flex flex-1 flex-col items-center justify-center px-8 pb-24 text-center">
+      <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-[28px] bg-primary/10 text-primary">
+        <Icon className="h-9 w-9" />
+      </div>
+      <h2 className="font-display text-xl font-bold">{title}</h2>
+      <p className="mt-1.5 max-w-[250px] text-[15px] text-muted-foreground">{hint}</p>
     </div>
   );
 }
@@ -503,11 +389,13 @@ function TripMenu({
   status,
   onConvert,
   onEdit,
+  variant = "photo",
 }: {
   trip: Trip;
   status: TripStatus;
   onConvert: (trip: Trip) => void;
   onEdit: (trip: Trip) => void;
+  variant?: "photo" | "plain";
 }) {
   const { mutate: updateTrip } = useUpdateTrip();
   const { mutate: saveItem } = useSaveItineraryItem();
@@ -571,7 +459,10 @@ const handleWishlist = () => {
 
     setIsOpen(true);
   }}
-  className="w-9 h-9 rounded-full border border-white/20 bg-white/15 backdrop-blur-xl flex items-center justify-center text-white shadow-lg shadow-black/10 hover:bg-white/25 transition-all"
+  className={cn(
+            "flex items-center justify-center rounded-full transition-all",
+            variant === "photo" ? "glass h-9 w-9" : "h-8 w-8 bg-muted text-muted-foreground hover:text-foreground"
+          )}
 >
   <MoreVertical className="w-4 h-4" />
 </button>
@@ -637,58 +528,109 @@ const handleWishlist = () => {
   );
 }
      
-function JoinTripSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
-  const [code, setCode] = useState('');
-const FULL_PREFIX = 'MOVE-';
-  const queryClient = useQueryClient();
-  
-  const handleJoin = async () => {
-  try {
-    const trimmed = `${FULL_PREFIX}${code.trim().toUpperCase()}`;
+/** Accepts "AB12", "move-ab12", a pasted "MOVE-AB12", or a full invite link. Returns the 4 character code. */
+function normalizeInviteCode(raw: string) {
+  const parts = raw.toUpperCase().split("MOVE-");
+  const last = parts[parts.length - 1];
+  return last.replace(/[^A-Z0-9]/g, "").slice(0, 4);
+}
 
-    if (!trimmed) {
-      alert("Enter an invite code");
+function friendlyJoinError(err: any) {
+  const msg = String(err?.message ?? "").toLowerCase();
+  if (msg.includes("not found") || msg.includes("invalid")) return "That code does not match any trip. Check it and try again.";
+  if (msg.includes("already")) return "You are already a member of this trip.";
+  if (msg.includes("jwt") || msg.includes("auth")) return "Your session expired. Sign in again and retry.";
+  return err?.message ? `Could not join: ${err.message}` : "Could not join this trip. Try again.";
+}
+
+function JoinTripSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+  const [code, setCode] = useState("");
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [joinedId, setJoinedId] = useState<string | null>(null);
+  const [done, setDone] = useState(false);
+  const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
+
+  useEffect(() => {
+    if (!isOpen) {
+      setCode("");
+      setError("");
+      setBusy(false);
+      setDone(false);
+      setJoinedId(null);
+    }
+  }, [isOpen]);
+
+  const handleJoin = async () => {
+    if (code.length < 4) {
+      setError("Enter the 4 character code from the invite.");
       return;
     }
-
-    await joinTripByCode(trimmed);
-    queryClient.invalidateQueries({ queryKey: ['trips'] });
-
-    alert("Trip joined successfully!");
-
-    onClose();
-    setCode('');
-  } catch (err: any) {
-  console.error("JOIN ERROR", err);
-  alert(err?.message ?? "Unable to join trip.");
-}
-};
+    setBusy(true);
+    setError("");
+    try {
+      const result: any = await joinTripByCode(`MOVE-${code}`);
+      await queryClient.invalidateQueries({ queryKey: ["trips"] });
+      const id = typeof result === "string" ? result : result?.id ?? result?.trip_id ?? null;
+      setJoinedId(id);
+      setDone(true);
+    } catch (err: any) {
+      console.error("JOIN ERROR", err);
+      setError(friendlyJoinError(err));
+    } finally {
+      setBusy(false);
+    }
+  };
 
   return (
-    <BottomSheet isOpen={isOpen} onClose={onClose} title="Join a Trip">
-      <div className="flex flex-col gap-4">
-        <p className="text-sm text-muted-foreground">Enter the invite code shared by the trip organizer.</p>
-        <div className="relative">
-  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg font-bold tracking-wider text-muted-foreground pointer-events-none">
-    MOVE-
-  </span>
-
-  <Input
-    value={code}
-    onChange={e =>
-      setCode(
-        e.target.value
-          .replace(/MOVE-/gi, '')
-          .toUpperCase()
-      )
-    }
-    placeholder="XXXX"
-    maxLength={4}
-    className="pl-[82px] text-lg font-bold tracking-wider uppercase"
-  />
-</div>
-        <Button size="lg" onClick={handleJoin}>Join Trip</Button>
-      </div>
+    <BottomSheet isOpen={isOpen} onClose={onClose} title={done ? "You are in" : "Join a Trip"}>
+      {done ? (
+        <div className="flex flex-col items-center gap-4 pb-2 text-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+            <Check className="h-8 w-8" />
+          </div>
+          <p className="text-sm text-muted-foreground">The trip has been added to your list.</p>
+          <div className="flex w-full gap-3">
+            <Button variant="secondary" className="flex-1" onClick={onClose}>Done</Button>
+            {joinedId && (
+              <Button
+                className="flex-1"
+                onClick={() => {
+                  onClose();
+                  setLocation(`/trip/${joinedId}`);
+                }}
+              >
+                Open trip
+              </Button>
+            )}
+          </div>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-4">
+          <p className="text-sm text-muted-foreground">Enter the invite code shared by the trip organizer. You can paste the whole code.</p>
+          <div className="relative">
+            <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-lg font-bold tracking-wider text-muted-foreground">
+              MOVE-
+            </span>
+            <Input
+              value={code}
+              onChange={(e) => {
+                setCode(normalizeInviteCode(e.target.value));
+                setError("");
+              }}
+              onKeyDown={(e) => e.key === "Enter" && handleJoin()}
+              placeholder="XXXX"
+              autoCapitalize="characters"
+              autoCorrect="off"
+              spellCheck={false}
+              className="pl-[82px] text-lg font-bold uppercase tracking-wider"
+            />
+          </div>
+          {error && <p className="-mt-2 text-sm font-medium text-red-500">{error}</p>}
+          <Button size="lg" onClick={handleJoin} isLoading={busy}>Join Trip</Button>
+        </div>
+      )}
     </BottomSheet>
   );
 }
@@ -743,6 +685,35 @@ function CountryPicker({ value, onChange }: { value: Country | null; onChange: (
   );
 }
 
+function IndiaStateField({
+  country,
+  value,
+  onChange,
+}: {
+  country: Country | null;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  if (country?.name !== "India") return null;
+  return (
+    <div>
+      <Label>State (Optional)</Label>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="flex h-12 w-full min-w-0 rounded-xl border-2 border-border bg-card px-4 text-base focus:border-primary focus:outline-none"
+      >
+        <option value="">All of India</option>
+        {INDIAN_STATES.map((st) => (
+          <option key={st} value={st}>
+            {st}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
 function AddTripSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const { mutateAsync: createTrip, isPending } = useCreateTrip();
   const [country, setCountry] = useState<Country | null>(null);
@@ -751,7 +722,7 @@ function AddTripSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (!country) { alert('Please select a destination country'); return; }
+    if (!country) { notify('Please select a destination country', 'error'); return; }
     const fd = new FormData(e.currentTarget);
     const id = generateId();
     await createTrip({
@@ -759,6 +730,7 @@ function AddTripSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
       name: fd.get('name') as string,
       destination: country.name,
       destinationCurrency: country.currency,
+      state: country.name === "India" ? state || undefined : undefined,
       startDate: fd.get('startDate') as string,
       endDate: fd.get('endDate') as string,
       inviteCode: `MOVE-${id.slice(0, 4).toUpperCase()}`,
@@ -766,6 +738,7 @@ function AddTripSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
       createdAt: Date.now()
     });
     setCountry(null);
+    setState("");
     onClose();
   };
 
@@ -778,8 +751,15 @@ function AddTripSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
         </div>
         <div>
           <Label>Destination Country</Label>
-          <CountryPicker value={country} onChange={setCountry} />
+          <CountryPicker
+            value={country}
+            onChange={(c) => {
+              setCountry(c);
+              if (c.name !== "India") setState("");
+            }}
+          />
         </div>
+        <IndiaStateField country={country} value={state} onChange={setState} />
         <div className="grid grid-cols-2 gap-4">
           <div><Label htmlFor="startDate">Start Date</Label><Input id="startDate" name="startDate" type="date" required /></div>
           <div><Label htmlFor="endDate">End Date</Label><Input id="endDate" name="endDate" type="date" required /></div>
@@ -797,7 +777,7 @@ function AddWishlistSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!country) { alert('Please select a destination country'); return; }
+    if (!country) { notify('Please select a destination country', 'error'); return; }
     const fd = new FormData(e.currentTarget);
     const id = generateId();
     await createTrip({
@@ -805,6 +785,7 @@ function AddWishlistSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
       name: fd.get('name') as string,
       destination: country.name,
       destinationCurrency: country.currency,
+      state: country.name === "India" ? state || undefined : undefined,
       startDate: '',
       endDate: '',
       inviteCode: `MOVE-${id.slice(0, 4).toUpperCase()}`,
@@ -813,6 +794,7 @@ function AddWishlistSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
       createdAt: Date.now()
     });
     setCountry(null);
+    setState("");
     onClose();
   };
 
@@ -825,8 +807,15 @@ function AddWishlistSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
         </div>
         <div>
           <Label>Destination Country</Label>
-          <CountryPicker value={country} onChange={setCountry} />
+          <CountryPicker
+            value={country}
+            onChange={(c) => {
+              setCountry(c);
+              if (c.name !== "India") setState("");
+            }}
+          />
         </div>
+        <IndiaStateField country={country} value={state} onChange={setState} />
         <Button type="submit" size="lg" className="mt-4" isLoading={isPending}>
           <Heart className="w-5 h-5 mr-2" /> Save to Wishlist
         </Button>
@@ -867,7 +856,7 @@ function EditTripSheet({
     e.preventDefault();
 
     if (!country) {
-      alert("Please select a destination country");
+      notify("Please select a destination country", "error");
       return;
     }
 
@@ -1010,11 +999,11 @@ function ConvertTripSheet({
 
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const handleConvert = () => {
+  const handleConvert = async () => {
   if (!trip) return;
 
   if (!startDate || !endDate) {
-    alert('Select both dates');
+    notify('Select both dates', 'error');
     return;
   }
 
@@ -1022,7 +1011,7 @@ function ConvertTripSheet({
 const endDt = safeParseDate(endDate);
 
 if (!startDt || !endDt) {
-  alert("Invalid dates");
+  notify("Invalid dates", "error");
   return;
 }
 
@@ -1030,14 +1019,16 @@ const plannedDays = trip.wishlistDayCount ?? 1;
 const days = differenceInDays(endDt, startDt) + 1;
 
 if (days < 1) {
-  alert("End date must be after start date");
+  notify("End date must be after start date", "error");
   return;
 }
 
 if (days < plannedDays) {
-  const proceed = confirm(
-    `This itinerary contains ${plannedDays} planned days but you selected only ${days} travel days.\n\nDays ${days + 1}-${plannedDays} won't fit into this trip.\n\nContinue anyway?`
-  );
+  const proceed = await confirmDialog({
+    title: "Some days will not fit",
+    message: `This itinerary has ${plannedDays} planned days but you selected ${days} travel days.\n\nDays ${days + 1} to ${plannedDays} will not fit into this trip.`,
+    confirmLabel: "Continue anyway",
+  });
 
   if (!proceed) return;
 }
