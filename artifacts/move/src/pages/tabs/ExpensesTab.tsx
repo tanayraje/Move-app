@@ -1006,7 +1006,7 @@ if (amounts.length > 0) {
    let amount = parseFloat(amountInput);
 
 if (expenseCurrency !== 'INR') {
-      const { RATES_PER_INR } = await import('@/lib/countries');
+
       const rate = RATES_PER_INR[destCurrency] || 1;
       amount = amount / rate;
     }
@@ -1042,7 +1042,7 @@ split = involved.map((mid, index) => ({
       } else {
         const rate =
   expenseCurrency !== 'INR'
-    ? (await import('@/lib/countries')).RATES_PER_INR[
+    ? RATES_PER_INR[
         destCurrency
       ] || 1
     : 1;

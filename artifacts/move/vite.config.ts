@@ -23,6 +23,17 @@ root: path.resolve(import.meta.dirname),
 build: {
 outDir: path.resolve(import.meta.dirname, "dist"),
 emptyOutDir: true,
+rollupOptions: {
+  output: {
+    manualChunks(id) {
+      if (!id.includes("node_modules")) return;
+      if (id.includes("leaflet") || id.includes("react-leaflet")) return "maps";
+      if (id.includes("@supabase")) return "supabase";
+      if (id.includes("recharts")) return "charts";
+      if (id.includes("lucide-react") || id.includes("react-icons")) return "icons";
+    },
+  },
+},
 },
 server: {
 port,
