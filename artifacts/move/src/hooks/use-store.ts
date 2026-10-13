@@ -408,7 +408,16 @@ export function useReorderItinerary() {
   });
 }
 
-// --- DOCUMENTS (IndexedDB) ---
+function storagePathFromUrl(url?: string | null): string | null {
+  const part = url?.split('/trip-documents/')[1];
+  if (!part) return null;
+  try {
+    return decodeURIComponent(part.split('?')[0]);
+  } catch {
+    return null;
+  }
+}
+
 // --- DOCUMENTS ---
 export function useDocuments(tripId: string) {
   return useQuery({
@@ -421,6 +430,21 @@ export function useDocuments(tripId: string) {
 
       if (error) throw error;
 
+      // Resolve short-lived signed links so the bucket can be private.
+      // If signing is not permitted (bucket policies not set yet) the stored public link is used.
+      const paths = (data || [])
+        .map((d: any) => storagePathFromUrl(d.file_url))
+        .filter((p: string | null): p is string => !!p);
+      const signed = new Map<string, string>();
+      if (paths.length) {
+        const { data: links } = await supabase.storage
+          .from('trip-documents')
+          .createSignedUrls(paths, 60 * 60);
+        (links || []).forEach((l: any) => {
+          if (l.path && l.signedUrl) signed.set(l.path, l.signedUrl);
+        });
+      }
+
       return (data || []).map((doc: any) => ({
   id: doc.id,
   tripId: doc.trip_id,
@@ -430,7 +454,7 @@ export function useDocuments(tripId: string) {
   fileName: doc.file_name,
   fileType: doc.file_type,
   fileSize: doc.file_size,
-  file_url: doc.file_url,
+  file_url: signed.get(storagePathFromUrl(doc.file_url) ?? '') ?? doc.file_url,
   createdAt: doc.created_at_ms,
 }));
     },
@@ -480,6 +504,38 @@ export function useAddDocument() {
         queryKey: ['documents', doc.tripId]
       });
     }
+  });
+}
+
+export function useUpdateDocument() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      id,
+      tripId,
+      name,
+      category,
+      notes,
+    }: {
+      id: string;
+      tripId: string;
+      name: string;
+      category: string;
+      notes: string;
+    }) => {
+      const { error } = await supabase
+        .from('documents')
+        .update({ name, category, notes })
+        .eq('id', id);
+
+      if (error) throw error;
+      return { id, tripId };
+    },
+
+    onSuccess: (_, v) => {
+      qc.invalidateQueries({ queryKey: ['documents', v.tripId] });
+    },
   });
 }
 
@@ -562,7 +618,6 @@ export function useSaveExpense() {
 
   return useMutation({
     mutationFn: async (item: Expense) => {
-      console.log("SAVE EXPENSE", item);
       const { error } = await supabase
         .from('expenses')
         .upsert({

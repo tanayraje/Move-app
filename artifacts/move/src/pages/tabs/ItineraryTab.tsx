@@ -1,3 +1,4 @@
+import { notify, confirmDialog } from "@/lib/dialogs";
 import React, {
   useState,
   useMemo,
@@ -6,14 +7,16 @@ import React, {
   useEffect,
 } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { fetchCityImage } from "@/lib/city-image";
+import { PlaceCode } from "@/components/TicketParts";
 import { format, addDays, differenceInDays } from "date-fns";
 import {
   Plus, GripVertical, MapPin, Trash2, CalendarDays,
   Plane, Train, Bus, Car, Building2, UtensilsCrossed,
   Bike, FileText, Paperclip, Check, Square, Clock, Upload,
   ArrowLeftRight, Pencil, X, ChevronDown, ChevronRight,
-  Coffee, Wine, Sun, Sunset
+  Coffee, Wine, Sun, Sunset, Route, Wallet
 } from "lucide-react";
 
 import {
@@ -26,7 +29,8 @@ import {
   TripDocument, ChecklistItem, ExpenseCategory
 } from "@/lib/types";
 import { generateId, cn, safeFormatDate, safeParseDate, isDayLabel, getTripStatus } from "@/lib/utils";
-import { Button, Input, Label, Select, BottomSheet, FAB } from "@/components/ui";
+import { Button, Input, Label, Select, BottomSheet, FAB, HeroScrim } from "@/components/ui";
+import { AddMenu } from "@/components/AddMenu";
 import { formatCurrency, convertFromINR, RATES_PER_INR } from "@/lib/countries";
 
 import {
@@ -56,16 +60,16 @@ const MEAL_SUBTYPES: { id: MealSubType; label: string; icon: React.ElementType; 
 ];
 
 const ELEMENT_COLORS: Record<ElementType, string> = {
-  travel: "from-blue-500 to-blue-600",
-  accommodation: "from-violet-500 to-violet-600",
-  meal: "from-amber-400 to-amber-500",
-  activity: "from-orange-500 to-orange-600",
+  travel: "from-[#3b82f6] to-[#2563eb] dark:from-[#3b82f6]/45 dark:to-[#2563eb]/45",
+  accommodation: "from-[#8b5cf6] to-[#7c3aed] dark:from-[#8b5cf6]/45 dark:to-[#7c3aed]/45",
+  meal: "from-[#fbbf24] to-[#f59e0b] dark:from-[#fbbf24]/45 dark:to-[#f59e0b]/45",
+  activity: "from-[#0d9488] to-[#059669] dark:from-[#0d9488]/45 dark:to-[#059669]/45",
 };
 const ELEMENT_BORDER: Record<ElementType, string> = {
   travel: "border-blue-200",
   accommodation: "border-violet-200",
   meal: "border-amber-200",
-  activity: "border-orange-200",
+  activity: "border-teal-200",
 };
 
 const ELEMENT_BADGES: Record<ElementType, string> = {
@@ -79,7 +83,7 @@ const ELEMENT_BADGES: Record<ElementType, string> = {
     "bg-amber-50 text-amber-700 border border-amber-100 dark:bg-amber-500/10 dark:text-amber-300 dark:border-amber-500/20",
 
   activity:
-    "bg-orange-50 text-orange-700 border border-orange-100 dark:bg-orange-500/10 dark:text-orange-300 dark:border-orange-500/20",
+    "bg-teal-50 text-teal-700 border border-teal-100 dark:bg-teal-500/10 dark:text-teal-300 dark:border-teal-500/20",
 };
 
 const ELEMENT_LABELS: Record<ElementType, string> = {
@@ -115,16 +119,16 @@ function categoryLabel(item: ItineraryItem) {
 function panelGradient(type: ElementType) {
   switch (type) {
     case "travel":
-      return "bg-gradient-to-b from-blue-500 to-blue-600";
+      return "bg-gradient-to-b from-[#3b82f6] to-[#2563eb] dark:from-[#3b82f6]/45 dark:to-[#2563eb]/45";
 
     case "accommodation":
-      return "bg-gradient-to-b from-violet-500 to-violet-600";
+      return "bg-gradient-to-b from-[#8b5cf6] to-[#7c3aed] dark:from-[#8b5cf6]/45 dark:to-[#7c3aed]/45";
 
     case "meal":
-      return "bg-gradient-to-b from-amber-400 to-amber-500";
+      return "bg-gradient-to-b from-[#fbbf24] to-[#f59e0b] dark:from-[#fbbf24]/45 dark:to-[#f59e0b]/45";
 
     default:
-      return "bg-gradient-to-b from-orange-500 to-orange-600";
+      return "bg-gradient-to-b from-[#14b8a6] to-[#0d9488] dark:from-[#14b8a6]/45 dark:to-[#0d9488]/45";
   }
 }
 
@@ -140,7 +144,7 @@ function tintSurface(type: ElementType) {
       return "bg-amber-50/30";
 
     default:
-      return "bg-orange-50/30";
+      return "bg-teal-50/30";
   }
 }
 
@@ -245,6 +249,52 @@ function stayNights(checkIn: string, checkOut: string): number {
   return Math.max(differenceInDays(d2, d1), 1);
 }
 
+// ─── Card helpers ─────────────────────────────────────────────────────────────
+
+/** Live state for a travel leg: departs in..., in transit, landed/arrived. */
+function legStatus(item: ItineraryItem): { label: string; tone: string } | null {
+  const start = new Date(`${item.date}T${item.startTime}`);
+  const end = new Date(`${item.date}T${item.endTime || item.startTime}`);
+  if (isNaN(start.getTime()) || isNaN(end.getTime())) return null;
+  if (end < start) end.setDate(end.getDate() + 1);
+  const now = new Date();
+  if (now >= end) {
+    return { label: item.travelType === "flight" ? "Landed" : "Arrived", tone: "bg-emerald-50 text-emerald-600" };
+  }
+  if (now >= start) return { label: "In transit", tone: "bg-blue-50 text-blue-600" };
+  const mins = Math.round((start.getTime() - now.getTime()) / 60000);
+  if (mins <= 24 * 60) {
+    return {
+      label: mins >= 60 ? `Departs in ${Math.round(mins / 60)}h` : `Departs in ${mins}m`,
+      tone: "bg-amber-50 text-amber-600",
+    };
+  }
+  return { label: "Upcoming", tone: "bg-blue-50 text-blue-600" };
+}
+
+function NowMarker({ time }: { time: string }) {
+  return (
+    <div className="relative flex h-5 items-center">
+      <span className="absolute -bottom-5 -top-5 left-[57px] w-0.5 bg-primary/30" />
+      <div className="w-11 shrink-0" />
+      <div className="relative flex w-7 shrink-0 justify-center">
+        <span className="relative z-10 h-[18px] w-[18px] rounded-full bg-primary shadow-[0_0_0_6px_hsl(var(--primary)/0.18)]" />
+      </div>
+      <span className="ml-3 text-xs font-semibold text-primary">Now, {time}</span>
+    </div>
+  );
+}
+
+/** Quiet "1h 30m free" note between two items, sitting on the rail */
+function GapLabel({ text }: { text: string }) {
+  return (
+    <div className="relative pl-[72px] text-[11px] text-muted-foreground/70">
+      <span className="absolute -bottom-5 -top-5 left-[57px] w-0.5 bg-border" />
+      {text}
+    </div>
+  );
+}
+
 // ─── Main Tab ─────────────────────────────────────────────────────────────────
 export default function ItineraryTab({ trip }: { trip: Trip }) {
   const { data: allItems = [] } = useItinerary(trip.id);
@@ -261,10 +311,14 @@ const { data: documents = [] } = useDocuments(trip.id);
   const [selectedDate, setSelectedDate] = useState<string>(isWishlist ? 'Day 1' : trip.startDate);
   const touchStartX = useRef(0);
 const touchStartY = useRef(0);
+  const swipeIgnored = useRef(false);
 const [swipeDirection, setSwipeDirection] = useState<1 | -1>(1);
 
 
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [addType, setAddType] = useState<ElementType | undefined>(undefined);
+  const [addKey, setAddKey] = useState(0);
   const [editItem, setEditItem] = useState<ItineraryItem | null>(null);
   const [editingCity, setEditingCity] = useState(false);
   const [cityDraft, setCityDraft] = useState('');
@@ -322,9 +376,12 @@ const goToPreviousDay = useCallback(() => {
 const handleTouchStart = (e: React.TouchEvent) => {
   touchStartX.current = e.touches[0].clientX;
   touchStartY.current = e.touches[0].clientY;
+  // Scrolling the day chips sideways must not count as "swipe to the next day"
+  swipeIgnored.current = !!(e.target as HTMLElement).closest("[data-no-swipe]");
 };
 
 const handleTouchEnd = (e: React.TouchEvent) => {
+  if (swipeIgnored.current) return;
   const dx = e.changedTouches[0].clientX - touchStartX.current;
   const dy = e.changedTouches[0].clientY - touchStartY.current;
 
@@ -361,12 +418,48 @@ const handleTouchEnd = (e: React.TouchEvent) => {
     }, 0), [filteredItems]
   );
 
+  const travelMinutes = useMemo(() =>
+    filteredItems
+      .filter(item => item.elementType === 'travel')
+      .reduce((sum, item) => {
+        const st = parseTime(item.startTime);
+        const en = parseTime(item.endTime);
+        return sum + (en >= st ? en - st : 0);
+      }, 0), [filteredItems]
+  );
+
   const totalDayCost = useMemo(() =>
     filteredItems.reduce((sum, item) => sum + (item.cost ?? 0), 0), [filteredItems]
   );
 
   const dayCities = trip.dayCities ?? {};
   const currentCity = dayCities[selectedDate] ?? '';
+
+  // Timeline header photo follows the city of the selected day (everywhere else uses the trip photo)
+  const cityHint = trip.state || trip.destination;
+  const cityKey = currentCity.trim().toLowerCase();
+  const { data: cityImage, isLoading: cityImageLoading } = useQuery({
+    queryKey: ["city-image", cityKey, (cityHint ?? "").toLowerCase()],
+    queryFn: () => fetchCityImage(currentCity, cityHint),
+    enabled: !!cityKey,
+    staleTime: Infinity,
+    gcTime: Infinity,
+    retry: false,
+  });
+  // Warm the cache for the other days' cities so switching days is instant
+  const allCitiesKey = Object.values(dayCities).map(c => String(c).trim().toLowerCase()).filter(Boolean).join("|");
+  useEffect(() => {
+    const unique = Array.from(new Set(allCitiesKey.split("|").filter(Boolean)));
+    unique.forEach(name => {
+      queryClient.prefetchQuery({
+        queryKey: ["city-image", name, (cityHint ?? "").toLowerCase()],
+        queryFn: () => fetchCityImage(name, cityHint),
+        staleTime: Infinity,
+        gcTime: Infinity,
+        retry: false,
+      });
+    });
+  }, [allCitiesKey, cityHint, queryClient]);
 
   const saveCity = (val: string) => {
   const trimmed = val.trim();
@@ -382,7 +475,6 @@ const handleTouchEnd = (e: React.TouchEvent) => {
   const updatedTrip = {
   ...trip,
   dayCities: updatedDayCities,
-  wishlistDayCount: currentDayCount - 1,
 };
 
 queryClient.setQueryData(
@@ -403,13 +495,13 @@ updateTrip(updatedTrip);
   setEditingCity(false);
 };
 
-  const deleteWishlistDay = (day: string) => {
+  const deleteWishlistDay = async (day: string) => {
   if (!isWishlist) return;
 
   const currentDayCount = trip.wishlistDayCount ?? 1;
 
   if (currentDayCount <= 1) {
-    alert("You must keep at least one day.");
+    notify("You must keep at least one day.", "error");
     return;
   }
 
@@ -420,19 +512,20 @@ updateTrip(updatedTrip);
   );
 
   if (hasAccommodation) {
-    alert(
-      "Delete or edit the accommodation for this day before deleting the day."
+    notify(
+      "Delete or edit the accommodation for this day before deleting the day.",
+      "error"
     );
     return;
   }
 
-  if (
-    !confirm(
-      `Delete ${day}?\n\nThis will permanently delete every itinerary item scheduled for this day.\n\nThis action cannot be undone.`
-    )
-  ) {
-    return;
-  }
+  const ok = await confirmDialog({
+    title: `Delete ${day}?`,
+    message: "This permanently deletes every itinerary item scheduled for this day. It cannot be undone.",
+    confirmLabel: "Delete day",
+    destructive: true,
+  });
+  if (!ok) return;
 
   const deletedDay = parseInt(day.replace("Day ", ""), 10);
 
@@ -552,293 +645,289 @@ const dur = Math.max(
     reorder({ tripId: trip.id, items: [...allItems.filter(i => i.date !== selectedDate || i.elementType === 'accommodation'), ...repositioned] });
   }, [filteredItems, allItems, selectedDate, trip.id, reorder]);
 
+  // Centre the selected day chip. Scrolls the chip row sideways only (scrollIntoView also scrolled the
+// page, and `days` is a new array every render, so it kept dragging the page back up).
+  const daysKey = days.join(",");
   useEffect(() => {
-  const container = dayScrollerRef.current;
-  if (!container) return;
+    const track = dayScrollerRef.current;
+    const row = track?.parentElement;
+    const chip = track?.children[days.indexOf(selectedDate)] as HTMLElement | undefined;
+    if (!row || !chip) return;
+    row.scrollTo({
+      left: chip.offsetLeft - (row.clientWidth - chip.offsetWidth) / 2,
+      behavior: "smooth",
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDate, daysKey]);
 
-  const index = days.indexOf(selectedDate);
-  if (index === -1) return;
-
-  const button = container.children[index] as HTMLElement;
-  if (!button) return;
-
-  button.scrollIntoView({
-    behavior: "smooth",
-    inline: "center",
-    block: "nearest",
-  });
-}, [selectedDate, days]);
+  const todayStr = format(new Date(), "yyyy-MM-dd");
+  const nowTime = format(new Date(), "HH:mm");
+  const nowIndex =
+    !isWishlist && selectedDate === todayStr
+      ? (() => {
+          const idx = filteredItems.findIndex(i => (i.startTime || "") > nowTime);
+          return idx === -1 ? filteredItems.length : idx;
+        })()
+      : -1;
+  const isDone = (i: ItineraryItem) =>
+    !isWishlist &&
+    (selectedDate < todayStr || (selectedDate === todayStr && (i.endTime || i.startTime || "") <= nowTime));
+  const toMinutes = (t?: string) => {
+    if (!t) return null;
+    const [h, m] = t.split(":").map(Number);
+    return Number.isNaN(h) || Number.isNaN(m) ? null : h * 60 + m;
+  };
+  const gapAfter = (a: ItineraryItem, b?: ItineraryItem) => {
+    if (!b) return "";
+    const end = toMinutes(a.endTime || a.startTime);
+    const start = toMinutes(b.startTime);
+    if (end === null || start === null) return "";
+    const g = start - end;
+    if (g < 20) return "";
+    const h = Math.floor(g / 60);
+    const m = g % 60;
+    return `${h ? `${h}h ` : ""}${m ? `${m}m` : ""}`.trim() + " free";
+  };
+  const dayIndex = days.indexOf(selectedDate);
+  const startCityEdit = () => {
+    setCityDraft(currentCity);
+    setEditingCity(true);
+  };
+  // City photo when the day has a city; the trip photo only when it has none or no city photo exists.
+  // While a city photo loads we show the neutral gradient, never another city's picture.
+  const heroImage = cityKey ? cityImage ?? (cityImageLoading ? null : trip.heroImage) : trip.heroImage;
+  const heroStyle = heroImage
+    ? { backgroundImage: `url(${heroImage})`, backgroundSize: "cover", backgroundPosition: "center" }
+    : { background: "linear-gradient(135deg,#2563eb 0%,#3b82f6 100%)" };
+  const chipShadow = "shadow-[0_1px_2px_rgba(15,23,42,0.05),0_6px_14px_-4px_rgba(15,23,42,0.1)]";
 
   return (
-    <div className="flex flex-col h-full relative">
-      {/* Day Selector */}
-      <div className="sticky top-0 z-20 bg-background pt-3 pb-2 px-4 overflow-x-auto no-scrollbar border-b border-border/50">
+    <div className="relative" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
+      {/* Photo header: city + date only (day strip lives below, no overlap) */}
       <div
-  ref={dayScrollerRef}
-  className="flex gap-2 min-w-max pb-1"
->
-  {days.map((day) => {
-    const isSelected = selectedDate === day;
-    const hasItems = sortedItems.some(i => i.date === day);
-    const hasAccom = allItems.some(
-      i =>
-        i.elementType === "accommodation" &&
-        i.date <= day &&
-        (i.endDate ?? i.date) >= day
-    );
-
-    const city = dayCities[day] ?? "";
-
-    return (
-      <button
-  key={day}
-  onClick={() => setSelectedDate(day)}
-  className={cn(
-          "flex flex-col items-center justify-center px-3 py-2 rounded-2xl transition-all font-medium border-2 relative",
-          city ? "min-w-[68px] h-20" : "min-w-[64px] h-16",
-          isSelected
-            ? "bg-primary border-primary text-primary-foreground shadow-md shadow-primary/20"
-            : "bg-card border-border text-foreground/70 hover:border-primary/30"
-        )}
+        className="relative flex min-h-[262px] flex-col justify-end px-6 pb-12 pt-[calc(76px+env(safe-area-inset-top))] text-white"
+        style={heroStyle}
       >
-        {city && (
-          <span
-            className={cn(
-              "text-[11px] font-bold leading-none mb-0.5 whitespace-nowrap",
-              isSelected
-                ? "text-primary-foreground/80"
-                : "text-primary"
-            )}
-          >
-            {city}
-          </span>
-        )}
-
-        <span className="text-xs uppercase opacity-80">
-          {isDayLabel(day)
-            ? day
-            : safeFormatDate(day, d => format(d, "EEE"), "")}
-        </span>
-
-        <span className="text-[19px] font-semibold mt-0.5">
-          {isDayLabel(day)
-            ? day.replace("Day ", "D")
-            : safeFormatDate(day, d => format(d, "d"), "")}
-        </span>
-
-        {hasAccom && (
-          <span
-            className={cn(
-              "text-[9px] font-bold mt-0.5 leading-none",
-              isSelected
-                ? "text-primary-foreground/60"
-                : "text-violet-400"
-            )}
-          >
-            STAY
-          </span>
-        )}
-      </button>
-    );
-  })}
-
-  {isWishlist && (
-  <button
-    onClick={() => {
-      const newCount = (trip.wishlistDayCount ?? 1) + 1;
-
-      updateTrip({
-        ...trip,
-        wishlistDayCount: newCount,
-      });
-
-      setSelectedDate(`Day ${newCount}`);
-    }}
-    className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border-2 border-dashed border-primary/30 bg-card text-primary hover:bg-primary/5"
-  >
-    <Plus className="w-5 h-5" />
-  </button>
-)}
-</div>
-      </div>
-
-      {/* Timeline */}
-      <div
-  className="overflow-hidden flex-1"
-  onTouchStart={handleTouchStart}
-  onTouchEnd={handleTouchEnd}
->
-  <AnimatePresence mode="wait" custom={swipeDirection}>
-   <motion.div
-  key={selectedDate}
-  layout
-  custom={swipeDirection}
-  initial={{
-    x: swipeDirection > 0 ? 16 : -16,
-    opacity: 0,
-  }}
-  animate={{
-    x: 0,
-    opacity: 1,
-  }}
-  exit={{
-    x: swipeDirection > 0 ? -16 : 16,
-    opacity: 0,
-  }}
-  transition={{
-    x: {
-      duration: 0.22,
-      ease: "easeInOut",
-    },
-    opacity: {
-      duration: 0.18,
-    },
-    layout: {
-      duration: 0.22,
-    },
-  }}
-  className="px-4 py-4 pb-40 overflow-y-auto h-full"
->
-        {/* City + date header */}
-        <div className="flex items-start justify-between mb-4">
-
-  <div className="min-w-0 flex-1">
-
-    <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-      {isDayLabel(selectedDate)
-        ? selectedDate
-        : safeFormatDate(
-            selectedDate,
-            d => format(d, "EEEE, MMMM d"),
-            selectedDate
-          )}
-    </span>
-
-    {editingCity ? (
-      <div className="flex items-center gap-2 mt-1">
-        <input
-          ref={cityInputRef}
-          autoFocus
-          value={cityDraft}
-          onChange={e => setCityDraft(e.target.value)}
-          onKeyDown={e => {
-            if (e.key === "Enter") saveCity(cityDraft);
-            if (e.key === "Escape") setEditingCity(false);
-          }}
-          placeholder="City name…"
-          className="text-base font-bold bg-transparent border-b-2 border-primary outline-none text-foreground placeholder:text-muted-foreground/50 min-w-0 w-40"
-        />
-
-        <button onClick={() => saveCity(cityDraft)}>
-          <Check className="w-4 h-4 text-primary" />
-        </button>
-
-      </div>
-    ) : (
-      <button
-        onClick={() => {
-          setCityDraft(currentCity);
-          setEditingCity(true);
-        }}
-        className="mt-1 flex items-center gap-1.5 group/city"
-      >
-        {currentCity ? (
-          <span className="text-[15px] font-medium text-foreground">
-            {currentCity}
-          </span>
-        ) : (
-          <span className="text-[13px] italic text-muted-foreground/60">
-            Tap to add city...
-          </span>
-        )}
-
-        <Pencil className="w-3.5 h-3.5 text-muted-foreground/40 group-hover/city:text-primary transition-colors" />
-      </button>
-    )}
-  </div>
-
-  <div className="flex items-start">
-  {isWishlist && (trip.wishlistDayCount ?? 1) > 1 && (
-    <button
-      type="button"
-      onClick={() => deleteWishlistDay(selectedDate)}
-      className="mr-2 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-red-200 bg-red-50 text-red-600 transition-colors hover:bg-red-100"
-      aria-label="Delete day"
-    >
-      <Trash2 className="h-4 w-4" />
-    </button>
-  )}
-
-  <div className="flex flex-col items-end gap-1">
-    {totalDayMinutes > 0 && (
-      <div className="flex items-center gap-1 rounded-full bg-muted px-2.5 py-1 text-xs font-bold text-muted-foreground">
-        <Clock className="h-3 w-3" />
-        {getDuration("00:00", addMinutesToTime("00:00", totalDayMinutes))}
-      </div>
-    )}
-
-    {totalDayCost > 0 && (
-      <div className="flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary">
-        ₹{Math.round(totalDayCost).toLocaleString("en-IN")}
-      </div>
-    )}
-  </div>
-</div>
-</div>
-        {/* Accommodation banners */}
-        {activeAccommodations.map(accom => (
-          <AccommodationCard
-          key={accom.id}
-          item={accom}
-          trip={trip}
-          currentDay={selectedDate}
-          onEdit={() => setEditItem(accom)}
-        />
-        ))}
-
-        {/* Regular items */}
-        {filteredItems.length === 0 && activeAccommodations.length === 0 ? (
-          <div className="text-center text-muted-foreground mt-12">
-            <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
-              <CalendarDays className="w-8 h-8 opacity-40" />
-            </div>
-            <p className="font-medium">Nothing planned for this day.</p>
-            <p className="text-sm mt-1 opacity-70">Tap + to add something.</p>
-          </div>
-        ) : filteredItems.length === 0 ? null : (
-          <div className="space-y-5 mt-5">
-            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-              <SortableContext items={filteredItems.map(i => i.id)} strategy={verticalListSortingStrategy}>
-                {filteredItems.map((item, index) => (
-                <SortableItem
-                  key={item.id}
-                  item={item}
-                  documents={documents}
-                  trip={trip}
-                  onEdit={() => setEditItem(item)}
-                  isLast={index === filteredItems.length - 1}
+        <HeroScrim />
+        <div className="relative flex items-end justify-between gap-3 [text-shadow:0_1px_14px_rgba(0,0,0,0.5)]">
+          <div className="min-w-0 flex-1">
+            <p className="text-[13px] font-medium text-white/90">
+              {isDayLabel(selectedDate)
+                ? selectedDate
+                : safeFormatDate(selectedDate, d => format(d, "EEEE, MMMM d"), selectedDate)}
+            </p>
+            {editingCity ? (
+              <div className="mt-1 flex items-center gap-2 [text-shadow:none]">
+                <input
+                  ref={cityInputRef}
+                  autoFocus
+                  value={cityDraft}
+                  onChange={e => setCityDraft(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === "Enter") saveCity(cityDraft);
+                    if (e.key === "Escape") setEditingCity(false);
+                  }}
+                  placeholder="City name…"
+                  className="w-48 min-w-0 border-b-2 border-white bg-transparent font-display text-3xl font-bold text-white outline-none placeholder:text-white/60"
                 />
-              ))}
-              </SortableContext>
-            </DndContext>
+                <button aria-label="Save city" onClick={() => saveCity(cityDraft)}>
+                  <Check className="h-6 w-6 text-white" />
+                </button>
+              </div>
+            ) : currentCity ? (
+              <button onClick={startCityEdit} aria-label="Edit city" className="flex items-center gap-2 text-left">
+                <h2 className="font-display text-[38px] font-bold leading-[1.1] tracking-tight">{currentCity}</h2>
+                <Pencil className="h-4 w-4 shrink-0 text-white/70" />
+              </button>
+            ) : (
+              <button onClick={startCityEdit} className="text-left text-base italic text-white/85">
+                Tap to add city…
+              </button>
+            )}
           </div>
-        )}
+          {dayIndex >= 0 && (
+            <span className="shrink-0 rounded-full bg-white px-3 py-1.5 text-xs font-semibold shadow-md [text-shadow:none]" style={{ color: "#0f172a" }}>
+              {isWishlist ? selectedDate : `Day ${dayIndex + 1} of ${days.length}`}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Content sheet slides over the photo */}
+      <div className="relative z-10 -mt-7 min-h-[60dvh] rounded-t-[34px] bg-background px-4 pb-40 pt-5 shadow-[0_-12px_30px_rgba(10,20,50,0.16)]">
+        {/* Day strip (solid chips, not glass) */}
+        <div data-no-swipe className="relative -mx-4 -mb-3 overflow-x-auto px-4 pb-6 no-scrollbar">
+          <div ref={dayScrollerRef} className="flex min-w-max gap-2 pt-1">
+            {days.map(day => {
+              const isSelected = selectedDate === day;
+              const hasItems = allItems.some(i => i.date === day && i.elementType !== "accommodation");
+              const hasAccom = allItems.some(
+                i => i.elementType === "accommodation" && i.date <= day && (i.endDate ?? i.date) >= day
+              );
+              return (
+                <button
+                  key={day}
+                  onClick={() => setSelectedDate(day)}
+                  className={cn(
+                    "flex h-[76px] w-[58px] shrink-0 flex-col items-center justify-center rounded-[22px] transition",
+                    isSelected
+                      ? "bg-primary text-primary-foreground shadow-[0_10px_18px_-6px_hsl(var(--primary)/0.55)] dark:shadow-none"
+                      : `bg-card text-foreground ${chipShadow}`
+                  )}
+                >
+                  <span className="text-[10.5px] opacity-75">
+                    {isDayLabel(day) ? "Day" : safeFormatDate(day, d => format(d, "EEE"), "")}
+                  </span>
+                  <span className="font-display text-lg font-bold leading-tight">
+                    {isDayLabel(day) ? day.replace("Day ", "") : safeFormatDate(day, d => format(d, "d"), "")}
+                  </span>
+                  <span className="mt-1 flex h-1 items-center gap-0.5">
+                    {hasItems && <i className={cn("h-1 w-1 rounded-full", isSelected ? "bg-white" : "bg-primary")} />}
+                    {hasAccom && <i className={cn("h-1 w-1 rounded-full", isSelected ? "bg-white/70" : "bg-violet-500")} />}
+                  </span>
+                </button>
+              );
+            })}
+            {isWishlist && (
+              <button
+                aria-label="Add day"
+                onClick={() => {
+                  const newCount = (trip.wishlistDayCount ?? 1) + 1;
+                  updateTrip({ ...trip, wishlistDayCount: newCount });
+                  setSelectedDate(`Day ${newCount}`);
+                }}
+                className="flex h-[76px] w-[58px] shrink-0 items-center justify-center rounded-[22px] border-2 border-dashed border-border text-muted-foreground"
+              >
+                <Plus className="h-5 w-5" />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Day summary */}
+        <div className="mb-5 mt-2 flex items-center justify-between px-0.5 text-[13px]">
+          <div className="flex items-center gap-4 text-muted-foreground">
+            {totalDayMinutes > 0 && (
+              <span className="flex items-center gap-1.5" title="Planned time">
+                <Clock className="h-4 w-4" />
+                {getDuration("00:00", addMinutesToTime("00:00", totalDayMinutes))}
+              </span>
+            )}
+            {travelMinutes > 0 && (
+              <span className="flex items-center gap-1.5" title="Travel time">
+                <Route className="h-4 w-4 text-blue-500" />
+                {getDuration("00:00", addMinutesToTime("00:00", travelMinutes))}
+              </span>
+            )}
+            {totalDayCost > 0 && (
+              <span className="flex items-center gap-1.5" title="Planned spend">
+                <Wallet className="h-4 w-4" />₹{Math.round(totalDayCost).toLocaleString("en-IN")}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            {isWishlist && (trip.wishlistDayCount ?? 1) > 1 && (
+              <button
+                type="button"
+                aria-label="Delete day"
+                onClick={() => deleteWishlistDay(selectedDate)}
+                className={`flex h-[34px] w-[34px] items-center justify-center rounded-full bg-card text-destructive ${chipShadow}`}
+              >
+                <Trash2 className="h-[15px] w-[15px]" />
+              </button>
+            )}
+          </div>
+        </div>
+
+        <AnimatePresence mode="wait" custom={swipeDirection}>
+          <motion.div
+            key={selectedDate}
+            custom={swipeDirection}
+            initial={{ x: swipeDirection > 0 ? 16 : -16, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: swipeDirection > 0 ? -16 : 16, opacity: 0 }}
+            transition={{
+              x: { duration: 0.22, ease: "easeInOut" },
+              opacity: { duration: 0.18 },
+            }}
+          >
+            {/* Stays */}
+            {activeAccommodations.map(accom => (
+              <AccommodationCard
+                key={accom.id}
+                item={accom}
+                trip={trip}
+                currentDay={selectedDate}
+                onEdit={() => setEditItem(accom)}
+              />
+            ))}
+
+            {/* Everything else */}
+            {filteredItems.length === 0 && activeAccommodations.length === 0 ? (
+              <div className="mt-8 text-center text-muted-foreground">
+                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+                  <CalendarDays className="h-8 w-8 opacity-40" />
+                </div>
+                <p className="font-medium">Nothing planned for this day.</p>
+                <p className="mt-1 text-sm opacity-70">Tap + to add something.</p>
+              </div>
+            ) : filteredItems.length === 0 ? null : (
+              <div className="space-y-5">
+                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                  <SortableContext items={filteredItems.map(i => i.id)} strategy={verticalListSortingStrategy}>
+                    {filteredItems.map((item, index) => {
+                      const gap = gapAfter(item, filteredItems[index + 1]);
+                      return (
+                        <React.Fragment key={item.id}>
+                          {index === nowIndex && <NowMarker time={nowTime} />}
+                          <SortableItem
+                            item={item}
+                            documents={documents}
+                            trip={trip}
+                            onEdit={() => setEditItem(item)}
+                            isLast={index === filteredItems.length - 1}
+                            done={isDone(item)}
+                          />
+                          {gap && <GapLabel text={gap} />}
+                        </React.Fragment>
+                      );
+                    })}
+                    {nowIndex === filteredItems.length && <NowMarker time={nowTime} />}
+                  </SortableContext>
+                </DndContext>
+              </div>
+            )}
           </motion.div>
-  </AnimatePresence>
-</div>
+        </AnimatePresence>
+      </div>
 
-{getTripStatus(trip) !== "archived" && (
-  <FAB
-    icon={Plus}
-    onClick={() => setIsAddOpen(true)}
-  />
-)}
-
+      {getTripStatus(trip) !== "archived" && (
+        <FAB icon={Plus} label="Add to timeline" open={menuOpen} onClick={() => setMenuOpen(o => !o)} />
+      )}
+      <AddMenu
+        open={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        items={[
+          { id: "travel", label: "Travel", hint: "Flight, train, bus or car", icon: Plane, tint: "bg-blue-50 text-blue-600" },
+          { id: "accommodation", label: "Stay", hint: "Hotel or rental", icon: Building2, tint: "bg-violet-50 text-violet-600" },
+          { id: "meal", label: "Meal", hint: "Breakfast to drinks", icon: UtensilsCrossed, tint: "bg-amber-50 text-amber-600" },
+          { id: "activity", label: "Activity", hint: "Sights and plans", icon: Bike, tint: "bg-teal-50 text-teal-600" },
+        ].map(o => ({
+          ...o,
+          onSelect: () => {
+            setAddType(o.id as ElementType);
+            setAddKey(k => k + 1);
+            setIsAddOpen(true);
+          },
+        }))}
+      />
       <AddEditSheet
+        key={`add-${addKey}`}
         isOpen={isAddOpen}
         onClose={() => setIsAddOpen(false)}
         trip={trip}
         defaultDate={selectedDate}
+        defaultElementType={addType}
         documents={documents}
         allItems={allItems}
       />
@@ -891,15 +980,15 @@ const doneChecklist =
 
   const openDoc = (doc: TripDocument) => {
   if (!doc.file_url) {
-    alert("Document not available.");
+    notify("Document not available.", "error");
     return;
   }
 
   window.open(doc.file_url, "_blank");
 };
 
-const detachDoc = (docId: string) => {
-  if (!confirm("Remove this file from the item?")) return;
+const detachDoc = async (docId: string) => {
+  if (!(await confirmDialog({ title: "Remove this file?", message: "It stays in Documents; only the link to this item is removed.", confirmLabel: "Remove", destructive: true }))) return;
 
   saveItem({
     ...item,
@@ -923,8 +1012,8 @@ const toggleChecklistItem = (checkId: string) => {
   });
 };
 
-  const handleDelete = () => {
-    if (!confirm("Remove this accommodation?")) return;
+  const handleDelete = async () => {
+    if (!(await confirmDialog({ title: "Remove this stay?", confirmLabel: "Remove", destructive: true }))) return;
 
     if (item.expenseId) {
       deleteExpense({
@@ -942,7 +1031,7 @@ const toggleChecklistItem = (checkId: string) => {
   return (
     <div
       className={cn(
-        "mb-4 overflow-hidden rounded-[28px] border bg-card shadow-[0_2px_10px_rgba(0,0,0,0.05)] transition-all duration-300 hover:shadow-[0_8px_28px_rgba(0,0,0,0.08)]",
+        "mb-6 overflow-hidden rounded-[26px] border bg-violet-50/70 shadow-[0_5px_0_-1px_#E9E3FD,0_10px_0_-2px_#F2EEFE] dark:shadow-[0_5px_0_-1px_#1d2235,0_10px_0_-2px_#171c2c] transition duration-300",
         ELEMENT_BORDER.accommodation
       )}
     >
@@ -950,19 +1039,7 @@ const toggleChecklistItem = (checkId: string) => {
 
         {/* Left Strip */}
 
-  <div
-    className={cn(
-      "flex w-[36px] shrink-0 flex-col",
-      panelGradient(item.elementType)
-    )}
-  >
-    <div className="flex h-[96px] items-center justify-center text-white">
-      <Building2 className="h-4 w-4 stroke-[1.8]" />
-    </div>
-
-    <div className="flex-1" />
-
-  </div>
+  <div className="w-[6px] shrink-0 bg-violet-500" />
 
   {/* Right Side */}
 
@@ -981,9 +1058,7 @@ const toggleChecklistItem = (checkId: string) => {
 
       <div className="min-w-0 flex-1">
 
-        <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-violet-600">
-          Stay
-        </p>
+        <p className="mb-1 flex items-center gap-1.5 text-[11px] font-semibold text-violet-600"><Building2 className="h-3.5 w-3.5" />Stay</p>
 
         <h3 className="min-w-0 break-words line-clamp-2 text-[18px] font-semibold leading-[1.35]">
           {item.title}
@@ -1057,7 +1132,20 @@ const toggleChecklistItem = (checkId: string) => {
     })()}
   </p>
 
-  <div className="mt-2 h-px w-8 bg-border/60" />
+  {(() => {
+                  const cd = safeParseDate(currentDay);
+                  const sd = safeParseDate(item.date);
+                  const total = stayNights(item.date, item.endDate ?? item.date);
+                  if (!cd || !sd) return null;
+                  const night = Math.min(Math.max(differenceInDays(cd, sd) + 1, 1), total);
+                  return (
+                    <div className="mt-2 flex items-center gap-1">
+                      {Array.from({ length: Math.min(total, 7) }).map((_, n) => (
+                        <span key={n} className={cn("h-1.5 w-1.5 rounded-full", n < night ? "bg-violet-500" : "bg-violet-200")} />
+                      ))}
+                    </div>
+                  );
+                })()}
 
 </div>
 
@@ -1201,7 +1289,7 @@ const toggleChecklistItem = (checkId: string) => {
     <div className="mb-5 h-2 overflow-hidden rounded-full bg-muted">
 
       <div
-        className="h-full rounded-full bg-violet-500 transition-all"
+        className="h-full rounded-full bg-violet-500 transition"
         style={{
           width: `${
             totalChecklist
@@ -1375,12 +1463,14 @@ function SortableItem({
   trip,
   onEdit,
   isLast,
+  done = false,
 }: {
   item: ItineraryItem;
   documents: TripDocument[];
   trip: Trip;
   onEdit: () => void;
   isLast: boolean;
+  done?: boolean;
 }) {
 
   const { mutate: deleteItem } = useDeleteItineraryItem();
@@ -1418,15 +1508,15 @@ function SortableItem({
 
   const openDoc = (doc: TripDocument) => {
   if (!doc.file_url) {
-    alert("Document not available.");
+    notify("Document not available.", "error");
     return;
   }
 
   window.open(doc.file_url, "_blank");
 };
 
-  const detachDoc = (docId: string) => {
-  if (!confirm("Remove this attachment from this itinerary item?")) return;
+  const detachDoc = async (docId: string) => {
+  if (!(await confirmDialog({ title: "Remove this attachment?", message: "It stays in Documents; only the link to this item is removed.", confirmLabel: "Remove", destructive: true }))) return;
 
   saveItem({
     ...item,
@@ -1449,8 +1539,8 @@ function SortableItem({
     });
   };
 
-  const handleDelete = () => {
-    if (!confirm("Delete this item?")) return;
+  const handleDelete = async () => {
+    if (!(await confirmDialog({ title: "Delete this item?", confirmLabel: "Delete", destructive: true }))) return;
 
     if (item.expenseId) {
       deleteExpense({
@@ -1465,345 +1555,199 @@ function SortableItem({
     });
   };
 
+  const isTravel = item.elementType === "travel";
+  const isMeal = item.elementType === "meal";
+  const accentBg = isTravel ? "bg-blue-500" : isMeal ? "bg-amber-500" : "bg-teal-500";
+  const leg = isTravel ? legStatus(item) : null;
+  // Ticket notches at the perforation (68% across). When expanded, only the top notch is cut.
+  const notchTop = "radial-gradient(circle 9px at 68% 0, #0000 97%, #000) top / 100% 51% no-repeat";
+  const notchBottom = "radial-gradient(circle 9px at 68% 100%, #0000 97%, #000) bottom / 100% 51% no-repeat";
+  const ticketMask = expanded
+    ? `${notchTop}, linear-gradient(#000, #000) bottom / 100% 49% no-repeat`
+    : `${notchTop}, ${notchBottom}`;
+
+  const dotColor = isTravel ? "bg-blue-500" : isMeal ? "bg-[#FFD633]" : "bg-teal-500";
+  const panelTone = isTravel
+    ? "border-blue-200 bg-card/70"
+    : isMeal
+    ? "border-amber-300/70 bg-card/60"
+    : "border-teal-200 bg-card/70";
+  // Receipt edge for meals: the bottom 8px is cut into a zig-zag
+  const zigzag = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='8' viewBox='0 0 16 8'%3E%3Cpath d='M0 0h16L8 8z'/%3E%3C/svg%3E")`;
+  const receiptMask = `linear-gradient(#000, #000) top / 100% calc(100% - 7px) no-repeat, ${zigzag} bottom / 16px 8px repeat-x`;
+
   return (
-  <div className="flex items-start gap-3">
-
-   {/* Timeline */}
-
-<div className="relative w-10 shrink-0">
-  <div className="h-[152px]" />
-
-  <div
-  className={cn(
-  "absolute left-1/2 top-[44px] z-20 flex h-8 w-8 -translate-x-1/2 items-center justify-center rounded-full bg-background shadow-sm",
-      item.elementType === "travel"
-        ? "bg-blue-500"
-        : item.elementType === "meal"
-        ? "bg-amber-400"
-        : "bg-orange-500"
-    )}
-  >
-    <Icon className="h-4 w-4 text-white stroke-[2]" />
-  </div>
-
-  <span className="absolute left-1/2 top-[84px] -translate-x-1/2 whitespace-nowrap text-[10px] font-medium text-muted-foreground">
-    {item.startTime}
-  </span>
-
-  {!isLast && (
-  <div
-    className="absolute left-1/2 top-[112px] -translate-x-1/2 rounded-full bg-border/80"
-    style={{
-      top: "116px",
-      width: "2px",
-      height: "110px",
-    }}
-  />
-)}
-
-</div>
-
-{/* Card */}
-
-<div
-  className={cn(
-    "flex-1 overflow-hidden rounded-[28px] border border-border/20 bg-card shadow-[0_10px_30px_rgba(15,23,42,0.08)] transition-[height] duration-300 hover:shadow-[0_14px_40px_rgba(15,23,42,0.12)]",
-    ELEMENT_BORDER[item.elementType]
-  )}
->
-  <div className="flex items-stretch">
-
-    {/* Thin Accent */}
-
-<div
-  className={cn(
-    "w-[8px] shrink-0",
-    item.elementType === "travel"
-      ? "bg-blue-500"
-      : item.elementType === "meal"
-      ? "bg-amber-400"
-      : "bg-orange-500"
-  )}
-/>
-
-  {/* Right Side */}
-
-  <div className="min-w-0 w-0 flex-1">
-
-          <button
-            type="button"
-            onClick={() => setExpanded((v) => !v)}
-            className="w-full text-left"
-          >
-            <div className="px-5 py-5">
-
-      {/* Individual cards go here */}
-
-        {item.elementType === "travel" && (
-  <div className="relative flex h-full flex-col">
-
-    {/* Header */}
-
-    <div className="flex items-start gap-2.5">
-
-      <div className="min-w-0 flex-1">
-
-        <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-blue-600">
-          {travelLabel(item.travelType)}
-        </p>
-
-        {!expanded ? (
-
-          <div className="mt-1 flex min-w-0 items-center gap-2">
-
-  {/* From */}
-
-  <div className="shrink-0">
-    <p
-      className="truncate text-[17px] font-semibold leading-[1.35]"
-      title={item.fromLocation}
-    >
-      {item.fromLocation || "—"}
-    </p>
-  </div>
-
-  {/* Connector */}
-
-  <div className="mx-3 flex min-w-[28px] flex-1 items-center">
-
-    <div className="flex-1 border-t-[1px] border-dashed border-blue-300" />
-
-    <Icon className="mx-2 h-4 w-4 shrink-0 text-blue-500" />
-
-    <div className="flex-1 border-t-[1px] border-dashed border-blue-300" />
-
-  </div>
-
-  {/* To */}
-
-  <div className="min-w-0 flex-1">
-    <p
-      className="truncate text-[17px] font-semibold leading-[1.35]"
-      title={item.toLocation}
-    >
-      {item.toLocation || "—"}
-    </p>
-  </div>
-
-</div>
-
-        ) : (
-
-          <div className="mt-3 flex flex-col items-start">
-
-  {/* From */}
-
-  <p
-  className="max-w-full truncate text-[18px] font-semibold leading-[1.2]"
-    title={item.fromLocation}
-  >
-    {item.fromLocation || "—"}
-  </p>
-
-  {/* Connector */}
-
-  <div className="my-2 flex w-full items-center">
-
-    <div className="flex-1 border-t-[1px] border-dashed border-blue-300" />
-
-    <Icon className="mx-2 h-4 w-4 shrink-0 text-blue-500" />
-
-    <div className="flex-1 border-t-[1px] border-dashed border-blue-300" />
-
-  </div>
-
-  {/* To */}
-
-  <p
-    className="max-w-full truncate text-[18px] font-semibold leading-[1.2]"
-    title={item.toLocation}
-  >
-    {item.toLocation || "—"}
-  </p>
-
-</div>
-
-        )}
-
+    <div className="flex">
+      {/* Time */}
+      <div className="w-11 shrink-0 pt-3.5 text-right">
+        <p className="text-[13px] font-bold leading-none tabular-nums">{item.startTime}</p>
+        {duration && <p className="mt-1 text-[10.5px] text-muted-foreground">{duration}</p>}
       </div>
 
-      <ChevronDown
+      {/* Rail: line turns blue once the item is done */}
+      <div className="relative w-7 shrink-0">
+        {!isLast && (
+          <span className={cn("absolute -bottom-5 left-[13px] top-0 w-0.5", done ? "bg-primary dark:bg-primary/60" : "bg-border")} />
+        )}
+        <span className={cn("absolute left-2 top-[18px] h-3 w-3 rounded-full ring-4 ring-background", dotColor)} />
+      </div>
+
+      {/* Card: boarding pass (travel), receipt (meal), entry pass (activity) */}
+      <div
         className={cn(
-          "mt-6 h-4 w-4 shrink-0 text-muted-foreground/70 transition-transform duration-300",
-          expanded && "rotate-180"
+          "min-w-0 flex-1 self-start",
+          !isTravel && !isMeal && "rounded-[28px] shadow-[0_1px_2px_rgba(15,23,42,0.04),0_4px_12px_-4px_rgba(13,148,136,0.08)]"
         )}
-      />
+        style={isTravel || isMeal ? { filter: "drop-shadow(0 8px 14px rgba(15,23,42,0.12))" } : undefined}
+      >
+        <div
+          className={cn(
+            "relative overflow-hidden",
+            isTravel && "rounded-[22px] bg-blue-50",
+            isMeal && "rounded-t-[26px] bg-amber-50 pb-2",
+            !isTravel && !isMeal && "rounded-[28px] bg-teal-50 ring-1 ring-teal-200/80"
+          )}
+          style={
+            isTravel
+              ? { WebkitMask: ticketMask, mask: ticketMask }
+              : isMeal
+              ? { WebkitMask: receiptMask, mask: receiptMask }
+              : undefined
+          }
+        >
+          <div className="min-w-0">
+            <button type="button" onClick={() => setExpanded((v) => !v)} className="w-full text-left">
+              {isTravel && (
+                <div className="relative">
+                  <span
+                    aria-hidden
+                    className="absolute bottom-4 left-[68%] top-4 border-l-[1.5px] border-dashed border-blue-300"
+                  />
+                  <div className="grid grid-cols-[68%_32%]">
+                    <div className="min-w-0 px-4 py-4">
+                      <div className="flex items-center gap-1.5 text-[11px] font-semibold text-blue-700">
+                        <Icon className="h-3.5 w-3.5" />
+                        <span className="truncate">{travelLabel(item.travelType)}</span>
+                      </div>
+                      <div className="mt-3 flex items-center gap-2">
+                        <PlaceCode place={item.fromLocation} />
+                        <div className="flex min-w-[20px] flex-1 items-center">
+                          <div className="flex-1 border-t-[1.5px] border-dashed border-blue-300" />
+                          <Icon className="mx-1.5 h-3.5 w-3.5 shrink-0 text-blue-500" />
+                          <div className="flex-1 border-t-[1.5px] border-dashed border-blue-300" />
+                        </div>
+                        <PlaceCode place={item.toLocation} right />
+                      </div>
+                      <p className="mt-3 text-[12.5px] font-medium text-blue-900/70">
+                        {item.startTime || "—"} to {item.endTime || "—"}
+                      </p>
+                    </div>
+                    <div className="flex min-w-0 flex-col items-center justify-center gap-2 bg-blue-100/60 px-2 py-4 text-center">
+                      {leg && (
+                        <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-semibold", leg.tone)}>
+                          {leg.label}
+                        </span>
+                      )}
+                      <span className="font-display text-[18px] font-bold leading-none text-blue-950">{duration || "—"}</span>
+                      <ChevronDown
+                        className={cn(
+                          "h-4 w-4 text-blue-900/40 transition-transform duration-300",
+                          expanded && "rotate-180"
+                        )}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
 
-    </div>
+              {isMeal && (
+                <div className="px-4 pb-2 pt-3.5">
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#FFD633]/10 text-[#FFD633]">
+                      <Icon className="h-5 w-5" />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[11px] font-semibold text-[#FFD633]">{categoryLabel(item)}</p>
+                      <h3 className="truncate text-base font-semibold leading-snug">{item.title}</h3>
+                    </div>
+                    <ChevronDown
+                      className={cn(
+                        "h-4 w-4 shrink-0 text-amber-900/40 transition-transform duration-300",
+                        expanded && "rotate-180"
+                      )}
+                    />
+                  </div>
+                  <div className="mt-3 flex items-center justify-between border-t border-dashed border-amber-300/80 pt-2.5 text-[12.5px]">
+                    <span className="text-amber-900/70">
+                      {item.startTime || "—"}
+                      {duration ? ` · ${duration}` : ""}
+                    </span>
+                    {item.cost ? (
+                      <span>
+                        <span className="mr-1.5 text-amber-900/60">Total</span>
+                        <b className="font-display text-amber-950">₹{Math.round(item.cost).toLocaleString("en-IN")}</b>
+                      </span>
+                    ) : null}
+                  </div>
+                </div>
+              )}
 
-    {/* Journey */}
-
-    <div className="mt-5 flex items-end gap-8">
-
-      {/* Departure */}
-
-      <div className="min-w-0">
-
-        <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-          Departure
-        </p>
-
-        <p className="mt-1 text-[15px] font-semibold">
-          {item.startTime || "—"}
-        </p>
-
-      </div>
-
-      {/* Duration */}
-
-      <div className="shrink-0">
-
-        <p className="whitespace-nowrap text-[11px] italic text-blue-600">
-          {duration || "—"}
-        </p>
-
-      </div>
-
-      {/* Arrival */}
-
-      <div className="min-w-0">
-
-        <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-          Arrival
-        </p>
-
-        <p className="mt-1 text-[15px] font-semibold">
-          {item.endTime || "—"}
-        </p>
-
-      </div>
-
-    </div>
-
-  </div>
-)}
-
-        {item.elementType === "meal" && (
-  <div className="relative flex h-full flex-col">
-
-    {/* Header */}
-
-    <div className="flex min-w-0 items-start justify-between gap-4">
-
-      <div className="min-w-0 flex-1">
-
-        <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-500">
-          {categoryLabel(item)}
-        </p>
-
-        <h3 className="min-w-0 break-words line-clamp-2 text-[18px] font-semibold leading-[1.35]">
-          {item.title}
-        </h3>
-
-      </div>
-
-      <ChevronDown
-        className={cn(
-          "mt-6 h-4 w-4 shrink-0 text-muted-foreground/70 transition-transform duration-300",
-          expanded && "rotate-180"
-        )}
-      />
-
-    </div>
-
-    {/* Time */}
-
-    <div className="mt-5">
-
-  <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-    Time
-  </p>
-
-  <p className="mt-1 text-[15px] font-semibold">
-    {item.startTime || "—"}
-  </p>
-
-</div>
-
-  </div>
-)}
-        {item.elementType === "activity" && (
-  <div className="relative flex h-full flex-col">
-
-    {/* Header */}
-
-    <div className="flex min-w-0 items-start justify-between gap-4">
-
-      <div className="min-w-0 flex-1">
-
-        <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-orange-500">
-          Activity
-        </p>
-
-        <h3 className="min-w-0 break-words line-clamp-2 text-[18px] font-semibold leading-[1.35]">
-          {item.title}
-        </h3>
-
-      </div>
-
-      <ChevronDown
-        className={cn(
-          "mt-6 h-4 w-4 shrink-0 text-muted-foreground/70 transition-transform duration-300",
-          expanded && "rotate-180"
-        )}
-      />
-
-    </div>
-
-    {/* Activity Timeline */}
-
-<div className="mt-4 flex items-end justify-between gap-6">
-
-  {/* Time */}
-
-  <div className="min-w-0 flex-1">
-
-    <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-      Time
-    </p>
-
-    <p className="mt-1 text-[15px] font-semibold">
-      {item.startTime || "—"}
-    </p>
-
-  </div>
-
-  {/* Duration */}
-
-  <div className="text-right">
-
-    <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-      Duration
-    </p>
-
-    <p className="mt-1 text-[15px] font-semibold">
-      {duration || "—"}
-    </p>
-
-  </div>
-
-</div>
-
-  </div>
-)}
-
-    </div>
-
-  </button>
+              {item.elementType === "activity" && (
+                <div>
+                  <div className="relative bg-gradient-to-r from-[#0d9488] to-[#059669] dark:from-[#0d9488]/45 dark:to-[#059669]/45 px-4 pb-2.5 pt-4 text-white">
+                    <span aria-hidden className="absolute left-1/2 top-1.5 h-1.5 w-10 -translate-x-1/2 rounded-full bg-black/25" />
+                    <div className="flex items-center justify-between text-[12px] font-semibold">
+                      <span className="flex items-center gap-1.5">
+                        <Icon className="h-3.5 w-3.5" />
+                        Activity
+                      </span>
+                      <span>
+                        {item.startTime || "—"}
+                        {item.endTime ? ` – ${item.endTime}` : ""}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="px-4 py-3.5">
+                    <div className="flex items-start gap-3">
+                      <h3 className="line-clamp-2 min-w-0 flex-1 break-words text-[17px] font-semibold leading-snug text-teal-950">
+                        {item.title}
+                      </h3>
+                      <ChevronDown
+                        className={cn(
+                          "mt-1 h-4 w-4 shrink-0 text-teal-900/40 transition-transform duration-300",
+                          expanded && "rotate-180"
+                        )}
+                      />
+                    </div>
+                    <div className="mt-2.5 flex items-center gap-3 text-[12px] text-teal-900/70">
+                      {duration && (
+                        <span className="flex shrink-0 items-center gap-1">
+                          <Clock className="h-3.5 w-3.5" />
+                          {duration}
+                        </span>
+                      )}
+                      {totalChecklist > 0 && (
+                        <div className="flex min-w-0 flex-1 items-center gap-2">
+                          <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-teal-100">
+                            <div
+                              className="h-full rounded-full bg-teal-500"
+                              style={{ width: `${(doneChecklist / totalChecklist) * 100}%` }}
+                            />
+                          </div>
+                          <span className="shrink-0">
+                            {doneChecklist} of {totalChecklist}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </button>
 
 
 {expanded && (
-  <div className="border-t border-border/20 bg-background py-2">
+  <div className={cn("border-t border-dashed py-2", panelTone)}>
 
   {/* Location */}
 
@@ -1917,14 +1861,14 @@ function SortableItem({
 
       <div
         className={cn(
-          "h-full rounded-full transition-all duration-300",
+          "h-full rounded-full transition duration-300",
           item.elementType === "travel"
             ? "bg-blue-500"
             : item.elementType === "accommodation"
             ? "bg-violet-500"
             : item.elementType === "meal"
             ? "bg-amber-400"
-            : "bg-orange-500"
+            : "bg-teal-500"
         )}
         style={{
           width: `${
@@ -1961,7 +1905,7 @@ function SortableItem({
                     ? "bg-violet-500"
                     : item.elementType === "meal"
                     ? "bg-amber-400"
-                    : "bg-orange-500"
+                    : "bg-teal-500"
                 )}
               >
                 <Check className="h-3 w-3 text-white" />
@@ -2115,9 +2059,10 @@ interface SheetProps {
   documents: TripDocument[];
   allItems: ItineraryItem[];
   existingItem?: ItineraryItem;
+  defaultElementType?: ElementType;
 }
 
-function AddEditSheet({ isOpen, onClose, trip, defaultDate, documents, allItems, existingItem }: SheetProps) {
+function AddEditSheet({ isOpen, onClose, trip, defaultDate, documents, allItems, existingItem, defaultElementType }: SheetProps) {
   const { mutateAsync: saveItem, isPending } = useSaveItineraryItem();
   const { mutateAsync: addDocument } = useAddDocument();
   const { mutateAsync: saveExpense } = useSaveExpense();
@@ -2126,7 +2071,7 @@ function AddEditSheet({ isOpen, onClose, trip, defaultDate, documents, allItems,
   const destCurrency = trip.destinationCurrency || 'INR';
   const showCurrencyToggle = destCurrency !== 'INR';
 
-  const [elementType, setElementType] = useState<ElementType>(existingItem?.elementType || 'activity');
+  const [elementType, setElementType] = useState<ElementType>(existingItem?.elementType || defaultElementType || 'activity');
   const [travelType, setTravelType] = useState<TravelType>(existingItem?.travelType || 'flight');
   const [mealSubType, setMealSubType] = useState<MealSubType>(existingItem?.mealSubType || 'lunch');
   const [mealTime, setMealTime] = useState(existingItem?.startTime || '13:00');
@@ -2291,11 +2236,11 @@ function AddEditSheet({ isOpen, onClose, trip, defaultDate, documents, allItems,
         {!isEditing && (
           <div>
             <Label>Type</Label>
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-4 gap-2 [&>*]:min-w-0">
               {ELEMENT_TYPES.map(({ id, label, icon: Icon }) => (
                 <button key={id} type="button" onClick={() => setElementType(id)}
                   className={cn(
-                    "flex flex-col items-center gap-1.5 py-3 rounded-xl border-2 transition-all text-[15px] font-semibold",
+                    "flex flex-col items-center gap-1.5 py-3 rounded-xl border-2 transition text-[15px] font-semibold",
                     elementType === id ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-muted-foreground"
                   )}>
                   <Icon className="w-5 h-5" />{label}
@@ -2345,12 +2290,12 @@ function AddEditSheet({ isOpen, onClose, trip, defaultDate, documents, allItems,
           <>
             <div>
               <Label>Travel Type</Label>
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-4 gap-2 [&>*]:min-w-0">
                 {(['flight', 'train', 'bus', 'car'] as TravelType[]).map(t => {
                   const TIcon = TRAVEL_ICONS[t];
                   return (
                     <button key={t} type="button" onClick={() => setTravelType(t)}
-                      className={cn("flex flex-col items-center gap-1 py-2.5 rounded-xl border-2 transition-all text-xs font-semibold capitalize",
+                      className={cn("flex flex-col items-center gap-1 py-2.5 rounded-xl border-2 transition text-xs font-semibold capitalize",
                         travelType === t ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-muted-foreground"
                       )}>
                       <TIcon className="w-4 h-4" />{t}
@@ -2359,7 +2304,7 @@ function AddEditSheet({ isOpen, onClose, trip, defaultDate, documents, allItems,
                 })}
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-3 [&>*]:min-w-0">
               <div>
                 <Label htmlFor="fromLocation">From</Label>
                 <Input id="fromLocation" name="fromLocation" placeholder="Delhi (DEL)" defaultValue={existingItem?.fromLocation} required />
@@ -2369,7 +2314,7 @@ function AddEditSheet({ isOpen, onClose, trip, defaultDate, documents, allItems,
                 <Input id="toLocation" name="toLocation" placeholder="Paris (CDG)" defaultValue={existingItem?.toLocation} required />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-3 [&>*]:min-w-0">
               <div>
                 <Label htmlFor="departureTime">Departure</Label>
                 <Input id="departureTime" name="departureTime" type="time" defaultValue={existingItem?.startTime || '10:00'} required />
@@ -2393,7 +2338,7 @@ function AddEditSheet({ isOpen, onClose, trip, defaultDate, documents, allItems,
               <Label htmlFor="address">Address / Location</Label>
               <Input id="address" name="address" placeholder="228 Rue de Rivoli, Paris" defaultValue={existingItem?.location} />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-3 [&>*]:min-w-0">
               <div>
                 <Label htmlFor="checkInDate">Check-in Date</Label>
                 <Input id="checkInDate" name="date" type="date" defaultValue={existingItem?.date || defaultDate} required />
@@ -2403,7 +2348,7 @@ function AddEditSheet({ isOpen, onClose, trip, defaultDate, documents, allItems,
                 <Input id="checkInTime" name="checkInTime" type="time" defaultValue={existingItem?.startTime || '14:00'} />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-3 [&>*]:min-w-0">
               <div>
                 <Label htmlFor="checkOutDate">Check-out Date</Label>
                 <Input id="checkOutDate" name="checkOutDate" type="date" defaultValue={existingItem?.endDate || defaultDate} required />
@@ -2422,11 +2367,11 @@ function AddEditSheet({ isOpen, onClose, trip, defaultDate, documents, allItems,
             {/* Meal sub-type picker */}
             <div>
               <Label>Meal Type</Label>
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-4 gap-2 [&>*]:min-w-0">
                 {MEAL_SUBTYPES.map(({ id, label, icon: MIcon }) => (
                   <button key={id} type="button" onClick={() => handleMealSubTypeChange(id)}
                     className={cn(
-                      "flex flex-col items-center gap-1.5 py-3 rounded-xl border-2 transition-all text-xs font-semibold",
+                      "flex flex-col items-center gap-1.5 py-3 rounded-xl border-2 transition text-xs font-semibold",
                       mealSubType === id ? "border-amber-400 bg-amber-50 text-amber-700" : "border-border bg-card text-muted-foreground"
                     )}>
                     <MIcon className="w-4 h-4" />{label}
@@ -2470,7 +2415,7 @@ function AddEditSheet({ isOpen, onClose, trip, defaultDate, documents, allItems,
               <Label htmlFor="activityLocation">Location</Label>
               <Input id="activityLocation" name="activityLocation" placeholder="Paris, France" defaultValue={existingItem?.location} />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-3 [&>*]:min-w-0">
               <div>
                 <Label htmlFor="startTime">Start Time</Label>
                 <Input id="startTime" name="startTime" type="time" value={startTime} onChange={e => setStartTime(e.target.value)} required />
@@ -2585,7 +2530,7 @@ function AddEditSheet({ isOpen, onClose, trip, defaultDate, documents, allItems,
         <div>
           <Label>Upload Document (optional)</Label>
           <label className={cn(
-            "flex items-center gap-3 w-full px-4 py-3 rounded-xl border-2 border-dashed cursor-pointer transition-all",
+            "flex items-center gap-3 w-full px-4 py-3 rounded-xl border-2 border-dashed cursor-pointer transition",
             uploadFile ? "border-primary bg-primary/5" : "border-border hover:border-primary/40 hover:bg-muted/30"
           )}>
             <Upload className={cn("w-5 h-5 shrink-0", uploadFile ? "text-primary" : "text-muted-foreground")} />
@@ -2610,7 +2555,7 @@ function AddEditSheet({ isOpen, onClose, trip, defaultDate, documents, allItems,
             <button
               type="button"
               onClick={() => setShowDocPicker(!showDocPicker)}
-              className="flex items-center justify-between w-full h-12 px-4 rounded-xl border-2 border-border bg-card text-base transition-all hover:border-primary/40"
+              className="flex items-center justify-between w-full h-12 px-4 rounded-xl border-2 border-border bg-card text-base transition hover:border-primary/40"
             >
               <span className="text-muted-foreground text-sm">
                 {selectedDocIds.length > 0 ? `${selectedDocIds.length} selected` : 'Select from saved documents'}
@@ -2626,7 +2571,7 @@ function AddEditSheet({ isOpen, onClose, trip, defaultDate, documents, allItems,
                       onClick={() => setSelectedDocIds(prev => isSel ? prev.filter(id => id !== doc.id) : [...prev, doc.id])}
                       className="flex items-center gap-3 w-full px-4 py-3 border-b border-border/30 last:border-0 hover:bg-muted/40"
                     >
-                      <div className={cn("w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition-all", isSel ? "bg-primary border-primary" : "border-border")}>
+                      <div className={cn("w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition", isSel ? "bg-primary border-primary" : "border-border")}>
                         {isSel && <Check className="w-3 h-3 text-white" />}
                       </div>
                       <FileText className="w-4 h-4 text-muted-foreground shrink-0" />

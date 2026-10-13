@@ -4,7 +4,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { differenceInDays, format, isBefore, isAfter, addDays } from "date-fns";
 import { useItinerary, useExpenses, useDocuments, usePlaces } from "@/hooks/use-store";
 import { Trip } from "@/lib/types";
-import { Calendar, FileText, Receipt, MapPin, Plane, Clock, Heart } from "lucide-react";
+import { HeroScrim } from "@/components/ui";
+import { Calendar, FileText, Receipt, MapPin, Plane, Clock, Heart, Building2, UtensilsCrossed, Bike } from "lucide-react";
 import { formatCurrency } from "@/lib/countries";
 import { safeFormatDate, safeParseDate } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
@@ -21,7 +22,7 @@ export default function OverviewTab({ trip }: { trip: Trip }) {
   const status = trip.status || (trip.archived ? 'archived' : 'active');
   const isWishlist = status === 'wishlist';
 
-  const totalSpent = expenses.reduce((s, e) => s + e.amount, 0);
+  const totalSpent = expenses.filter(e => e.category !== "settlement").reduce((s, e) => s + e.amount, 0);
   const budgetTotal = trip.budget?.total ?? 0;
   const visitedPlaces = places.filter(p => p.visited).length;
 
@@ -75,20 +76,6 @@ if (!isWishlist) {
 useEffect(() => {
   if (!heroLocation) return;
 
-  // Already have the correct image
-  if (trip.heroLocation === heroLocation) return;
-
-  supabase.functions.invoke("hero-image", {
-    body: {
-      trip_id: trip.id,
-      destination: heroLocation,
-    },
-  });
-}, [trip.id, heroLocation, trip.heroLocation]);
-
-useEffect(() => {
-  if (!heroLocation) return;
-
   if (trip.heroLocation === heroLocation) return;
 
   (async () => {
@@ -114,144 +101,99 @@ useEffect(() => {
   queryClient,
 ]);
 
+const NextIcon =
+  nextItem?.elementType === "travel" ? Plane
+  : nextItem?.elementType === "accommodation" ? Building2
+  : nextItem?.elementType === "meal" ? UtensilsCrossed
+  : nextItem?.elementType === "activity" ? Bike
+  : Clock;
+const overBudget = budgetTotal > 0 && totalSpent > budgetTotal;
+const card = "rounded-[22px] bg-card shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_rgba(15,23,42,0.06)]";
+
 return (
-    <div className="p-5 pb-28 flex flex-col gap-4">
-      {/* Hero card */}
-<div
-  className="relative rounded-[2rem] overflow-hidden shadow-xl min-h-[220px] flex items-end"
-  style={
-  trip.heroImage
-    ? {
-        backgroundImage: `url(${trip.heroImage})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-      }
-    : {}
-}
->
+    <div className="flex flex-col pb-28">
+      {/* Photo hero: runs under the floating header */}
+      <div
+        className="relative h-[340px] shrink-0"
+        style={
+          trip.heroImage
+            ? { backgroundImage: `url(${trip.heroImage})`, backgroundSize: "cover", backgroundPosition: "center" }
+            : { background: "linear-gradient(135deg,#2563eb 0%,#3b82f6 100%)" }
+        }
+      >
+        {!trip.heroImage && <Plane className="absolute -right-6 bottom-10 h-44 w-44 text-white/10" />}
+        <HeroScrim />
+        <div className="absolute inset-x-0 bottom-14 z-10 px-6 text-white [text-shadow:0_1px_14px_rgba(0,0,0,0.5)]">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-white/95 px-3 py-1.5 text-xs font-semibold shadow-md [text-shadow:none]" style={{ color: "#0f172a" }}>
+            {isWishlist ? <Heart className="h-3.5 w-3.5 text-pink-500" /> : <span className="h-1.5 w-1.5 rounded-full bg-orange-500" />}
+            {tripStatusLabel}
+          </span>
+          <h2 className="mt-3 font-display text-4xl font-bold leading-[1.05] tracking-tight">{trip.name}</h2>
+          <p className="mt-1.5 flex items-center gap-1.5 text-[13px] text-white">
+            <MapPin className="h-3.5 w-3.5 shrink-0" />
+            <span className="truncate">
+              {heroLocation}
+              {!isWishlist && (
+                <>
+                  {" "}· {safeFormatDate(trip.startDate, d => format(d, "MMM d"), "")} –{" "}
+                  {safeFormatDate(trip.endDate, d => format(d, "MMM d, yyyy"), "")}
+                </>
+              )}
+            </span>
+          </p>
+        </div>
+      </div>
 
-  {/* Fallback */}
-  {!trip.heroImage && (
-    <div className="absolute inset-0 bg-primary" />
-  )}
-
-  {/* Dark overlay */}
-  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/25 to-black/10" />
-
-  {/* Plane icon only when no image */}
-  {!trip.heroImage && (
-    <div className="absolute -right-6 -bottom-6 opacity-10 text-white">
-      <Plane className="w-44 h-44" />
-    </div>
-  )}
-
-  <div className="relative z-10 p-6 text-white w-full">
-    <p className="text-white/80 font-medium text-sm mb-1">
-      {heroLocation}
-    </p>
-
-    <h2 className="text-3xl font-display font-extrabold mb-3">
-      {tripStatusLabel}
-    </h2>
-
-    <div className="flex items-center gap-2 text-sm font-medium bg-white/20 backdrop-blur-md px-3 py-1.5 rounded-xl w-fit">
-      {isWishlist ? (
-        <>
-          <Heart className="w-4 h-4 text-pink-300" />
-          Saved to Wishlist
-        </>
-      ) : (
-        <>
-          <Calendar className="w-4 h-4" />
-          {safeFormatDate(trip.startDate, d => format(d, "MMM d"), "")} –{" "}
-          {safeFormatDate(trip.endDate, d => format(d, "MMM d, yyyy"), "")}
-        </>
-      )}
-    </div>
-  </div>
-</div>
-
-      {/* Next item */}
-      {nextItem && !isWishlist && (
-        <div className="bg-card border border-border rounded-2xl p-4">
-          <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">Next Up</p>
-          <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
-              <Clock className="w-5 h-5" />
+      {/* Content sheet slides over the photo */}
+      <div className="relative z-10 -mt-9 flex flex-col gap-3 rounded-t-[34px] bg-background px-4 pt-5 shadow-[0_-12px_30px_rgba(10,20,50,0.16)]">
+        {nextItem && !isWishlist && (
+          <div className={`${card} flex items-center gap-3.5 p-3.5`}>
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+              <NextIcon className="h-[22px] w-[22px]" />
             </div>
-            <div>
-              <p className="font-bold text-foreground">{nextItem.title}</p>
-              <p className="text-sm text-muted-foreground mt-0.5">
-                {safeFormatDate(nextItem.date, d => format(d, 'MMM d'), nextItem.date)} · {nextItem.startTime}–{nextItem.endTime}
+            <div className="min-w-0">
+              <p className="text-xs text-muted-foreground">Next up</p>
+              <p className="truncate text-[15px] font-semibold text-foreground">{nextItem.title}</p>
+              <p className="text-xs text-muted-foreground">
+                {safeFormatDate(nextItem.date, d => format(d, "MMM d"), nextItem.date)} · {nextItem.startTime}–{nextItem.endTime}
               </p>
               {nextItem.location && (
-                <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
-                  <MapPin className="w-3 h-3" />{nextItem.location}
+                <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
+                  <MapPin className="h-3 w-3 shrink-0" />
+                  <span className="truncate">{nextItem.location}</span>
                 </p>
               )}
             </div>
           </div>
+        )}
+
+        <div className="grid grid-cols-2 gap-3">
+          <StatCard icon={Calendar} tint="bg-blue-50 text-primary" label="Timeline items" value={itinerary.length} onClick={() => navigate(`/trip/${trip.id}/itinerary`)} />
+          <StatCard icon={Receipt} tint="bg-emerald-50 text-emerald-600" label="Total spent" value={formatCurrency(totalSpent, "INR")} onClick={() => navigate(`/trip/${trip.id}/expenses`)} />
+          <StatCard icon={MapPin} tint="bg-orange-50 text-orange-600" label="Places" value={`${visitedPlaces}/${places.length}`} sub="visited" onClick={() => navigate(`/trip/${trip.id}/places`)} />
+          <StatCard icon={FileText} tint="bg-violet-50 text-violet-600" label="Documents" value={documents.length} onClick={() => navigate(`/trip/${trip.id}/documents`)} />
         </div>
-      )}
 
-      {/* Stats grid */}
-      <div className="grid grid-cols-2 gap-3">
-  <StatCard
-    icon={Calendar}
-    label="Timeline Items"
-    value={itinerary.length}
-    onClick={() => navigate(`/trip/${trip.id}/itinerary`)}
-  />
-
-  <StatCard
-    icon={Receipt}
-    label="Total Spent"
-    value={formatCurrency(totalSpent, 'INR')}
-    onClick={() => navigate(`/trip/${trip.id}/expenses`)}
-  />
-
-  <StatCard
-    icon={MapPin}
-    label="Places"
-    value={`${visitedPlaces}/${places.length}`}
-    sub="visited"
-    onClick={() => navigate(`/trip/${trip.id}/places`)}
-  />
-
-  <StatCard
-    icon={FileText}
-    label="Documents"
-    value={documents.length}
-    onClick={() => navigate(`/trip/${trip.id}/documents`)}
-  />
-</div>
-
-      {/* Budget summary */}
-            {budgetTotal > 0 && (
-        <div className="bg-card border border-border rounded-2xl p-4">
-          <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">Budget</p>
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-foreground font-medium">
-              {formatCurrency(totalSpent, 'INR')} spent of {formatCurrency(budgetTotal, 'INR')}
-            </span>
-            <span className={`text-xs font-bold ${totalSpent > budgetTotal ? 'text-red-500' : 'text-primary'}`}>
-              {totalSpent > budgetTotal ? 'Over budget' : formatCurrency(budgetTotal - totalSpent, 'INR') + ' left'}
-            </span>
+        {budgetTotal > 0 && (
+          <div
+            className={`rounded-[22px] px-[18px] py-4 text-white shadow-[0_12px_28px_rgba(37,99,235,0.3)] ${
+              overBudget ? "bg-gradient-to-br from-red-500 to-red-400 dark:from-red-500/80 dark:to-red-400/60" : "bg-gradient-to-br from-primary to-blue-400 dark:from-primary/80 dark:to-blue-400/60"
+            }`}
+          >
+            <div className="flex items-center justify-between text-xs text-white/90">
+              <span>{formatCurrency(totalSpent, "INR")} of {formatCurrency(budgetTotal, "INR")}</span>
+              <span className="font-semibold">
+                {overBudget ? "Over budget" : formatCurrency(budgetTotal - totalSpent, "INR") + " left"}
+              </span>
+            </div>
+            <div className="mt-2.5 h-[7px] overflow-hidden rounded-full bg-white/30">
+              <div className="h-full rounded-full bg-white transition-[width]" style={{ width: `${Math.min((totalSpent / budgetTotal) * 100, 100)}%` }} />
+            </div>
           </div>
+        )}
 
-          <div className="h-2 bg-muted rounded-full overflow-hidden">
-            <div
-              className={`h-full rounded-full transition-all ${totalSpent > budgetTotal ? 'bg-red-500' : 'bg-primary'}`}
-              style={{
-                width: `${Math.min((totalSpent / budgetTotal) * 100, 100)}%`
-              }}
-            />
-          </div>
-        </div>
-      )}
-
-      {/* Trip Map */}
-      <TripMap trip={trip} />
+        <TripMap trip={trip} />
+      </div>
     </div>
   );
 }
@@ -261,25 +203,26 @@ function StatCard({
   label,
   value,
   sub,
+  tint,
   onClick,
 }: {
   icon: any;
   label: string;
   value: string | number;
   sub?: string;
+  tint: string;
   onClick?: () => void;
 }) {
   return (
     <button
-  onClick={onClick}
-  className="bg-card border border-border/60 p-4 rounded-2xl shadow-sm flex flex-col text-left transition-transform active:scale-[0.98]"
->
-      <div className="w-9 h-9 bg-primary/10 rounded-xl flex items-center justify-center text-primary mb-3">
-        <Icon className="w-5 h-5" />
+      onClick={onClick}
+      className="flex flex-col rounded-[22px] bg-card p-3.5 text-left shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_rgba(15,23,42,0.06)] transition-transform active:scale-[0.98]"
+    >
+      <div className={`flex h-[34px] w-[34px] items-center justify-center rounded-xl ${tint}`}>
+        <Icon className="h-[17px] w-[17px]" />
       </div>
-      <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider mb-1">{label}</p>
-      <p className="text-2xl font-display font-bold text-foreground">{value}</p>
-      {sub && <p className="text-xs text-muted-foreground mt-0.5">{sub}</p>}
+      <p className="mt-2.5 font-display text-xl font-bold text-foreground">{value}</p>
+      <p className="text-xs text-muted-foreground">{label}{sub ? ` · ${sub}` : ""}</p>
     </button>
   );
 }

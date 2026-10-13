@@ -29,7 +29,7 @@ Deno.serve(async (req) => {
 
     const accessKey = Deno.env.get("UNSPLASH_ACCESS_KEY");
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
-    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
 
     if (!accessKey) {
       return Response.json(
@@ -41,10 +41,10 @@ Deno.serve(async (req) => {
       );
     }
 
-    if (!supabaseUrl || !serviceRoleKey) {
+    if (!supabaseUrl || !anonKey) {
       return Response.json(
         {
-          error: "Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY",
+          error: "Missing SUPABASE_URL or SUPABASE_ANON_KEY",
         },
         {
           status: 500,
@@ -92,47 +92,31 @@ Deno.serve(async (req) => {
       );
     }
 
-    const supabase = createClient(
-      supabaseUrl,
-      serviceRoleKey
-    );
+    // Use the caller's own JWT so row level security decides whether they may edit this trip.
+    const supabase = createClient(supabaseUrl, anonKey, {
+      global: { headers: { Authorization: req.headers.get("Authorization") ?? "" } },
+    });
 
-    const { data, error } = await supabase
-  .from("trips")
-  .update({
-    hero_image: image,
-  })
-  .eq("id", trip_id)
-  .select();
+    const { error } = await supabase
+      .from("trips")
+      .update({ hero_image: image })
+      .eq("id", trip_id);
 
-return Response.json(
-  {
-    trip_id,
-    image,
-    updated: data,
-    error,
-  },
-  {
-    headers: corsHeaders,
-  }
-);
+    if (error) {
+      console.error(error);
+      return Response.json(
+        { error: error.message },
+        { status: 403, headers: corsHeaders }
+      );
     }
 
-    return Response.json(
-      {
-        image,
-      },
-      {
-        headers: corsHeaders,
-      }
-    );
+    return Response.json({ trip_id, image }, { headers: corsHeaders });
   } catch (err) {
   console.error(err);
 
   return Response.json(
     {
-      error: String(err),
-      stack: err instanceof Error ? err.stack : null,
+      error: err instanceof Error ? err.message : "Unexpected error",
     },
     {
       status: 500,
