@@ -259,7 +259,7 @@ export default function DocumentsTab({ trip }: { trip: Trip }) {
                     className={cn(
                       "flex h-9 items-center gap-1.5 rounded-full px-3.5 text-[13px] font-semibold outline-none transition-colors focus:outline-none",
                       active
-                        ? "bg-primary text-primary-foreground shadow-[0_8px_16px_-6px_hsl(var(--primary)/0.55)]"
+                        ? "bg-primary text-primary-foreground shadow-[0_8px_16px_-6px_hsl(var(--primary)/0.55)] dark:shadow-none"
                         : "bg-card text-foreground/80 shadow-[0_1px_2px_rgba(15,23,42,0.05),0_4px_10px_-4px_rgba(15,23,42,0.1)]"
                     )}
                   >
@@ -515,7 +515,7 @@ function StayCard({ entry, onOpen }: { entry: Entry; onOpen: () => void }) {
   return (
     <button
       onClick={onOpen}
-      className="mb-3 block w-full rounded-[24px] bg-violet-50 p-4 text-left ring-1 ring-violet-200/80 shadow-[0_5px_0_-1px_#E9E3FD,0_10px_0_-2px_#F2EEFE]"
+      className="mb-3 block w-full rounded-[24px] bg-violet-50 p-4 text-left ring-1 ring-violet-200/80 shadow-[0_5px_0_-1px_#E9E3FD,0_10px_0_-2px_#F2EEFE] dark:shadow-[0_5px_0_-1px_#2a2a2f,0_10px_0_-2px_#202024]"
     >
       <div className="flex items-start gap-3">
         <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#7c3aed] text-white dark:bg-[#7c3aed]/80">

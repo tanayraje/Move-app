@@ -60,10 +60,10 @@ const MEAL_SUBTYPES: { id: MealSubType; label: string; icon: React.ElementType; 
 ];
 
 const ELEMENT_COLORS: Record<ElementType, string> = {
-  travel: "from-[#3b82f6] to-[#2563eb] dark:from-[#3b82f6]/70 dark:to-[#2563eb]/70",
-  accommodation: "from-[#8b5cf6] to-[#7c3aed] dark:from-[#8b5cf6]/70 dark:to-[#7c3aed]/70",
-  meal: "from-[#fbbf24] to-[#f59e0b] dark:from-[#fbbf24]/70 dark:to-[#f59e0b]/70",
-  activity: "from-[#0d9488] to-[#059669] dark:from-[#0d9488]/70 dark:to-[#059669]/70",
+  travel: "from-[#3b82f6] to-[#2563eb] dark:from-[#3b82f6]/45 dark:to-[#2563eb]/45",
+  accommodation: "from-[#8b5cf6] to-[#7c3aed] dark:from-[#8b5cf6]/45 dark:to-[#7c3aed]/45",
+  meal: "from-[#fbbf24] to-[#f59e0b] dark:from-[#fbbf24]/45 dark:to-[#f59e0b]/45",
+  activity: "from-[#0d9488] to-[#059669] dark:from-[#0d9488]/45 dark:to-[#059669]/45",
 };
 const ELEMENT_BORDER: Record<ElementType, string> = {
   travel: "border-blue-200",
@@ -119,16 +119,16 @@ function categoryLabel(item: ItineraryItem) {
 function panelGradient(type: ElementType) {
   switch (type) {
     case "travel":
-      return "bg-gradient-to-b from-[#3b82f6] to-[#2563eb] dark:from-[#3b82f6]/70 dark:to-[#2563eb]/70";
+      return "bg-gradient-to-b from-[#3b82f6] to-[#2563eb] dark:from-[#3b82f6]/45 dark:to-[#2563eb]/45";
 
     case "accommodation":
-      return "bg-gradient-to-b from-[#8b5cf6] to-[#7c3aed] dark:from-[#8b5cf6]/70 dark:to-[#7c3aed]/70";
+      return "bg-gradient-to-b from-[#8b5cf6] to-[#7c3aed] dark:from-[#8b5cf6]/45 dark:to-[#7c3aed]/45";
 
     case "meal":
-      return "bg-gradient-to-b from-[#fbbf24] to-[#f59e0b] dark:from-[#fbbf24]/70 dark:to-[#f59e0b]/70";
+      return "bg-gradient-to-b from-[#fbbf24] to-[#f59e0b] dark:from-[#fbbf24]/45 dark:to-[#f59e0b]/45";
 
     default:
-      return "bg-gradient-to-b from-[#14b8a6] to-[#0d9488] dark:from-[#14b8a6]/70 dark:to-[#0d9488]/70";
+      return "bg-gradient-to-b from-[#14b8a6] to-[#0d9488] dark:from-[#14b8a6]/45 dark:to-[#0d9488]/45";
   }
 }
 
@@ -746,7 +746,7 @@ const dur = Math.max(
             )}
           </div>
           {dayIndex >= 0 && (
-            <span className="shrink-0 rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-slate-900 shadow-md [text-shadow:none]">
+            <span className="shrink-0 rounded-full bg-white px-3 py-1.5 text-xs font-semibold shadow-md [text-shadow:none]" style={{ color: "#0f172a" }}>
               {isWishlist ? selectedDate : `Day ${dayIndex + 1} of ${days.length}`}
             </span>
           )}
@@ -771,7 +771,7 @@ const dur = Math.max(
                   className={cn(
                     "flex h-[76px] w-[58px] shrink-0 flex-col items-center justify-center rounded-[22px] transition-all",
                     isSelected
-                      ? "bg-primary text-primary-foreground shadow-[0_10px_18px_-6px_hsl(var(--primary)/0.55)]"
+                      ? "bg-primary text-primary-foreground shadow-[0_10px_18px_-6px_hsl(var(--primary)/0.55)] dark:shadow-none"
                       : `bg-card text-foreground ${chipShadow}`
                   )}
                 >
@@ -1031,7 +1031,7 @@ const toggleChecklistItem = (checkId: string) => {
   return (
     <div
       className={cn(
-        "mb-6 overflow-hidden rounded-[26px] border bg-violet-50/70 shadow-[0_5px_0_-1px_#E9E3FD,0_10px_0_-2px_#F2EEFE] transition-all duration-300",
+        "mb-6 overflow-hidden rounded-[26px] border bg-violet-50/70 shadow-[0_5px_0_-1px_#E9E3FD,0_10px_0_-2px_#F2EEFE] dark:shadow-[0_5px_0_-1px_#2a2a2f,0_10px_0_-2px_#202024] transition-all duration-300",
         ELEMENT_BORDER.accommodation
       )}
     >
@@ -1587,7 +1587,7 @@ function SortableItem({
       {/* Rail: line turns blue once the item is done */}
       <div className="relative w-7 shrink-0">
         {!isLast && (
-          <span className={cn("absolute -bottom-5 left-[13px] top-0 w-0.5", done ? "bg-primary" : "bg-border")} />
+          <span className={cn("absolute -bottom-5 left-[13px] top-0 w-0.5", done ? "bg-primary dark:bg-primary/60" : "bg-border")} />
         )}
         <span className={cn("absolute left-2 top-[18px] h-3 w-3 rounded-full ring-4 ring-background", dotColor)} />
       </div>
@@ -1694,7 +1694,7 @@ function SortableItem({
 
               {item.elementType === "activity" && (
                 <div>
-                  <div className="relative bg-gradient-to-r from-[#0d9488] to-[#059669] dark:from-[#0d9488]/70 dark:to-[#059669]/70 px-4 pb-2.5 pt-4 text-white">
+                  <div className="relative bg-gradient-to-r from-[#0d9488] to-[#059669] dark:from-[#0d9488]/45 dark:to-[#059669]/45 px-4 pb-2.5 pt-4 text-white">
                     <span aria-hidden className="absolute left-1/2 top-1.5 h-1.5 w-10 -translate-x-1/2 rounded-full bg-black/25" />
                     <div className="flex items-center justify-between text-[12px] font-semibold">
                       <span className="flex items-center gap-1.5">

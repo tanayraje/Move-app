@@ -124,7 +124,7 @@ return (
         {!trip.heroImage && <Plane className="absolute -right-6 bottom-10 h-44 w-44 text-white/10" />}
         <HeroScrim />
         <div className="absolute inset-x-0 bottom-14 z-10 px-6 text-white [text-shadow:0_1px_14px_rgba(0,0,0,0.5)]">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-white/95 px-3 py-1.5 text-xs font-semibold text-slate-900 shadow-md [text-shadow:none]">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-white/95 px-3 py-1.5 text-xs font-semibold shadow-md [text-shadow:none]" style={{ color: "#0f172a" }}>
             {isWishlist ? <Heart className="h-3.5 w-3.5 text-pink-500" /> : <span className="h-1.5 w-1.5 rounded-full bg-orange-500" />}
             {tripStatusLabel}
           </span>
