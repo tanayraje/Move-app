@@ -14,7 +14,7 @@ export function Button({ className, variant = 'primary', size = 'default', isLoa
           'bg-muted text-foreground hover:bg-muted/80': variant === 'secondary',
           'border-2 border-border bg-transparent hover:bg-muted/50 text-foreground': variant === 'outline',
           'bg-transparent hover:bg-muted text-foreground': variant === 'ghost',
-          'bg-red-500 text-white shadow-lg shadow-red-500/25 hover:bg-red-600': variant === 'danger',
+          'bg-red-500 text-white shadow-lg shadow-red-500/25 hover:bg-[#dc2626] dark:shadow-none': variant === 'danger',
           'h-12 px-6 py-3': size === 'default',
           'h-9 px-4 text-sm': size === 'sm',
           'h-14 px-8 text-lg rounded-2xl': size === 'lg',

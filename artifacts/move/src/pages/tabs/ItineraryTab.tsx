@@ -60,10 +60,10 @@ const MEAL_SUBTYPES: { id: MealSubType; label: string; icon: React.ElementType; 
 ];
 
 const ELEMENT_COLORS: Record<ElementType, string> = {
-  travel: "from-blue-500 to-blue-600",
-  accommodation: "from-violet-500 to-violet-600",
-  meal: "from-amber-400 to-amber-500",
-  activity: "from-teal-600 to-emerald-600",
+  travel: "from-[#3b82f6] to-[#2563eb] dark:from-[#3b82f6]/70 dark:to-[#2563eb]/70",
+  accommodation: "from-[#8b5cf6] to-[#7c3aed] dark:from-[#8b5cf6]/70 dark:to-[#7c3aed]/70",
+  meal: "from-[#fbbf24] to-[#f59e0b] dark:from-[#fbbf24]/70 dark:to-[#f59e0b]/70",
+  activity: "from-[#0d9488] to-[#059669] dark:from-[#0d9488]/70 dark:to-[#059669]/70",
 };
 const ELEMENT_BORDER: Record<ElementType, string> = {
   travel: "border-blue-200",
@@ -119,16 +119,16 @@ function categoryLabel(item: ItineraryItem) {
 function panelGradient(type: ElementType) {
   switch (type) {
     case "travel":
-      return "bg-gradient-to-b from-blue-500 to-blue-600";
+      return "bg-gradient-to-b from-[#3b82f6] to-[#2563eb] dark:from-[#3b82f6]/70 dark:to-[#2563eb]/70";
 
     case "accommodation":
-      return "bg-gradient-to-b from-violet-500 to-violet-600";
+      return "bg-gradient-to-b from-[#8b5cf6] to-[#7c3aed] dark:from-[#8b5cf6]/70 dark:to-[#7c3aed]/70";
 
     case "meal":
-      return "bg-gradient-to-b from-amber-400 to-amber-500";
+      return "bg-gradient-to-b from-[#fbbf24] to-[#f59e0b] dark:from-[#fbbf24]/70 dark:to-[#f59e0b]/70";
 
     default:
-      return "bg-gradient-to-b from-teal-500 to-teal-600";
+      return "bg-gradient-to-b from-[#14b8a6] to-[#0d9488] dark:from-[#14b8a6]/70 dark:to-[#0d9488]/70";
   }
 }
 
@@ -1694,7 +1694,7 @@ function SortableItem({
 
               {item.elementType === "activity" && (
                 <div>
-                  <div className="relative bg-gradient-to-r from-teal-600 to-emerald-600 px-4 pb-2.5 pt-4 text-white">
+                  <div className="relative bg-gradient-to-r from-[#0d9488] to-[#059669] dark:from-[#0d9488]/70 dark:to-[#059669]/70 px-4 pb-2.5 pt-4 text-white">
                     <span aria-hidden className="absolute left-1/2 top-1.5 h-1.5 w-10 -translate-x-1/2 rounded-full bg-black/25" />
                     <div className="flex items-center justify-between text-[12px] font-semibold">
                       <span className="flex items-center gap-1.5">

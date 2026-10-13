@@ -518,7 +518,7 @@ function StayCard({ entry, onOpen }: { entry: Entry; onOpen: () => void }) {
       className="mb-3 block w-full rounded-[24px] bg-violet-50 p-4 text-left ring-1 ring-violet-200/80 shadow-[0_5px_0_-1px_#E9E3FD,0_10px_0_-2px_#F2EEFE]"
     >
       <div className="flex items-start gap-3">
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-violet-600 text-white">
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#7c3aed] text-white dark:bg-[#7c3aed]/80">
           <KeyRound className="h-5 w-5" />
         </span>
         <div className="min-w-0 flex-1">
@@ -760,7 +760,7 @@ function PreviewSheet({
                   <button
                     disabled={isPending}
                     onClick={() => deleteDoc({ id: doc.id, tripId: doc.tripId }, { onSuccess: close })}
-                    className="h-11 flex-1 rounded-xl bg-red-600 text-sm font-semibold text-white disabled:opacity-60"
+                    className="h-11 flex-1 rounded-xl bg-[#dc2626] dark:bg-[#dc2626]/85 text-sm font-semibold text-white disabled:opacity-60"
                   >
                     {isPending ? "Deleting" : "Delete"}
                   </button>

@@ -177,7 +177,7 @@ return (
         {budgetTotal > 0 && (
           <div
             className={`rounded-[22px] px-[18px] py-4 text-white shadow-[0_12px_28px_rgba(37,99,235,0.3)] ${
-              overBudget ? "bg-gradient-to-br from-red-500 to-red-400" : "bg-gradient-to-br from-primary to-blue-400"
+              overBudget ? "bg-gradient-to-br from-red-500 to-red-400 dark:from-red-500/80 dark:to-red-400/60" : "bg-gradient-to-br from-primary to-blue-400 dark:from-primary/80 dark:to-blue-400/60"
             }`}
           >
             <div className="flex items-center justify-between text-xs text-white/90">

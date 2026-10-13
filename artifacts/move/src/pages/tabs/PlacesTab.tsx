@@ -307,7 +307,7 @@ function PlaceCard({ place, onToggle, onEdit }: { place: Place; onToggle: () => 
                 <button
                   disabled={deleting}
                   onClick={() => deletePlace({ tripId: place.tripId, id: place.id })}
-                  className="h-11 flex-1 rounded-xl bg-red-600 text-sm font-semibold text-white disabled:opacity-60"
+                  className="h-11 flex-1 rounded-xl bg-[#dc2626] dark:bg-[#dc2626]/85 text-sm font-semibold text-white disabled:opacity-60"
                 >
                   {deleting ? "Removing" : "Remove"}
                 </button>

@@ -348,7 +348,7 @@ setShowSettlement(false);
   return (
     <div className="relative px-4 pb-40 pt-2">
       {/* Status card: where the money stands, and what you owe or are owed */}
-      <div className="mb-4 rounded-[28px] bg-gradient-to-br from-primary to-[#4C82F0] p-5 text-primary-foreground shadow-[0_18px_36px_-14px_hsl(var(--primary)/0.6)]">
+      <div className="mb-4 rounded-[28px] bg-gradient-to-br from-primary to-[#4C82F0] dark:from-primary/85 dark:to-[#4C82F0]/70 p-5 text-primary-foreground shadow-[0_18px_36px_-14px_hsl(var(--primary)/0.6)]">
         <div className="flex items-center justify-between">
           <p className="text-sm font-medium text-primary-foreground/80">Total spent</p>
           {showToggle && (
@@ -841,7 +841,7 @@ function DeleteExpense({ expense, onDone }: { expense: Expense; onDone: () => vo
           type="button"
           disabled={isPending}
           onClick={() => deleteExp({ id: expense.id, tripId: expense.tripId }, { onSuccess: onDone })}
-          className="h-11 flex-1 rounded-xl bg-red-600 text-sm font-semibold text-white disabled:opacity-60"
+          className="h-11 flex-1 rounded-xl bg-[#dc2626] dark:bg-[#dc2626]/85 text-sm font-semibold text-white disabled:opacity-60"
         >
           {isPending ? "Deleting" : "Delete"}
         </button>
