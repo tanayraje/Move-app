@@ -1566,7 +1566,7 @@ function SortableItem({
     ? `${notchTop}, linear-gradient(#000, #000) bottom / 100% 49% no-repeat`
     : `${notchTop}, ${notchBottom}`;
 
-  const dotColor = isTravel ? "bg-blue-500" : isMeal ? "bg-amber-500" : "bg-teal-500";
+  const dotColor = isTravel ? "bg-blue-500" : isMeal ? "bg-[#FFD633]" : "bg-teal-500";
   const panelTone = isTravel
     ? "border-blue-200 bg-card/70"
     : isMeal
@@ -1596,7 +1596,7 @@ function SortableItem({
       <div
         className={cn(
           "min-w-0 flex-1 self-start",
-          !isTravel && !isMeal && "rounded-[28px] shadow-[0_1px_2px_rgba(15,23,42,0.05),0_10px_26px_-6px_rgba(13,148,136,0.28)]"
+          !isTravel && !isMeal && "rounded-[28px] shadow-[0_1px_2px_rgba(15,23,42,0.04),0_4px_12px_-4px_rgba(13,148,136,0.08)]"
         )}
         style={isTravel || isMeal ? { filter: "drop-shadow(0 8px 14px rgba(15,23,42,0.12))" } : undefined}
       >
@@ -1663,11 +1663,11 @@ function SortableItem({
               {isMeal && (
                 <div className="px-4 pb-2 pt-3.5">
                   <div className="flex items-center gap-3">
-                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700">
+                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#FFD633]/10 text-[#FFD633]">
                       <Icon className="h-5 w-5" />
                     </span>
                     <div className="min-w-0 flex-1">
-                      <p className="text-[11px] font-semibold text-amber-700">{categoryLabel(item)}</p>
+                      <p className="text-[11px] font-semibold text-[#FFD633]">{categoryLabel(item)}</p>
                       <h3 className="truncate text-base font-semibold leading-snug">{item.title}</h3>
                     </div>
                     <ChevronDown
