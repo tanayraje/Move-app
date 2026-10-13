@@ -1570,8 +1570,8 @@ function SortableItem({
   const panelTone = isTravel
     ? "border-blue-200 bg-card/70"
     : isMeal
-    ? "border-amber-300/70 bg-card/60"
-    : "border-teal-200 bg-card/70";
+    ? "border-amber-300/80 bg-card/80"
+    : "border-teal-300/70 bg-card/85";
   // Receipt edge for meals: the bottom 8px is cut into a zig-zag
   const zigzag = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='8' viewBox='0 0 16 8'%3E%3Cpath d='M0 0h16L8 8z'/%3E%3C/svg%3E")`;
   const receiptMask = `linear-gradient(#000, #000) top / 100% calc(100% - 7px) no-repeat, ${zigzag} bottom / 16px 8px repeat-x`;
@@ -1603,9 +1603,9 @@ function SortableItem({
         <div
           className={cn(
             "relative overflow-hidden",
-            isTravel && "rounded-[22px] bg-blue-50",
-            isMeal && "rounded-t-[26px] bg-amber-50 pb-2",
-            !isTravel && !isMeal && "rounded-[28px] bg-teal-50 ring-1 ring-teal-200/80"
+            isTravel && "rounded-[22px] bg-blue-50 dark:bg-blue-950/70",
+isMeal && "rounded-t-[26px] bg-amber-50 pb-2 dark:bg-amber-950/80",
+!isTravel && !isMeal && "rounded-[28px] bg-teal-50 ring-1 ring-teal-200/80 dark:bg-teal-950/80 dark:ring-teal-400/30"
           )}
           style={
             isTravel
