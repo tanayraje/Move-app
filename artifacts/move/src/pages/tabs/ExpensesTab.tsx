@@ -648,7 +648,7 @@ setShowSettlement(false);
                       <p className={cn("font-display text-[15.5px] font-bold", catOver && "text-red-600")}>{money(spent)}</p>
                     </div>
                     <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-muted">
-                      <div className={cn("h-full rounded-full transition-all", catOver ? "bg-red-500" : tone.bar)} style={{ width: `${barPct}%` }} />
+                      <div className={cn("h-full rounded-full transition-[width]", catOver ? "bg-red-500" : tone.bar)} style={{ width: `${barPct}%` }} />
                     </div>
                   </div>
                 );
@@ -1165,8 +1165,8 @@ const parts = involved.map(mid => {
                 <Split className="w-4 h-4 text-primary" />
                 <span className="font-bold text-sm text-foreground">{showSplit ? 'Split On' : 'Split Expense'}</span>
               </div>
-              <div className={cn("w-10 h-6 rounded-full transition-all relative", showSplit ? "bg-primary" : "bg-muted")}>
-                <div className={cn("w-4 h-4 rounded-full bg-white absolute top-1 transition-all", showSplit ? "left-5" : "left-1")} />
+              <div className={cn("w-10 h-6 rounded-full transition relative", showSplit ? "bg-primary" : "bg-muted")}>
+                <div className={cn("w-4 h-4 rounded-full bg-white absolute top-1 transition-[left]", showSplit ? "left-5" : "left-1")} />
               </div>
             </button>
 

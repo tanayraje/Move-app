@@ -515,7 +515,7 @@ function StayCard({ entry, onOpen }: { entry: Entry; onOpen: () => void }) {
   return (
     <button
       onClick={onOpen}
-      className="mb-3 block w-full rounded-[24px] bg-violet-50 p-4 text-left ring-1 ring-violet-200/80 shadow-[0_5px_0_-1px_#E9E3FD,0_10px_0_-2px_#F2EEFE] dark:shadow-[0_5px_0_-1px_#2a2a2f,0_10px_0_-2px_#202024]"
+      className="mb-3 block w-full rounded-[24px] bg-violet-50 p-4 text-left ring-1 ring-violet-200/80 shadow-[0_5px_0_-1px_#E9E3FD,0_10px_0_-2px_#F2EEFE] dark:shadow-[0_5px_0_-1px_#1d2235,0_10px_0_-2px_#171c2c]"
     >
       <div className="flex items-start gap-3">
         <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#7c3aed] text-white dark:bg-[#7c3aed]/80">
@@ -613,7 +613,7 @@ function SoonTile({ entry, onOpen }: { entry: Entry; onOpen: () => void }) {
     stay: "bg-violet-50 text-violet-600",
     meal: "bg-amber-50 text-amber-600",
     activity: "bg-teal-50 text-teal-600",
-    id: "bg-slate-100 text-[#1B3F82]",
+    id: "bg-slate-100 text-[#1B3F82] dark:text-blue-300",
     file: "bg-muted text-slate-600",
   };
   const icon: Record<Kind, any> = {
@@ -706,7 +706,7 @@ function PreviewSheet({
                 src={doc.file_url}
                 alt={doc.name}
                 onError={() => setImgFailed(true)}
-                className="max-h-[48vh] w-full object-contain"
+                className="max-h-[48dvh] w-full object-contain"
               />
             ) : (
               <div className="flex flex-col items-center gap-2 py-8 text-muted-foreground">

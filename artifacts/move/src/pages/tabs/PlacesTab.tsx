@@ -64,7 +64,7 @@ export default function PlacesTab({ trip }: { trip: Trip }) {
       {places.length > 0 && (
         <>
           <div className="mb-4 h-1.5 overflow-hidden rounded-full bg-muted">
-            <div className="h-full rounded-full bg-orange-400 dark:bg-orange-400/80 transition-all duration-500" style={{ width: `${pct}%` }} />
+            <div className="h-full rounded-full bg-orange-400 dark:bg-orange-400/80 transition-[width] duration-300" style={{ width: `${pct}%` }} />
           </div>
           <div className="flex gap-2">
             {chips.map(c => {

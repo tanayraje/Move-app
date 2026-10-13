@@ -4,7 +4,7 @@ export type ThemeMode = "system" | "light" | "dark";
 
 const KEY = "move-theme";
 const LIGHT_BAR = "#f8fafc";
-const DARK_BAR = "#0b0b0d";
+const DARK_BAR = "#111724";
 
 const listeners = new Set<() => void>();
 const media =

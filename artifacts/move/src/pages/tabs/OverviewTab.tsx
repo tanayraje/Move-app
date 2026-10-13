@@ -187,7 +187,7 @@ return (
               </span>
             </div>
             <div className="mt-2.5 h-[7px] overflow-hidden rounded-full bg-white/30">
-              <div className="h-full rounded-full bg-white transition-all" style={{ width: `${Math.min((totalSpent / budgetTotal) * 100, 100)}%` }} />
+              <div className="h-full rounded-full bg-white transition-[width]" style={{ width: `${Math.min((totalSpent / budgetTotal) * 100, 100)}%` }} />
             </div>
           </div>
         )}

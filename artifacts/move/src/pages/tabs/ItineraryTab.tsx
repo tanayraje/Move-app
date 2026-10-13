@@ -754,7 +754,7 @@ const dur = Math.max(
       </div>
 
       {/* Content sheet slides over the photo */}
-      <div className="relative z-10 -mt-7 min-h-[60vh] rounded-t-[34px] bg-background px-4 pb-40 pt-5 shadow-[0_-12px_30px_rgba(10,20,50,0.16)]">
+      <div className="relative z-10 -mt-7 min-h-[60dvh] rounded-t-[34px] bg-background px-4 pb-40 pt-5 shadow-[0_-12px_30px_rgba(10,20,50,0.16)]">
         {/* Day strip (solid chips, not glass) */}
         <div data-no-swipe className="relative -mx-4 -mb-3 overflow-x-auto px-4 pb-6 no-scrollbar">
           <div ref={dayScrollerRef} className="flex min-w-max gap-2 pt-1">
@@ -769,7 +769,7 @@ const dur = Math.max(
                   key={day}
                   onClick={() => setSelectedDate(day)}
                   className={cn(
-                    "flex h-[76px] w-[58px] shrink-0 flex-col items-center justify-center rounded-[22px] transition-all",
+                    "flex h-[76px] w-[58px] shrink-0 flex-col items-center justify-center rounded-[22px] transition",
                     isSelected
                       ? "bg-primary text-primary-foreground shadow-[0_10px_18px_-6px_hsl(var(--primary)/0.55)] dark:shadow-none"
                       : `bg-card text-foreground ${chipShadow}`
@@ -1031,7 +1031,7 @@ const toggleChecklistItem = (checkId: string) => {
   return (
     <div
       className={cn(
-        "mb-6 overflow-hidden rounded-[26px] border bg-violet-50/70 shadow-[0_5px_0_-1px_#E9E3FD,0_10px_0_-2px_#F2EEFE] dark:shadow-[0_5px_0_-1px_#2a2a2f,0_10px_0_-2px_#202024] transition-all duration-300",
+        "mb-6 overflow-hidden rounded-[26px] border bg-violet-50/70 shadow-[0_5px_0_-1px_#E9E3FD,0_10px_0_-2px_#F2EEFE] dark:shadow-[0_5px_0_-1px_#1d2235,0_10px_0_-2px_#171c2c] transition duration-300",
         ELEMENT_BORDER.accommodation
       )}
     >
@@ -1289,7 +1289,7 @@ const toggleChecklistItem = (checkId: string) => {
     <div className="mb-5 h-2 overflow-hidden rounded-full bg-muted">
 
       <div
-        className="h-full rounded-full bg-violet-500 transition-all"
+        className="h-full rounded-full bg-violet-500 transition"
         style={{
           width: `${
             totalChecklist
@@ -1568,10 +1568,10 @@ function SortableItem({
 
   const dotColor = isTravel ? "bg-blue-500" : isMeal ? "bg-amber-500" : "bg-teal-500";
   const panelTone = isTravel
-    ? "border-blue-200 bg-white/70"
+    ? "border-blue-200 bg-card/70"
     : isMeal
-    ? "border-amber-300/70 bg-white/60"
-    : "border-teal-200 bg-white/70";
+    ? "border-amber-300/70 bg-card/60"
+    : "border-teal-200 bg-card/70";
   // Receipt edge for meals: the bottom 8px is cut into a zig-zag
   const zigzag = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='8' viewBox='0 0 16 8'%3E%3Cpath d='M0 0h16L8 8z'/%3E%3C/svg%3E")`;
   const receiptMask = `linear-gradient(#000, #000) top / 100% calc(100% - 7px) no-repeat, ${zigzag} bottom / 16px 8px repeat-x`;
@@ -1861,7 +1861,7 @@ function SortableItem({
 
       <div
         className={cn(
-          "h-full rounded-full transition-all duration-300",
+          "h-full rounded-full transition duration-300",
           item.elementType === "travel"
             ? "bg-blue-500"
             : item.elementType === "accommodation"
@@ -2240,7 +2240,7 @@ function AddEditSheet({ isOpen, onClose, trip, defaultDate, documents, allItems,
               {ELEMENT_TYPES.map(({ id, label, icon: Icon }) => (
                 <button key={id} type="button" onClick={() => setElementType(id)}
                   className={cn(
-                    "flex flex-col items-center gap-1.5 py-3 rounded-xl border-2 transition-all text-[15px] font-semibold",
+                    "flex flex-col items-center gap-1.5 py-3 rounded-xl border-2 transition text-[15px] font-semibold",
                     elementType === id ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-muted-foreground"
                   )}>
                   <Icon className="w-5 h-5" />{label}
@@ -2295,7 +2295,7 @@ function AddEditSheet({ isOpen, onClose, trip, defaultDate, documents, allItems,
                   const TIcon = TRAVEL_ICONS[t];
                   return (
                     <button key={t} type="button" onClick={() => setTravelType(t)}
-                      className={cn("flex flex-col items-center gap-1 py-2.5 rounded-xl border-2 transition-all text-xs font-semibold capitalize",
+                      className={cn("flex flex-col items-center gap-1 py-2.5 rounded-xl border-2 transition text-xs font-semibold capitalize",
                         travelType === t ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-muted-foreground"
                       )}>
                       <TIcon className="w-4 h-4" />{t}
@@ -2371,7 +2371,7 @@ function AddEditSheet({ isOpen, onClose, trip, defaultDate, documents, allItems,
                 {MEAL_SUBTYPES.map(({ id, label, icon: MIcon }) => (
                   <button key={id} type="button" onClick={() => handleMealSubTypeChange(id)}
                     className={cn(
-                      "flex flex-col items-center gap-1.5 py-3 rounded-xl border-2 transition-all text-xs font-semibold",
+                      "flex flex-col items-center gap-1.5 py-3 rounded-xl border-2 transition text-xs font-semibold",
                       mealSubType === id ? "border-amber-400 bg-amber-50 text-amber-700" : "border-border bg-card text-muted-foreground"
                     )}>
                     <MIcon className="w-4 h-4" />{label}
@@ -2530,7 +2530,7 @@ function AddEditSheet({ isOpen, onClose, trip, defaultDate, documents, allItems,
         <div>
           <Label>Upload Document (optional)</Label>
           <label className={cn(
-            "flex items-center gap-3 w-full px-4 py-3 rounded-xl border-2 border-dashed cursor-pointer transition-all",
+            "flex items-center gap-3 w-full px-4 py-3 rounded-xl border-2 border-dashed cursor-pointer transition",
             uploadFile ? "border-primary bg-primary/5" : "border-border hover:border-primary/40 hover:bg-muted/30"
           )}>
             <Upload className={cn("w-5 h-5 shrink-0", uploadFile ? "text-primary" : "text-muted-foreground")} />
@@ -2555,7 +2555,7 @@ function AddEditSheet({ isOpen, onClose, trip, defaultDate, documents, allItems,
             <button
               type="button"
               onClick={() => setShowDocPicker(!showDocPicker)}
-              className="flex items-center justify-between w-full h-12 px-4 rounded-xl border-2 border-border bg-card text-base transition-all hover:border-primary/40"
+              className="flex items-center justify-between w-full h-12 px-4 rounded-xl border-2 border-border bg-card text-base transition hover:border-primary/40"
             >
               <span className="text-muted-foreground text-sm">
                 {selectedDocIds.length > 0 ? `${selectedDocIds.length} selected` : 'Select from saved documents'}
@@ -2571,7 +2571,7 @@ function AddEditSheet({ isOpen, onClose, trip, defaultDate, documents, allItems,
                       onClick={() => setSelectedDocIds(prev => isSel ? prev.filter(id => id !== doc.id) : [...prev, doc.id])}
                       className="flex items-center gap-3 w-full px-4 py-3 border-b border-border/30 last:border-0 hover:bg-muted/40"
                     >
-                      <div className={cn("w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition-all", isSel ? "bg-primary border-primary" : "border-border")}>
+                      <div className={cn("w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition", isSel ? "bg-primary border-primary" : "border-border")}>
                         {isSel && <Check className="w-3 h-3 text-white" />}
                       </div>
                       <FileText className="w-4 h-4 text-muted-foreground shrink-0" />
