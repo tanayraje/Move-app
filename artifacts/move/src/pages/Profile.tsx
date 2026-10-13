@@ -1,12 +1,13 @@
-import { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Link } from "wouter";
-import { ChevronLeft, Pencil, Check, LogOut, Mail } from "lucide-react";
+import { ChevronLeft, Pencil, Check, LogOut, Mail, Sun, Moon, Monitor } from "lucide-react";
 import { useSupabaseAuth } from "@/contexts/AuthContext";
 import { useProfile, useUpdateProfile } from "@/hooks/use-profile";
 import { useTrips } from "@/hooks/use-store";
 import { getAvatarUrl } from "@/lib/avatar";
 import { BottomSheet, Button, Input, Label } from "@/components/ui";
 import { cn } from "@/lib/utils";
+import { setThemeMode, useThemeMode, type ThemeMode } from "@/lib/theme";
 
 const AVATARS = Array.from({ length: 24 }, (_, i) => `avatar-${i + 1}`);
 
@@ -15,6 +16,7 @@ export default function Profile() {
   const { data: profile } = useProfile(user?.id);
   const updateProfile = useUpdateProfile(user?.id);
   const { data: trips = [] } = useTrips();
+  const themeMode = useThemeMode();
 
   const [username, setUsername] = useState("");
   const [name, setName] = useState("");
@@ -89,7 +91,7 @@ export default function Profile() {
       <h1 className="mt-5 px-2 font-display text-[40px] font-bold leading-none tracking-tight">Profile</h1>
 
       {/* Identity */}
-      <div className="mt-6 rounded-[28px] bg-card p-6 shadow-[0_8px_30px_rgba(15,23,42,0.06)]">
+      <div className="mt-6 rounded-[28px] bg-card p-6 shadow-[0_8px_30px_rgba(15,23,42,0.06)] dark:shadow-none dark:ring-1 dark:ring-border">
         <div className="flex flex-col items-center text-center">
           <button type="button" onClick={() => setShowPicker(true)} className="relative" aria-label="Change avatar">
             <img
@@ -115,7 +117,7 @@ export default function Profile() {
       </div>
 
       {/* Details */}
-      <div className="mt-4 rounded-[28px] bg-card p-6 shadow-[0_8px_30px_rgba(15,23,42,0.06)]">
+      <div className="mt-4 rounded-[28px] bg-card p-6 shadow-[0_8px_30px_rgba(15,23,42,0.06)] dark:shadow-none dark:ring-1 dark:ring-border">
         <div className="mb-4">
           <Label>Name</Label>
           <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" />
@@ -150,9 +152,18 @@ export default function Profile() {
         )}
       </div>
 
+      {/* Appearance */}
+      <div className="mt-4 rounded-[28px] bg-card p-6 shadow-[0_8px_30px_rgba(15,23,42,0.06)] dark:shadow-none dark:ring-1 dark:ring-border">
+        <p className="mb-1 font-display text-[17px] font-bold tracking-[-0.01em]">Appearance</p>
+        <p className="mb-4 text-sm text-muted-foreground">
+          {themeMode === "system" ? "Matches your phone's setting." : themeMode === "dark" ? "Dark is on." : "Light is on."}
+        </p>
+        <ThemeSwitch value={themeMode} onChange={setThemeMode} />
+      </div>
+
       <button
         onClick={signOut}
-        className="mt-4 flex h-14 w-full items-center justify-center gap-2 rounded-[22px] bg-card text-[15px] font-semibold text-red-500 shadow-[0_8px_30px_rgba(15,23,42,0.06)] active:scale-[0.99]"
+        className="mt-4 flex h-14 w-full items-center justify-center gap-2 rounded-[22px] bg-card text-[15px] font-semibold text-red-500 shadow-[0_8px_30px_rgba(15,23,42,0.06)] dark:shadow-none dark:ring-1 dark:ring-border"
       >
         <LogOut className="h-4 w-4" /> Sign out
       </button>
@@ -171,7 +182,7 @@ export default function Profile() {
               type="button"
               onClick={() => setAvatar(item)}
               className={cn(
-                "relative aspect-square overflow-hidden rounded-2xl bg-muted transition-all",
+                "relative aspect-square overflow-hidden rounded-2xl bg-muted transition",
                 avatar === item ? "ring-2 ring-primary ring-offset-2 ring-offset-card" : "hover:scale-105"
               )}
             >
@@ -186,6 +197,42 @@ export default function Profile() {
         </div>
         <Button size="lg" className="mt-6 w-full" onClick={() => setShowPicker(false)}>Done</Button>
       </BottomSheet>
+    </div>
+  );
+}
+
+const THEME_OPTIONS: { id: ThemeMode; label: string; icon: React.ElementType }[] = [
+  { id: "system", label: "System", icon: Monitor },
+  { id: "light", label: "Light", icon: Sun },
+  { id: "dark", label: "Dark", icon: Moon },
+];
+
+/** Three-way switch. The pill slides with a transform transition, so it can be retargeted mid-move. */
+function ThemeSwitch({ value, onChange }: { value: ThemeMode; onChange: (m: ThemeMode) => void }) {
+  const index = Math.max(0, THEME_OPTIONS.findIndex((o) => o.id === value));
+  return (
+    <div role="radiogroup" aria-label="Theme" className="relative grid grid-cols-3 rounded-2xl bg-muted p-1">
+      <span
+        aria-hidden
+        className="absolute inset-y-1 left-1 w-[calc((100%-8px)/3)] rounded-xl bg-card shadow-[0_2px_8px_rgba(15,23,42,0.12)] transition-transform duration-[250ms] ease-[cubic-bezier(0.23,1,0.32,1)] dark:bg-[#2b3447] dark:shadow-none"
+        style={{ transform: `translateX(${index * 100}%)` }}
+      />
+      {THEME_OPTIONS.map(({ id, label, icon: Icon }) => (
+        <button
+          key={id}
+          type="button"
+          role="radio"
+          aria-checked={value === id}
+          onClick={() => onChange(id)}
+          className={cn(
+            "relative z-10 flex h-11 items-center justify-center gap-1.5 rounded-xl text-[14px] font-semibold transition-colors duration-200",
+            value === id ? "text-foreground" : "text-muted-foreground"
+          )}
+        >
+          <Icon className="h-4 w-4" />
+          {label}
+        </button>
+      ))}
     </div>
   );
 }

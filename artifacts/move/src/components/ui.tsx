@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { createPortal } from "react-dom";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useDragControls } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { X } from "lucide-react";
 
@@ -8,7 +8,7 @@ export function Button({ className, variant = 'primary', size = 'default', isLoa
   return (
     <button 
       className={cn(
-        "inline-flex items-center justify-center rounded-xl font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98]",
+        "inline-flex items-center justify-center rounded-xl font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:pointer-events-none disabled:opacity-50",
         {
           'bg-primary text-primary-foreground shadow-sm shadow-black/10 hover:bg-primary/90': variant === 'primary',
           'bg-muted text-foreground hover:bg-muted/80': variant === 'secondary',
@@ -35,7 +35,7 @@ export function Input({ className, ...props }: React.InputHTMLAttributes<HTMLInp
   return (
     <input 
       className={cn(
-        "flex h-12 w-full rounded-xl border-2 border-border bg-card px-4 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:border-primary focus-visible:ring-4 focus-visible:ring-primary/10 disabled:cursor-not-allowed disabled:opacity-50 transition-all",
+        "flex h-12 w-full rounded-xl border-2 border-border bg-card px-4 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:border-primary focus-visible:ring-4 focus-visible:ring-primary/10 disabled:cursor-not-allowed disabled:opacity-50 transition",
         className
       )}
       {...props}
@@ -47,7 +47,7 @@ export function Select({ className, children, ...props }: React.SelectHTMLAttrib
   return (
     <select 
       className={cn(
-        "flex h-12 w-full rounded-xl border-2 border-border bg-card px-4 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:border-primary focus-visible:ring-4 focus-visible:ring-primary/10 disabled:cursor-not-allowed disabled:opacity-50 transition-all appearance-none",
+        "flex h-12 w-full rounded-xl border-2 border-border bg-card px-4 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:border-primary focus-visible:ring-4 focus-visible:ring-primary/10 disabled:cursor-not-allowed disabled:opacity-50 transition appearance-none",
         className
       )}
       {...props}
@@ -88,6 +88,15 @@ function BottomSheetInner({
   title: string;
   children: React.ReactNode;
 }) {
+  const controls = useDragControls();
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [isOpen, onClose]);
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -96,46 +105,56 @@ function BottomSheetInner({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
             onClick={onClose}
-            className="fixed inset-0 z-200 bg-foreground/20 backdrop-blur-sm"
+            className="fixed inset-0 z-200 bg-black/35 backdrop-blur-[3px] dark:bg-black/60"
           />
 
           <motion.div
+            role="dialog"
+            aria-modal="true"
+            aria-label={title}
             initial={{ y: "100%" }}
-            animate={{ y: 0 }}
-            exit={{ y: "100%" }}
-            transition={{
-              type: "tween",
-              duration: 0.3,
-              ease: "easeInOut",
+            animate={{ y: 0, transition: { duration: 0.34, ease: [0.32, 0.72, 0, 1] } }}
+            exit={{ y: "100%", transition: { duration: 0.26, ease: [0.32, 0.72, 0, 1] } }}
+            drag="y"
+            dragControls={controls}
+            dragListener={false}
+            dragConstraints={{ top: 0, bottom: 0 }}
+            dragElastic={{ top: 0.04, bottom: 0.7 }}
+            onDragEnd={(_, info) => {
+              // A quick flick is enough; so is a long pull.
+              if (info.offset.y > 110 || info.velocity.y > 600) onClose();
             }}
             className="fixed inset-x-0 bottom-0 z-[201] mx-auto flex w-full max-w-md flex-col rounded-t-[32px] bg-card shadow-2xl"
-            style={{
-              maxHeight: "85vh",
-              minHeight: 0,
-          }}
+            style={{ maxHeight: "85dvh" }}
           >
+            {/* Grab zone: dragging the handle or title pulls the sheet down */}
             <div
-  className="overflow-y-auto overflow-x-hidden px-6 pb-8 pt-4 no-scrollbar"
-  style={{ maxHeight: "calc(85vh - 80px)" }}
->
-              <div className="mx-auto mt-2 mb-6 h-1.5 w-12 rounded-full bg-muted-foreground/20" />
+              className="shrink-0 cursor-grab touch-none px-6 pt-4"
+              onPointerDown={(e) => controls.start(e)}
+            >
+              <div className="mx-auto mt-2 mb-6 h-1.5 w-12 rounded-full bg-muted-foreground/25" />
 
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-display font-bold text-foreground">
+              <div className="mb-5 flex items-center justify-between">
+                <h2 className="text-2xl font-display font-bold tracking-[-0.02em] text-foreground">
                   {title}
                 </h2>
 
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 -mr-2 rounded-full bg-muted/50"
+                  aria-label="Close"
+                  className="-mr-2 h-9 w-9 rounded-full bg-muted/60"
+                  onPointerDown={(e) => e.stopPropagation()}
                   onClick={onClose}
                 >
                   <X className="h-4 w-4" />
                 </Button>
               </div>
+            </div>
 
+            <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain px-6 pb-[calc(2rem+env(safe-area-inset-bottom))] no-scrollbar">
               {children}
             </div>
           </motion.div>
