@@ -1,9 +1,9 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { format, differenceInDays, addDays } from "date-fns";
 import {
   Plus, MapPin, Calendar, Plane, Trash2, Search, ChevronDown, X,
-  Archive, Heart, User, MoreVertical, Users, LogOut, Pencil
+  Archive, Heart, User, Check, MoreVertical, Users, LogOut, Pencil
 } from "lucide-react";
 import { useTrips, useCreateTrip, useDeleteTrip, useUpdateTrip } from "@/hooks/use-store";
 import { useItinerary, useSaveItineraryItem } from "@/hooks/use-store";
@@ -11,6 +11,7 @@ import { cn, generateId, safeFormatDate, safeParseDate, getTripStatus } from "@/
 import { Button, Input, Label, BottomSheet, FAB } from "@/components/ui";
 import { DockBar, DockItem } from "@/components/Dock";
 import { AddMenu } from "@/components/AddMenu";
+import { ProfileMenu } from "@/components/ProfileMenu";
 import { COUNTRIES, Country } from "@/lib/countries";
 import { INDIAN_STATES } from "@/lib/india-states";
 import type { Trip, TripStatus } from "@/lib/types";
@@ -37,19 +38,6 @@ const { data: profile } = useProfile(user?.id);
   const [convertTrip, setConvertTrip] = useState<Trip | null>(null);
 const [editingTrip, setEditingTrip] = useState<Trip | null>(null);
   const [showUserMenu, setShowUserMenu] = useState(false);
-  useEffect(() => {
-  if (!showUserMenu) return;
-
-  const handleClickOutside = () => {
-    setShowUserMenu(false);
-  };
-
-  window.addEventListener("click", handleClickOutside);
-
-  return () => {
-    window.removeEventListener("click", handleClickOutside);
-  };
-}, [showUserMenu]);
   const [tab, setTab] = useState<TripStatus>('active');
   
   
@@ -118,60 +106,13 @@ useEffect(() => {
   <header className="px-6 pt-14 pb-3">
     <div className="flex items-center justify-between">
       <h1 className="font-display text-[40px] font-bold leading-none tracking-tight">Trips</h1>
-      <div className="relative">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setShowUserMenu(!showUserMenu);
-            }}
-            className="w-11 h-11 rounded-full overflow-hidden bg-muted border-2 border-white shadow-md shadow-black/10 hover:opacity-90 transition-opacity"
-          >
-            <img
-            src={getAvatarUrl(profile?.avatar, 128)}
-            alt="Profile"
-            className="w-full h-full"
-          />
-        </button>
-
-          {showUserMenu && (
-            <div
-              className="absolute right-0 top-12 bg-card border border-border rounded-2xl shadow-2xl p-2 min-w-[220px] z-[9999]"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="px-3 py-1 border-b border-border mb-1">
-                <p className="text-sm font-semibold text-foreground">
-                  {profile?.username || "User"}
-                </p>
-
-                {profile?.name && (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {profile.name}
-                  </p>
-                )}
-              </div>
-
-              <Link href="/profile">
-                <button
-                  onClick={() => setShowUserMenu(false)}
-                  className="w-full text-left px-3 py-1.5 text-sm font-medium hover:bg-muted rounded-xl"
-                >
-                  Profile
-                </button>
-              </Link>
-
-              <button
-                onClick={() => {
-                  setShowUserMenu(false);
-                  logout();
-                }}
-                className="w-full text-left px-3 py-1.5 text-sm font-medium text-red-500 hover:bg-red-50 rounded-xl flex items-center gap-2"
-              >
-                <LogOut className="w-4 h-4" />
-                Log out
-              </button>
-            </div>
-          )}
-        </div>
+      <button
+        onClick={() => setShowUserMenu(true)}
+        aria-label="Account menu"
+        className="h-11 w-11 overflow-hidden rounded-full border-2 border-white bg-muted shadow-md shadow-black/10 transition-opacity hover:opacity-90"
+      >
+        <img src={getAvatarUrl(profile?.avatar, 128)} alt="Profile" className="h-full w-full" />
+      </button>
     </div>
     <p className="mt-2.5 flex items-center gap-2 text-sm text-muted-foreground">
       <Plane className="h-4 w-4 shrink-0 text-primary" />
@@ -218,6 +159,15 @@ useEffect(() => {
   isOpen={isWishlistOpen}
   onClose={() => setIsWishlistOpen(false)}
 />
+      <ProfileMenu
+        open={showUserMenu}
+        onClose={() => setShowUserMenu(false)}
+        avatar={profile?.avatar}
+        name={profile?.name}
+        username={profile?.username}
+        onJoin={() => setIsJoinOpen(true)}
+        onSignOut={logout}
+      />
       <JoinTripSheet isOpen={isJoinOpen} onClose={() => setIsJoinOpen(false)} />
         <EditTripSheet
   trip={editingTrip}
@@ -571,58 +521,109 @@ const handleWishlist = () => {
   );
 }
      
-function JoinTripSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
-  const [code, setCode] = useState('');
-const FULL_PREFIX = 'MOVE-';
-  const queryClient = useQueryClient();
-  
-  const handleJoin = async () => {
-  try {
-    const trimmed = `${FULL_PREFIX}${code.trim().toUpperCase()}`;
+/** Accepts "AB12", "move-ab12", a pasted "MOVE-AB12", or a full invite link. Returns the 4 character code. */
+function normalizeInviteCode(raw: string) {
+  const parts = raw.toUpperCase().split("MOVE-");
+  const last = parts[parts.length - 1];
+  return last.replace(/[^A-Z0-9]/g, "").slice(0, 4);
+}
 
-    if (!trimmed) {
-      alert("Enter an invite code");
+function friendlyJoinError(err: any) {
+  const msg = String(err?.message ?? "").toLowerCase();
+  if (msg.includes("not found") || msg.includes("invalid")) return "That code does not match any trip. Check it and try again.";
+  if (msg.includes("already")) return "You are already a member of this trip.";
+  if (msg.includes("jwt") || msg.includes("auth")) return "Your session expired. Sign in again and retry.";
+  return err?.message ? `Could not join: ${err.message}` : "Could not join this trip. Try again.";
+}
+
+function JoinTripSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+  const [code, setCode] = useState("");
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [joinedId, setJoinedId] = useState<string | null>(null);
+  const [done, setDone] = useState(false);
+  const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
+
+  useEffect(() => {
+    if (!isOpen) {
+      setCode("");
+      setError("");
+      setBusy(false);
+      setDone(false);
+      setJoinedId(null);
+    }
+  }, [isOpen]);
+
+  const handleJoin = async () => {
+    if (code.length < 4) {
+      setError("Enter the 4 character code from the invite.");
       return;
     }
-
-    await joinTripByCode(trimmed);
-    queryClient.invalidateQueries({ queryKey: ['trips'] });
-
-    alert("Trip joined successfully!");
-
-    onClose();
-    setCode('');
-  } catch (err: any) {
-  console.error("JOIN ERROR", err);
-  alert(err?.message ?? "Unable to join trip.");
-}
-};
+    setBusy(true);
+    setError("");
+    try {
+      const result: any = await joinTripByCode(`MOVE-${code}`);
+      await queryClient.invalidateQueries({ queryKey: ["trips"] });
+      const id = typeof result === "string" ? result : result?.id ?? result?.trip_id ?? null;
+      setJoinedId(id);
+      setDone(true);
+    } catch (err: any) {
+      console.error("JOIN ERROR", err);
+      setError(friendlyJoinError(err));
+    } finally {
+      setBusy(false);
+    }
+  };
 
   return (
-    <BottomSheet isOpen={isOpen} onClose={onClose} title="Join a Trip">
-      <div className="flex flex-col gap-4">
-        <p className="text-sm text-muted-foreground">Enter the invite code shared by the trip organizer.</p>
-        <div className="relative">
-  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg font-bold tracking-wider text-muted-foreground pointer-events-none">
-    MOVE-
-  </span>
-
-  <Input
-    value={code}
-    onChange={e =>
-      setCode(
-        e.target.value
-          .replace(/MOVE-/gi, '')
-          .toUpperCase()
-      )
-    }
-    placeholder="XXXX"
-    maxLength={4}
-    className="pl-[82px] text-lg font-bold tracking-wider uppercase"
-  />
-</div>
-        <Button size="lg" onClick={handleJoin}>Join Trip</Button>
-      </div>
+    <BottomSheet isOpen={isOpen} onClose={onClose} title={done ? "You are in" : "Join a Trip"}>
+      {done ? (
+        <div className="flex flex-col items-center gap-4 pb-2 text-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+            <Check className="h-8 w-8" />
+          </div>
+          <p className="text-sm text-muted-foreground">The trip has been added to your list.</p>
+          <div className="flex w-full gap-3">
+            <Button variant="secondary" className="flex-1" onClick={onClose}>Done</Button>
+            {joinedId && (
+              <Button
+                className="flex-1"
+                onClick={() => {
+                  onClose();
+                  setLocation(`/trip/${joinedId}`);
+                }}
+              >
+                Open trip
+              </Button>
+            )}
+          </div>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-4">
+          <p className="text-sm text-muted-foreground">Enter the invite code shared by the trip organizer. You can paste the whole code.</p>
+          <div className="relative">
+            <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-lg font-bold tracking-wider text-muted-foreground">
+              MOVE-
+            </span>
+            <Input
+              value={code}
+              onChange={(e) => {
+                setCode(normalizeInviteCode(e.target.value));
+                setError("");
+              }}
+              onKeyDown={(e) => e.key === "Enter" && handleJoin()}
+              placeholder="XXXX"
+              autoCapitalize="characters"
+              autoCorrect="off"
+              spellCheck={false}
+              className="pl-[82px] text-lg font-bold uppercase tracking-wider"
+            />
+          </div>
+          {error && <p className="-mt-2 text-sm font-medium text-red-500">{error}</p>}
+          <Button size="lg" onClick={handleJoin} isLoading={busy}>Join Trip</Button>
+        </div>
+      )}
     </BottomSheet>
   );
 }

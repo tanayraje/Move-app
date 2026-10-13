@@ -76,6 +76,12 @@ return () => subscription.unsubscribe();
   }, []);
 
   const signInWithGoogle = async () => {
+  try {
+    const path = window.location.pathname + window.location.search;
+    if (window.location.pathname !== "/") {
+      localStorage.setItem("move-return-to", JSON.stringify({ path, at: Date.now() }));
+    }
+  } catch {}
   await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {

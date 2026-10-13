@@ -1,4 +1,5 @@
 import React, { useEffect } from "react";
+import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
@@ -16,7 +17,16 @@ export interface AddMenuItem {
  * Glass popover that opens from the docked "+" button.
  * The "+" itself must sit above this (z-[70]) so it can rotate into a close button.
  */
-export function AddMenu({
+export function AddMenu(props: {
+  open: boolean;
+  onClose: () => void;
+  items: AddMenuItem[];
+}) {
+  if (typeof document === "undefined") return null;
+  return createPortal(<AddMenuInner {...props} />, document.body);
+}
+
+function AddMenuInner({
   open,
   onClose,
   items,

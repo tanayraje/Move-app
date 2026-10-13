@@ -57,7 +57,7 @@ export default function TripDashboard({ params }: { params: { id: string, tab?: 
       {/* Floating header: transparent over photos, glass once scrolled / on plain tabs */}
       <header
         className={cn(
-          "fixed left-1/2 top-0 z-40 w-full max-w-md -translate-x-1/2 px-4 pb-3 pt-[calc(12px+env(safe-area-inset-top))] transition-colors duration-300",
+          "fixed inset-x-0 top-0 z-40 mx-auto w-full max-w-md px-4 pb-3 pt-[calc(12px+env(safe-area-inset-top))] transition-colors duration-300",
           !onPhoto && "border-b border-border/60 bg-background/95"
         )}
       >
@@ -286,10 +286,10 @@ Trip: ${trip.name}
 Code: ${trip.inviteCode}
 
 Open Move:
-https://move-app-theta.vercel.app
+${window.location.origin}
 
 Or join directly:
-https://move-app-theta.vercel.app/join/${trip.inviteCode}`;
+${window.location.origin}/join/${trip.inviteCode}`;
 
       if (navigator.share) {
         await navigator.share({

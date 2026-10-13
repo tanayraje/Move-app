@@ -1,4 +1,5 @@
 import React, { useEffect } from "react";
+import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { X } from "lucide-react";
@@ -64,7 +65,19 @@ export function Label({ className, children, ...props }: React.LabelHTMLAttribut
   );
 }
 
-export function BottomSheet({
+export function BottomSheet(props: {
+  isOpen: boolean;
+  onClose: () => void;
+  title: string;
+  children: React.ReactNode;
+}) {
+  // Rendered into document.body so a transformed ancestor can never
+  // re-anchor the fixed sheet (this is what threw the members sheet off-screen).
+  if (typeof document === "undefined") return null;
+  return createPortal(<BottomSheetInner {...props} />, document.body);
+}
+
+function BottomSheetInner({
   isOpen,
   onClose,
   title,
