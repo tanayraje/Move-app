@@ -235,14 +235,14 @@ const hasMembers = memberCount > 1;
 
   // Status chip: glass tinted by state (green = ongoing, blue = upcoming, pink = wishlist, grey = archived / past)
   const tone = isWishlist
-    ? { label: "Wishlist", glass: "bg-black/40", dot: "bg-pink-400" }
+    ? { label: "Wishlist", glass: "bg-white/70", dot: "bg-pink-500" }
     : status === "archived"
-    ? { label: "Archived", glass: "bg-black/40", dot: "bg-slate-400" }
+    ? { label: "Archived", glass: "bg-white/70", dot: "bg-slate-500" }
     : isPast
-    ? { label: "Past", glass: "bg-black/40", dot: "bg-slate-400" }
+    ? { label: "Past", glass: "bg-white/70", dot: "bg-slate-500" }
     : isActiveNow
-    ? { label: "In progress", glass: "bg-black/40", dot: "bg-emerald-400" }
-    : { label: `In ${daysUntil}d`, glass: "bg-black/40", dot: "bg-blue-400" };
+    ? { label: "In progress", glass: "bg-white/70", dot: "bg-emerald-500" }
+    : { label: `In ${daysUntil}d`, glass: "bg-white/70", dot: "bg-blue-500" };
 
   const heroStyle = trip.heroImage
     ? { backgroundImage: `url(${trip.heroImage})`, backgroundSize: "cover", backgroundPosition: "center" }
@@ -263,13 +263,14 @@ const hasMembers = memberCount > 1;
           <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
           <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-transparent to-transparent" />
 
-          <span
+                    <span
             className={cn(
-              "absolute left-4 top-4 z-10 inline-flex items-center gap-1.5 rounded-full border border-white/25 px-3 py-1.5 text-xs font-semibold text-white shadow-[0_2px_10px_rgba(0,0,0,0.25)] backdrop-blur-md [text-shadow:0_1px_6px_rgba(0,0,0,0.3)]",
+              "absolute left-4 top-4 z-10 inline-flex items-center gap-1.5 rounded-full border border-white/50 px-3 py-1.5 text-xs font-semibold shadow-[0_2px_10px_rgba(0,0,0,0.18)] backdrop-blur-md",
               tone.glass
             )}
+            style={{ color: "#0f172a" }}
           >
-            <span className={cn("h-2 w-2 rounded-full ring-2 ring-white/20", tone.dot)} />
+            <span className={cn("h-2 w-2 rounded-full", tone.dot)} />
             {tone.label}
           </span>
 
