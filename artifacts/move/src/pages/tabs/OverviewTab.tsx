@@ -224,25 +224,77 @@ function DayStrip({ totalDays, currentDay, tone, wave = false }: { totalDays: nu
   );
 }
 
-function CountdownCard({ days, start, totalDays, first }: { days: number; start: Date; totalDays: number; first: boolean }) {
+function CountdownCard({ days, start, totalDays, cities, place, first }: { days: number; start: Date; totalDays: number; cities?: Record<string, string>; place: string; first: boolean }) {
   const n = Math.round(useCountUp(days, first));
+  const tomorrow = days === 1;
+  const end = addDays(start, totalDays - 1);
+  const hasRoute = new Set(Object.values(cities ?? {}).filter(Boolean)).size >= 2;
+  const { stops } = buildRoute(cities, start, end, place);
+  const last = stops.length - 1;
+  const at = (pct: number) => `calc(${pct}% - ${(pct / 100) * 10}px)`;
+
   return (
     <div className="flex flex-col gap-4 rounded-[26px] bg-blue-500/[0.12] p-5 ring-1 ring-inset ring-blue-500/25 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_rgba(15,23,42,0.06)]">
       <div className="flex items-center justify-between">
         <Chip tone="blue">Upcoming</Chip>
         <span className="text-xs text-muted-foreground">Trip starts {format(start, "MMM d")}</span>
       </div>
-      <div className="flex items-baseline gap-3">
-        <span className="font-display text-[72px] font-bold leading-[68px] tracking-[-3px] text-primary">{n}</span>
-        <span className="text-xl font-medium text-muted-foreground">{days === 1 ? "day to go" : "days to go"}</span>
-      </div>
-      <div className="flex flex-col gap-2">
-        <DayStrip totalDays={totalDays} currentDay={0} tone="blue" />
-        <div className="flex justify-between text-xs text-muted-foreground">
-          <span>{format(start, "MMM d")} · Day 1</span>
-          <span>{format(addDays(start, totalDays - 1), "MMM d")} · Day {totalDays}</span>
+      {tomorrow ? (
+        <div className="flex items-baseline">
+          <span className="font-display text-[56px] font-bold leading-[68px] tracking-[-2px] text-primary">Tomorrow</span>
         </div>
-      </div>
+      ) : (
+        <div className="flex items-baseline gap-3">
+          <span className="font-display text-[72px] font-bold leading-[68px] tracking-[-3px] text-primary">{n}</span>
+          <span className="text-xl font-medium text-muted-foreground">days to go</span>
+        </div>
+      )}
+      {hasRoute ? (
+        <div>
+          <div className="relative h-2.5">
+            {stops.slice(1).map((st, i) => {
+              const from = stops[i].pct;
+              const gap = st.pct - from;
+              return (
+                <span
+                  key={i}
+                  className="absolute top-[4px] h-0 border-t-2 border-dashed border-blue-500/45"
+                  style={{ left: `calc(${from}% - ${(from / 100) * 10}px + 13px)`, width: `max(0px, calc(${gap}% - ${(gap / 100) * 10}px - 16px))` }}
+                />
+              );
+            })}
+            {stops.map((st, i) => (
+              <span key={i} className="absolute top-0 h-2.5 w-2.5 rounded-full border-2 border-blue-500" style={{ left: at(st.pct) }} />
+            ))}
+          </div>
+          <div className="relative mt-2 h-5 text-xs text-muted-foreground">
+            {stops.map((st, i) =>
+              st.label ? (
+                <div
+                  key={i}
+                  className="absolute"
+                  style={i === 0 ? { left: 0 } : i === last ? { right: 0, textAlign: "right" } : { left: `${st.pct}%`, transform: "translateX(-50%)", textAlign: "center" }}
+                >
+                  <p className="text-[13px] font-semibold text-foreground">{st.name}</p>
+                </div>
+              ) : null
+            )}
+          </div>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-2">
+          <div className="relative flex h-2.5 items-center">
+            <div className="absolute inset-x-[5px] h-[2px] bg-blue-500/35" />
+            <span className="absolute left-0 h-2.5 w-2.5 rounded-full bg-blue-500" />
+            <span className="absolute right-0 h-2.5 w-2.5 rounded-full bg-blue-500" />
+          </div>
+          <div className="flex items-baseline justify-between text-xs text-muted-foreground">
+            <b className="text-[13px] font-semibold text-foreground">{format(start, "MMM d")}</b>
+            <span className="font-semibold text-blue-500">{totalDays} day{totalDays === 1 ? "" : "s"}</span>
+            <b className="text-[13px] font-semibold text-foreground">{format(end, "MMM d")}</b>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -693,8 +745,7 @@ export default function OverviewTab({ trip }: { trip: Trip }) {
   else if (tripStart && tripEnd) {
     daysUntil = differenceInCalendarDays(tripStart, now);
     if (differenceInCalendarDays(now, tripEnd) > 0) phase = "completed";
-    else if (daysUntil > 1) phase = "far";
-    else if (daysUntil === 1) phase = "close";
+    else if (daysUntil >= 1) phase = "far";
     else if (daysUntil === 0) {
       // Departure day: the ticket stays big until the first journey of the day is over.
       const today = format(now, "yyyy-MM-dd");
@@ -756,7 +807,7 @@ export default function OverviewTab({ trip }: { trip: Trip }) {
   if (phase === "far" && tripStart) {
     topCard = (
       <>
-        <CountdownCard days={daysUntil} start={tripStart} totalDays={totalDays} first={first} />
+        <CountdownCard days={daysUntil} start={tripStart} totalDays={totalDays} cities={trip.dayCities} place={trip.state || trip.destination || ""} first={first} />
         {nextItem && <NextUpRow item={nextItem} Icon={iconFor(nextItem)} />}
       </>
     );
@@ -826,7 +877,7 @@ export default function OverviewTab({ trip }: { trip: Trip }) {
         {!isWishlist && (stay || stays.length === 0) && (
           <Rise i={1} first={first}>
             {stay ? (
-              <StayCard stay={stay} now={now} tripFar={phase === "far"} count={stays.length} index={activeIndex} />
+              <StayCard stay={stay} now={now} tripFar={phase === "far" && daysUntil > 1} count={stays.length} index={activeIndex} />
             ) : (
               <AddStayCard onAdd={goItinerary} />
             )}
