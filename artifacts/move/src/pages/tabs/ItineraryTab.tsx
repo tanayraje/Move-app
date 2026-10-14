@@ -74,7 +74,7 @@ const ELEMENT_BORDER: Record<ElementType, string> = {
 
 const ELEMENT_BADGES: Record<ElementType, string> = {
   travel:
-    "bg-blue-50 text-blue-700 border border-blue-100 dark:bg-[#73580d] dark:text-amber-100 dark:border-[#73580d]",
+    "bg-blue-50 text-blue-700 border border-blue-100 dark:bg-blue-500/10 dark:text-blue-300 dark:border-blue-500/20",
 
   accommodation:
     "bg-violet-50 text-violet-700 border border-violet-100 dark:bg-violet-500/10 dark:text-violet-300 dark:border-violet-500/20",
@@ -261,7 +261,7 @@ function legStatus(item: ItineraryItem): { label: string; tone: string } | null 
   if (now >= end) {
     return { label: item.travelType === "flight" ? "Landed" : "Arrived", tone: "bg-emerald-50 text-emerald-600" };
   }
-  if (now >= start) return { label: "In transit", tone: "bg-blue-50 text-blue-600 dark:bg-[#1d859f] dark:text-[#ffda24]" };
+  if (now >= start) return { label: "In transit", tone: "bg-blue-50 text-blue-600 dark:bg-[#3a6bb0] dark:text-[#e8f1ff]" };
   const mins = Math.round((start.getTime() - now.getTime()) / 60000);
   if (mins <= 24 * 60) {
     return {
@@ -269,7 +269,7 @@ function legStatus(item: ItineraryItem): { label: string; tone: string } | null 
       tone: "bg-amber-50 text-amber-600 dark:bg-[#1d859f] dark:text-[#ffda24]",
     };
   }
-  return { label: "Upcoming", tone: "bg-blue-50 text-blue-600 dark:bg-[#1d859f] dark:text-[#ffda24]" };
+  return { label: "Upcoming", tone: "bg-blue-50 text-blue-600 dark:bg-[#3a6bb0] dark:text-[#e8f1ff]" };
 }
 
 function NowMarker({ time }: { time: string }) {
@@ -1642,7 +1642,7 @@ function SortableItem({
                         {item.startTime || "—"} to {item.endTime || "—"}
                       </p>
                     </div>
-                    <div className="flex min-w-0 flex-col items-center justify-center gap-2 bg-blue-100/60 px-2 py-4 text-center">
+                    <div className="flex min-w-0 flex-col items-center justify-center gap-2 bg-blue-100/60 dark:bg-blue-100 px-2 py-4 text-center">
                       {leg && (
                         <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-semibold", leg.tone)}>
                           {leg.label}
