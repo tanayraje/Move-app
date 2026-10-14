@@ -171,12 +171,12 @@ function stayStage(stay: Stay, now: Date, tripFar: boolean): StayStage {
 
 function Chip({ tone, children }: { tone: "blue" | "green" | "teal" | "amber" | "grey" | "pink"; children: React.ReactNode }) {
   const tones = {
-    blue: "bg-blue-500/15 text-blue-700 border-blue-500/25 dark:text-blue-200",
-    green: "bg-emerald-500/15 text-emerald-700 border-emerald-500/25 dark:text-emerald-200",
-    teal: "bg-teal-500/15 text-teal-700 border-teal-500/25 dark:text-teal-200",
-    amber: "bg-amber-500/15 text-amber-700 border-amber-500/30 dark:text-amber-200",
+    blue: "bg-blue-500/15 border-blue-500/30 text-foreground",
+    green: "bg-emerald-500/15 border-emerald-500/30 text-foreground",
+    teal: "bg-teal-500/15 border-teal-500/30 text-foreground",
+    amber: "bg-amber-500/15 border-amber-500/30 text-foreground",
     grey: "bg-foreground/5 text-muted-foreground border-foreground/10",
-    pink: "bg-pink-500/15 text-pink-700 border-pink-500/25 dark:text-pink-200",
+    pink: "bg-pink-500/15 border-pink-500/30 text-foreground",
   };
   return (
     <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold ${tones[tone]}`}>{children}</span>
@@ -277,7 +277,7 @@ function TicketCard({ item, route, now }: { item: any; route: { from: string; to
           ) : (
             <span className="text-xs font-medium uppercase tracking-[0.6px] text-muted-foreground">Next up</span>
           )}
-          <span className={`text-[13px] font-semibold ${inTransit ? "text-emerald-600 dark:text-emerald-300" : "text-muted-foreground"}`}>{right}</span>
+          <span className={`text-[13px] font-semibold ${inTransit ? "text-emerald-500" : "text-muted-foreground"}`}>{right}</span>
         </div>
 
         <div className="flex items-center gap-3">
@@ -378,9 +378,9 @@ function RecapCard({ start, end, totalDays, spent, items }: { start: Date; end: 
 
 function StayIcon({ tone = "teal", twinkle = true }: { tone?: "teal" | "blue" | "amber"; twinkle?: boolean }) {
   const t = {
-    teal: "bg-teal-500/15 text-teal-600 dark:text-teal-300",
-    blue: "bg-blue-500/15 text-blue-600 dark:text-blue-300",
-    amber: "bg-amber-500/15 text-amber-600 dark:text-amber-300",
+    teal: "bg-teal-500/15 text-teal-500",
+    blue: "bg-blue-500/15 text-blue-500",
+    amber: "bg-amber-500/15 text-amber-500",
   }[tone];
   return (
     <div className={`relative flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-xl ${t}`}>
@@ -463,7 +463,7 @@ function StayCard({ stay, now, tripFar, count, index }: { stay: Stay; now: Date;
           </div>
           <div className="flex items-baseline justify-between text-xs text-muted-foreground">
             <span><b className="text-[13px] font-semibold text-foreground">{inDay}</b> · {checkInTime}</span>
-            <span className="font-semibold text-teal-600 dark:text-teal-300">{nightsLabel}</span>
+            <span className="font-semibold text-teal-500">{nightsLabel}</span>
             <span><b className="text-[13px] font-semibold text-foreground">{outDay}</b> · {checkOutTime}</span>
           </div>
         </div>
@@ -513,9 +513,9 @@ function TallTile({ icon: Icon, label, value, onClick }: { icon: any; label: str
   return (
     <button
       onClick={onClick}
-      className="row-span-2 flex flex-col justify-between rounded-[22px] bg-gradient-to-br from-emerald-500/20 to-card p-4 text-left shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_rgba(15,23,42,0.06)] transition-transform active:scale-[0.98]"
+      className="row-span-2 flex flex-col justify-between rounded-[22px] bg-gradient-to-br from-emerald-500/10 to-card p-4 text-left shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_rgba(15,23,42,0.06)] transition-transform active:scale-[0.98]"
     >
-      <div className="flex h-[34px] w-[34px] items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-300">
+      <div className="flex h-[34px] w-[34px] items-center justify-center rounded-xl bg-card text-emerald-500 shadow-[0_1px_3px_rgba(15,23,42,0.12)]">
         <Icon className="h-[18px] w-[18px]" />
       </div>
       <div>
@@ -736,8 +736,8 @@ export default function OverviewTab({ trip }: { trip: Trip }) {
         <Rise i={2} first={first}>
           <div className="grid grid-cols-2 grid-rows-[70px_70px] gap-2.5">
             <TallTile icon={Receipt} label="Total spent" value={formatCurrency(Math.round(spentShown), "INR")} onClick={() => navigate(`/trip/${trip.id}/expenses`)} />
-            <SmallTile icon={Calendar} tint="bg-blue-500/15 text-blue-600 dark:text-blue-300" label="Timeline" value={timelineShown} onClick={goItinerary} />
-            <SmallTile icon={FileText} tint="bg-violet-500/15 text-violet-600 dark:text-violet-300" label="Documents" value={docsShown} onClick={() => navigate(`/trip/${trip.id}/documents`)} />
+            <SmallTile icon={Calendar} tint="bg-blue-500/15 text-blue-500" label="Timeline" value={timelineShown} onClick={goItinerary} />
+            <SmallTile icon={FileText} tint="bg-violet-500/15 text-violet-500" label="Documents" value={docsShown} onClick={() => navigate(`/trip/${trip.id}/documents`)} />
           </div>
         </Rise>
 
@@ -746,7 +746,7 @@ export default function OverviewTab({ trip }: { trip: Trip }) {
             onClick={() => navigate(`/trip/${trip.id}/places`)}
             className={`${card} flex h-[60px] w-full items-center gap-3 px-3.5 text-left transition-transform active:scale-[0.98]`}
           >
-            <div className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-xl bg-orange-500/15 text-orange-600 dark:text-orange-300">
+            <div className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-xl bg-orange-500/15 text-orange-500">
               <MapPin className="h-[18px] w-[18px]" />
             </div>
             <div className="min-w-0 flex-1">
