@@ -403,58 +403,72 @@ function buildRoute(cities: Record<string, string> | undefined, start: Date, end
   return { stops, legs };
 }
 
-function RecapCard({ start, end, totalDays, spent, items, cities, place }: { start: Date; end: Date; totalDays: number; spent: number; items: number; cities?: Record<string, string>; place: string }) {
-  const stops = buildRoute(cities, start, end, totalDays, place);
+function RecapCard({ start, end, totalDays, cities, place, first }: { start: Date; end: Date; totalDays: number; cities?: Record<string, string>; place: string; first: boolean }) {
+  const { stops, legs } = buildRoute(cities, start, end, place);
+  const p = useProgress(first);
+  const reached = (pct: number) => p * 100 >= pct - 0.01;
+  const done = p >= 1;
   const last = stops.length - 1;
+  const at = (pct: number) => `calc(${pct}% - ${(pct / 100) * 10}px)`;
+
   return (
-    <div className={`${card} !rounded-[24px] flex flex-col gap-3.5 px-5 py-4`}>
+    <div className={`${card} !rounded-[24px] flex flex-col gap-3 px-5 py-4`}>
       <div className="flex items-center justify-between">
-        <Chip tone="grey">Completed</Chip>
-        <span className="text-xs text-muted-foreground">{format(start, "MMM d")} – {format(end, "MMM d")}</span>
+        <Chip tone="green">
+          Completed
+          <Check className={`h-3.5 w-3.5 text-emerald-500 transition-transform duration-300 ${done ? "scale-100" : "scale-0"}`} strokeWidth={2.5} />
+        </Chip>
+        <span className="text-xs tabular-nums text-muted-foreground">{Math.round(p * totalDays)} days</span>
       </div>
-      <div className="pt-1">
-        <div className="relative h-2.5">
-          <div className="absolute inset-x-[5px] top-1 h-[2px] bg-blue-500/20" />
-          <div className="ov-line-draw absolute inset-x-[5px] top-1 h-[2px] bg-blue-500/50" />
-          {stops.map((st, i) => (
-            <span
-              key={i}
-              className="absolute top-0 h-2.5 w-2.5 rounded-full bg-blue-500 ring-[3px] ring-card"
-              style={{ left: `calc(${st.pct}% - ${(st.pct / 100) * 10}px)` }}
-            />
-          ))}
+
+      <div>
+        <div className="relative h-9">
+          <div className="absolute inset-x-[5px] top-[24px] h-[2px] bg-blue-500/20" />
+          <div className="absolute inset-x-[5px] top-[24px] h-[2px]">
+            <div className="h-full bg-blue-500" style={{ width: `${p * 100}%` }} />
+          </div>
+          {legs.map((n, i) => {
+            const mid = (stops[i].pct + stops[i + 1].pct) / 2;
+            return n > 0 ? (
+              <span
+                key={i}
+                className={`absolute top-0.5 -translate-x-1/2 text-[11px] font-semibold text-blue-500 transition-opacity duration-500 ${reached(mid) ? "opacity-100" : "opacity-0"}`}
+                style={{ left: `${mid}%` }}
+              >
+                {n}N
+              </span>
+            ) : null;
+          })}
+          {stops.map((st, i) => {
+            const on = reached(st.pct);
+            return (
+              <React.Fragment key={i}>
+                {on && first && !done && <span className="ov-ripple absolute top-5 h-2.5 w-2.5 rounded-full border-2 border-blue-500" style={{ left: at(st.pct) }} />}
+                <span
+                  className={`absolute top-5 h-2.5 w-2.5 rounded-full bg-blue-500 ring-[3px] ring-card transition-transform duration-300 ${on ? "scale-100" : "scale-0"}`}
+                  style={{ left: at(st.pct) }}
+                />
+              </React.Fragment>
+            );
+          })}
+          <span
+            className={`absolute top-5 h-2.5 w-2.5 rounded-full bg-blue-300 ring-4 ring-blue-500/30 transition-opacity duration-300 ${p > 0 && !done ? "opacity-100" : "opacity-0"}`}
+            style={{ left: at(p * 100) }}
+          />
         </div>
-        <div className="relative mt-2 h-9 text-xs text-muted-foreground">
-          {stops.map((st, i) => (
-            <div
-              key={i}
-              className="absolute max-w-[110px]"
-              style={
-                i === 0
-                  ? { left: 0 }
-                  : i === last
-                  ? { right: 0, textAlign: "right" }
-                  : { left: `${st.pct}%`, transform: "translateX(-50%)", textAlign: "center" }
-              }
-            >
-              <p className="truncate text-[13px] font-semibold text-foreground">{st.name}</p>
-              <p>{format(st.date, "MMM d")}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-      <div className="grid grid-cols-3 border-t border-border pt-3.5">
-        <div>
-          <p className="font-display text-[22px] font-bold text-foreground">{totalDays}</p>
-          <p className="text-xs text-muted-foreground">Days</p>
-        </div>
-        <div>
-          <p className="font-display text-[22px] font-bold text-foreground">{formatCurrency(spent, "INR")}</p>
-          <p className="text-xs text-muted-foreground">Spent</p>
-        </div>
-        <div>
-          <p className="font-display text-[22px] font-bold text-foreground">{items}</p>
-          <p className="text-xs text-muted-foreground">Timeline items</p>
+
+        <div className="relative mt-1 h-9 text-xs text-muted-foreground">
+          {stops.map((st, i) =>
+            st.label ? (
+              <div
+                key={i}
+                className={`absolute transition-all duration-500 ${reached(st.pct) ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0"}`}
+                style={i === 0 ? { left: 0 } : i === last ? { right: 0, textAlign: "right" } : { left: `${st.pct}%`, transform: "translateX(-50%)", textAlign: "center" }}
+              >
+                <p className="text-[13px] font-semibold text-foreground">{st.name}</p>
+              </div>
+            ) : null
+          )}
         </div>
       </div>
     </div>
