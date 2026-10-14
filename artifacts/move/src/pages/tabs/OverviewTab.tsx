@@ -372,11 +372,11 @@ function buildRoute(cities: Record<string, string> | undefined, start: Date, end
       { name: "End", date: end, pct: 100 },
     ];
   }
-  if (stops.length > 5) {
-    const keep = [0, 1, 2, 3, 4].map(i => Math.round((i * (stops.length - 1)) / 4));
-    return keep.map(i => stops[i]);
-  }
-  return stops;
+  const picked = stops.length > 5
+    ? [0, 1, 2, 3, 4].map(i => stops[Math.round((i * (stops.length - 1)) / 4)])
+    : stops;
+  // First dot sits at the start of the line and the last at the end, matching their labels.
+  return picked.map((st, i) => (i === 0 ? { ...st, pct: 0 } : i === picked.length - 1 ? { ...st, pct: 100 } : st));
 }
 
 function RecapCard({ start, end, totalDays, spent, items, cities, place }: { start: Date; end: Date; totalDays: number; spent: number; items: number; cities?: Record<string, string>; place: string }) {
