@@ -207,13 +207,13 @@ function DayStrip({ totalDays, currentDay, tone, wave = false }: { totalDays: nu
 function CountdownCard({ days, start, totalDays, first }: { days: number; start: Date; totalDays: number; first: boolean }) {
   const n = Math.round(useCountUp(days, first));
   return (
-    <div className="flex flex-col gap-4 rounded-[26px] bg-card p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_rgba(15,23,42,0.06)]">
+    <div className="flex flex-col gap-4 rounded-[26px] bg-blue-500/[0.12] p-5 ring-1 ring-inset ring-blue-500/25 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_rgba(15,23,42,0.06)]">
       <div className="flex items-center justify-between">
         <Chip tone="blue">Upcoming</Chip>
         <span className="text-xs text-muted-foreground">Trip starts {format(start, "MMM d")}</span>
       </div>
       <div className="flex items-baseline gap-3">
-        <span className="font-display text-[72px] font-bold leading-[68px] tracking-[-3px] text-foreground">{n}</span>
+        <span className="font-display text-[72px] font-bold leading-[68px] tracking-[-3px] text-primary">{n}</span>
         <span className="text-xl font-medium text-muted-foreground">{days === 1 ? "day to go" : "days to go"}</span>
       </div>
       <div className="flex flex-col gap-2">
@@ -513,9 +513,9 @@ function TallTile({ icon: Icon, label, value, onClick }: { icon: any; label: str
   return (
     <button
       onClick={onClick}
-      className="row-span-2 flex flex-col justify-between rounded-[22px] bg-card p-4 text-left shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_rgba(15,23,42,0.06)] transition-transform active:scale-[0.98]"
+      className="row-span-2 flex flex-col justify-between rounded-[22px] bg-emerald-500/[0.12] p-4 text-left ring-1 ring-inset ring-emerald-500/25 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_rgba(15,23,42,0.06)] transition-transform active:scale-[0.98]"
     >
-      <div className="flex h-[34px] w-[34px] items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-500">
+      <div className="flex h-[34px] w-[34px] items-center justify-center rounded-xl bg-card text-emerald-500 shadow-[0_1px_3px_rgba(15,23,42,0.12)]">
         <Icon className="h-[18px] w-[18px]" />
       </div>
       <div>
