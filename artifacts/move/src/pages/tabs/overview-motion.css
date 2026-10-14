@@ -1,0 +1,88 @@
+/* Overview tab micro animations. Slow, small, one moving thing per card. */
+
+@keyframes ov-rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+.ov-rise { animation: ov-rise 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+
+/* Plane idling on the ticket line before departure */
+@keyframes ov-idle {
+  0%, 100% { left: 44%; }
+  50% { left: 56%; }
+}
+.ov-plane-idle { animation: ov-idle 7s ease-in-out infinite; }
+
+/* Dashed track crawling */
+@keyframes ov-dash {
+  from { background-position: 0 0; }
+  to { background-position: 12px 0; }
+}
+.ov-track {
+  height: 1.5px;
+  background-image: linear-gradient(90deg, currentColor 50%, transparent 50%);
+  background-size: 12px 1.5px;
+  background-repeat: repeat-x;
+  animation: ov-dash 2.4s linear infinite;
+}
+.ov-track-still { animation: none; }
+
+/* Current day segment */
+@keyframes ov-glow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+.ov-glow { animation: ov-glow 3s ease-in-out infinite; }
+
+/* Breathing dots */
+@keyframes ov-dot-green {
+  0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5); }
+  70%, 100% { box-shadow: 0 0 0 7px rgba(16, 185, 129, 0); }
+}
+@keyframes ov-dot-teal {
+  0% { box-shadow: 0 0 0 0 rgba(20, 184, 166, 0.55); }
+  70%, 100% { box-shadow: 0 0 0 7px rgba(20, 184, 166, 0); }
+}
+@keyframes ov-dot-amber {
+  0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.55); }
+  70%, 100% { box-shadow: 0 0 0 7px rgba(245, 158, 11, 0); }
+}
+.ov-dot-green { animation: ov-dot-green 2.4s ease-out infinite; }
+.ov-dot-teal { animation: ov-dot-teal 2.6s ease-out infinite; }
+.ov-dot-amber { animation: ov-dot-amber 2.2s ease-out infinite; }
+
+/* Stay line draws once */
+@keyframes ov-line {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+.ov-line-draw { transform-origin: left center; animation: ov-line 1s 0.2s ease-out both; }
+
+/* Recap strip fills in a quick wave */
+@keyframes ov-wave {
+  from { opacity: 0.15; }
+  to { opacity: 1; }
+}
+.ov-wave { animation: ov-wave 0.4s ease-out both; }
+
+/* Tiny twinkle on the stay icon */
+@keyframes ov-twinkle {
+  0%, 100% { opacity: 0.9; transform: scale(1); }
+  50% { opacity: 0.25; transform: scale(0.7); }
+}
+.ov-twinkle { animation: ov-twinkle 3.6s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ov-rise,
+  .ov-plane-idle,
+  .ov-track,
+  .ov-glow,
+  .ov-dot-green,
+  .ov-dot-teal,
+  .ov-dot-amber,
+  .ov-line-draw,
+  .ov-wave,
+  .ov-twinkle {
+    animation: none !important;
+  }
+}
