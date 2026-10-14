@@ -235,14 +235,14 @@ const hasMembers = memberCount > 1;
 
   // Status chip: glass tinted by state (green = ongoing, blue = upcoming, pink = wishlist, grey = archived / past)
   const tone = isWishlist
-    ? { label: "Wishlist", glass: "bg-pink-400/30", dot: "bg-pink-300" }
+    ? { label: "Wishlist", glass: "bg-pink-500/45", dot: "bg-pink-200" }
     : status === "archived"
-    ? { label: "Archived", glass: "bg-slate-400/30", dot: "bg-slate-300" }
+    ? { label: "Archived", glass: "bg-slate-500/45", dot: "bg-slate-200" }
     : isPast
-    ? { label: "Past", glass: "bg-slate-400/30", dot: "bg-slate-300" }
+    ? { label: "Past", glass: "bg-slate-500/45", dot: "bg-slate-200" }
     : isActiveNow
-    ? { label: "In progress", glass: "bg-emerald-400/30", dot: "bg-emerald-300" }
-    : { label: `In ${daysUntil}d`, glass: "bg-blue-400/30", dot: "bg-blue-300" };
+    ? { label: "In progress", glass: "bg-emerald-500/45", dot: "bg-emerald-200" }
+    : { label: `In ${daysUntil}d`, glass: "bg-blue-500/45", dot: "bg-blue-200" };
 
   const heroStyle = trip.heroImage
     ? { backgroundImage: `url(${trip.heroImage})`, backgroundSize: "cover", backgroundPosition: "center" }
@@ -265,7 +265,7 @@ const hasMembers = memberCount > 1;
 
           <span
             className={cn(
-              "glass absolute left-4 top-4 z-10 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold",
+              "absolute left-4 top-4 z-10 inline-flex items-center gap-1.5 rounded-full border border-white/25 px-3 py-1.5 text-xs font-semibold text-white shadow-[0_2px_10px_rgba(0,0,0,0.25)] backdrop-blur-md [text-shadow:0_1px_6px_rgba(0,0,0,0.3)]",
               tone.glass
             )}
           >
