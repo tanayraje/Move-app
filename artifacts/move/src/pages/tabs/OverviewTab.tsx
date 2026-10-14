@@ -431,7 +431,7 @@ function StayCard({ stay, now, tripFar, count, index }: { stay: Stay; now: Date;
   if (stage === "compact" || stage === "done") {
     return (
       <div className={`rounded-[22px] bg-violet-500/[0.12] ring-1 ring-inset ring-violet-500/25 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_rgba(15,23,42,0.06)] flex h-[72px] items-center gap-3 px-4`}>
-        <StayIcon twinkle={stage === "compact"} tone={stage === "done" ? "blue" : "violet"} />
+        <StayIcon twinkle={stage === "compact"} />
         <div className="min-w-0 flex-1">
           <p className="text-[11px] font-medium uppercase tracking-[0.5px] text-muted-foreground">{label} · {nightsLabel}</p>
           <p className="truncate text-[15px] font-semibold text-foreground">{stay.name}</p>
@@ -496,15 +496,15 @@ function StayCard({ stay, now, tripFar, count, index }: { stay: Stay; now: Date;
 
 function AddStayCard({ onAdd }: { onAdd: () => void }) {
   return (
-    <button onClick={onAdd} className="flex h-[72px] w-full items-center gap-3 rounded-[22px] border border-dashed border-foreground/25 bg-card px-4 text-left transition-transform active:scale-[0.98]">
-      <div className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-xl bg-foreground/5 text-muted-foreground">
+    <button onClick={onAdd} className="flex h-[72px] w-full items-center gap-3 rounded-[22px] border border-dashed border-violet-500/50 bg-violet-500/[0.04] px-4 text-left transition-transform active:scale-[0.98]">
+      <div className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-xl bg-violet-500/10 text-violet-500">
         <BedDouble className="h-5 w-5" />
       </div>
       <div className="min-w-0 flex-1">
         <p className="text-[15px] font-semibold text-foreground">Add where you're staying</p>
         <p className="text-xs text-muted-foreground">Hotel, homestay or a friend's place</p>
       </div>
-      <span className="flex h-8 items-center rounded-full border border-foreground/15 bg-foreground/5 px-3.5 text-[13px] font-semibold text-foreground">Add stay</span>
+      <span className="flex h-8 items-center rounded-full border border-violet-500/40 bg-violet-500/10 px-3.5 text-[13px] font-semibold text-foreground">Add stay</span>
     </button>
   );
 }
@@ -608,11 +608,13 @@ export default function OverviewTab({ trip }: { trip: Trip }) {
 
   const dayNum = tripStart ? Math.min(Math.max(differenceInCalendarDays(now, tripStart) + 1, 1), totalDays) : 1;
 
-  // Stay: the one happening now, otherwise the next one, otherwise the last one
+  // Stay card shows from 3 days before check-in until 2 days after check-out.
+  // Prefer a stay that hasn't ended yet, otherwise one that just ended.
   const stays = buildStays(itinerary, trip);
-  const upcomingStay = stays.findIndex(s => now < s.checkOut);
-  const activeIndex = upcomingStay === -1 ? stays.length - 1 : upcomingStay;
-  const stay: Stay | undefined = stays[activeIndex];
+  const inWindow = (s: Stay) => differenceInCalendarDays(s.checkIn, now) <= 3 && differenceInCalendarDays(now, s.checkOut) <= 2;
+  const liveIndex = stays.findIndex(s => inWindow(s) && now < s.checkOut);
+  const activeIndex = liveIndex !== -1 ? liveIndex : stays.findIndex(inWindow);
+  const stay: Stay | undefined = activeIndex === -1 ? undefined : stays[activeIndex];
 
   // Hero location (city if available)
   let heroLocation = trip.state || trip.destination;
@@ -721,8 +723,8 @@ export default function OverviewTab({ trip }: { trip: Trip }) {
           </Rise>
         )}
 
-        {/* Stay: always here once added */}
-        {!isWishlist && (
+        {/* Stay: shows a few days around the stay. Empty prompt only when no stay exists at all. */}
+        {!isWishlist && (stay || stays.length === 0) && (
           <Rise i={1} first={first}>
             {stay ? (
               <StayCard stay={stay} now={now} tripFar={phase === "far"} count={stays.length} index={activeIndex} />
