@@ -41,11 +41,11 @@ export function DockBar({
             mode === "labels"
               ? cn(
                   "flex h-12 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full text-[13px] font-semibold transition-colors duration-200",
-                  active ? "bg-primary/15 text-primary" : "text-muted-foreground"
+                  active ? "bg-primary/15 text-primary dark:bg-white/[0.16] dark:text-white" : "text-muted-foreground dark:text-white/70"
                 )
               : active
-              ? "flex h-12 flex-none items-center gap-1.5 rounded-full bg-primary/15 px-3.5 text-primary transition-colors duration-200"
-              : "flex h-12 min-w-0 flex-1 items-center justify-center rounded-full text-muted-foreground transition-colors duration-200";
+              ? "flex h-12 flex-none items-center gap-1.5 rounded-full bg-primary/15 px-3.5 text-primary dark:bg-white/[0.16] dark:text-white dark:shadow-[inset_0_1px_0_rgb(255_255_255/0.12)] transition-colors duration-200"
+              : "flex h-12 min-w-0 flex-1 items-center justify-center rounded-full text-muted-foreground dark:text-white/70 transition-colors duration-200";
 
           const inner =
             mode === "labels" ? (
@@ -55,7 +55,7 @@ export function DockBar({
                   <span
                     className={cn(
                       "flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1 text-[11px] font-semibold leading-none",
-                      active ? "bg-primary text-primary-foreground" : "bg-black/[0.07] text-muted-foreground"
+                      active ? "bg-primary text-primary-foreground" : "bg-foreground/[0.1] text-muted-foreground"
                     )}
                   >
                     {item.badge}

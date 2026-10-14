@@ -60,10 +60,10 @@ const MEAL_SUBTYPES: { id: MealSubType; label: string; icon: React.ElementType; 
 ];
 
 const ELEMENT_COLORS: Record<ElementType, string> = {
-  travel: "from-[#3b82f6] to-[#2563eb] dark:from-[#3b82f6]/45 dark:to-[#2563eb]/45",
-  accommodation: "from-[#8b5cf6] to-[#7c3aed] dark:from-[#8b5cf6]/45 dark:to-[#7c3aed]/45",
-  meal: "from-[#fbbf24] to-[#f59e0b] dark:from-[#fbbf24]/45 dark:to-[#f59e0b]/45",
-  activity: "from-[#0d9488] to-[#059669] dark:from-[#0d9488]/45 dark:to-[#059669]/45",
+  travel: "from-[#3b82f6] to-[#2563eb] dark:from-[#1f3d6f] dark:to-[#1f3d6f]",
+  accommodation: "from-[#8b5cf6] to-[#7c3aed] dark:from-[#4f3a78] dark:to-[#4f3a78]",
+  meal: "from-[#fbbf24] to-[#f59e0b] dark:from-[#8b6b13] dark:to-[#8b6b13]",
+  activity: "from-[#0d9488] to-[#059669] dark:from-[#0d453a] dark:to-[#0d453a]",
 };
 const ELEMENT_BORDER: Record<ElementType, string> = {
   travel: "border-blue-200",
@@ -119,16 +119,16 @@ function categoryLabel(item: ItineraryItem) {
 function panelGradient(type: ElementType) {
   switch (type) {
     case "travel":
-      return "bg-gradient-to-b from-[#3b82f6] to-[#2563eb] dark:from-[#3b82f6]/45 dark:to-[#2563eb]/45";
+      return "bg-gradient-to-b from-[#3b82f6] to-[#2563eb] dark:from-[#1f3d6f] dark:to-[#1f3d6f]";
 
     case "accommodation":
-      return "bg-gradient-to-b from-[#8b5cf6] to-[#7c3aed] dark:from-[#8b5cf6]/45 dark:to-[#7c3aed]/45";
+      return "bg-gradient-to-b from-[#8b5cf6] to-[#7c3aed] dark:from-[#4f3a78] dark:to-[#4f3a78]";
 
     case "meal":
-      return "bg-gradient-to-b from-[#fbbf24] to-[#f59e0b] dark:from-[#fbbf24]/45 dark:to-[#f59e0b]/45";
+      return "bg-gradient-to-b from-[#fbbf24] to-[#f59e0b] dark:from-[#8b6b13] dark:to-[#8b6b13]";
 
     default:
-      return "bg-gradient-to-b from-[#14b8a6] to-[#0d9488] dark:from-[#14b8a6]/45 dark:to-[#0d9488]/45";
+      return "bg-gradient-to-b from-[#14b8a6] to-[#0d9488] dark:from-[#0d453a] dark:to-[#0d453a]";
   }
 }
 
@@ -261,15 +261,15 @@ function legStatus(item: ItineraryItem): { label: string; tone: string } | null 
   if (now >= end) {
     return { label: item.travelType === "flight" ? "Landed" : "Arrived", tone: "bg-emerald-50 text-emerald-600" };
   }
-  if (now >= start) return { label: "In transit", tone: "bg-blue-50 text-blue-600" };
+  if (now >= start) return { label: "In transit", tone: "bg-blue-50 text-blue-600 dark:bg-[#1d859f] dark:text-[#ffda24]" };
   const mins = Math.round((start.getTime() - now.getTime()) / 60000);
   if (mins <= 24 * 60) {
     return {
       label: mins >= 60 ? `Departs in ${Math.round(mins / 60)}h` : `Departs in ${mins}m`,
-      tone: "bg-amber-50 text-amber-600",
+      tone: "bg-amber-50 text-amber-600 dark:bg-[#1d859f] dark:text-[#ffda24]",
     };
   }
-  return { label: "Upcoming", tone: "bg-blue-50 text-blue-600" };
+  return { label: "Upcoming", tone: "bg-blue-50 text-blue-600 dark:bg-[#1d859f] dark:text-[#ffda24]" };
 }
 
 function NowMarker({ time }: { time: string }) {
@@ -1031,7 +1031,7 @@ const toggleChecklistItem = (checkId: string) => {
   return (
     <div
       className={cn(
-        "mb-6 overflow-hidden rounded-[26px] border bg-violet-50/70 shadow-[0_5px_0_-1px_#E9E3FD,0_10px_0_-2px_#F2EEFE] dark:shadow-[0_5px_0_-1px_#1d2235,0_10px_0_-2px_#171c2c] transition duration-300",
+        "mb-6 overflow-hidden rounded-[26px] border bg-violet-50/70 dark:bg-violet-50 shadow-[0_5px_0_-1px_#E9E3FD,0_10px_0_-2px_#F2EEFE] dark:shadow-[0_5px_0_-1px_#362d58,0_10px_0_-2px_#202431] transition duration-300",
         ELEMENT_BORDER.accommodation
       )}
     >
@@ -1566,7 +1566,7 @@ function SortableItem({
     ? `${notchTop}, linear-gradient(#000, #000) bottom / 100% 49% no-repeat`
     : `${notchTop}, ${notchBottom}`;
 
-  const dotColor = isTravel ? "bg-blue-500" : isMeal ? "bg-[#FFD633]" : "bg-teal-500";
+  const dotColor = isTravel ? "bg-blue-500" : isMeal ? "bg-amber-500" : "bg-teal-500";
   const panelTone = isTravel
     ? "border-blue-200 bg-card/70"
     : isMeal
@@ -1596,7 +1596,7 @@ function SortableItem({
       <div
         className={cn(
           "min-w-0 flex-1 self-start",
-          !isTravel && !isMeal && "rounded-[28px] shadow-[0_1px_2px_rgba(15,23,42,0.04),0_4px_12px_-4px_rgba(13,148,136,0.08)]"
+          !isTravel && !isMeal && "rounded-[28px] shadow-[0_1px_2px_rgba(15,23,42,0.05),0_10px_26px_-6px_rgba(13,148,136,0.28)]"
         )}
         style={isTravel || isMeal ? { filter: "drop-shadow(0 8px 14px rgba(15,23,42,0.12))" } : undefined}
       >
@@ -1663,11 +1663,11 @@ function SortableItem({
               {isMeal && (
                 <div className="px-4 pb-2 pt-3.5">
                   <div className="flex items-center gap-3">
-                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#FFD633]/10 text-[#FFD633]">
+                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700">
                       <Icon className="h-5 w-5" />
                     </span>
                     <div className="min-w-0 flex-1">
-                      <p className="text-[11px] font-semibold text-[#FFD633]">{categoryLabel(item)}</p>
+                      <p className="text-[11px] font-semibold text-amber-700">{categoryLabel(item)}</p>
                       <h3 className="truncate text-base font-semibold leading-snug">{item.title}</h3>
                     </div>
                     <ChevronDown
@@ -1694,7 +1694,7 @@ function SortableItem({
 
               {item.elementType === "activity" && (
                 <div>
-                  <div className="relative bg-gradient-to-r from-[#0d9488] to-[#059669] dark:from-[#0d9488]/45 dark:to-[#059669]/45 px-4 pb-2.5 pt-4 text-white">
+                  <div className="relative bg-gradient-to-r from-[#0d9488] to-[#059669] dark:from-[#0d453a] dark:to-[#0d453a] px-4 pb-2.5 pt-4 text-white">
                     <span aria-hidden className="absolute left-1/2 top-1.5 h-1.5 w-10 -translate-x-1/2 rounded-full bg-black/25" />
                     <div className="flex items-center justify-between text-[12px] font-semibold">
                       <span className="flex items-center gap-1.5">
