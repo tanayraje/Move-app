@@ -7,7 +7,7 @@ import { Trip } from "@/lib/types";
 import { HeroScrim } from "@/components/ui";
 import {
   Calendar, FileText, Receipt, MapPin, Plane, Clock, Heart, Building2, UtensilsCrossed, Bike,
-  Train, Bus, Car, BedDouble, Plus,
+  Train, Bus, Car, BedDouble, Plus, Check,
 } from "lucide-react";
 import { formatCurrency } from "@/lib/countries";
 import { safeFormatDate, safeParseDate } from "@/lib/utils";
@@ -67,8 +67,28 @@ function useCountUp(target: number, enabled: boolean, duration = 900) {
   return value;
 }
 
-function Rise({ i, first, className = "", children }: { i: number; first: boolean; className?: string; children: React.ReactNode }) {
-  return (
+// Eased 0 to 1 over a few seconds on first open. Already 1 on later visits and with reduced motion.
+function useProgress(enabled: boolean, duration = 3200) {
+  const [value, setValue] = useState(enabled && !prefersReducedMotion() ? 0 : 1);
+  useEffect(() => {
+    if (!enabled || prefersReducedMotion()) {
+      setValue(1);
+      return;
+    }
+    let raf = 0;
+    const startedAt = performance.now();
+    const tick = (t: number) => {
+      const x = Math.min((t - startedAt) / duration, 1);
+      setValue(0.5 - Math.cos(Math.PI * x) / 2);
+      if (x < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [enabled, duration]);
+  return value;
+}
+
+function Rise({ i, first, className = "", children }: { i: number; first: boolean; className?: string; children: React.ReactNode }) {  return (
     <div className={`${first ? "ov-rise" : ""} ${className}`} style={first ? { animationDelay: `${i * 70}ms` } : undefined}>
       {children}
     </div>
@@ -350,33 +370,109 @@ function OngoingCard({ dayNum, totalDays, nextItem, Icon }: { dayNum: number; to
   );
 }
 
-type RouteStop = { name: string; date: Date; pct: number };
+type RouteStop = { name: string; date: Date; pct: number; label: boolean };
 
-// Consecutive days in the same city collapse into one stop. Falls back to start and end dates.
-function buildRoute(cities: Record<string, string> | undefined, start: Date, end: Date, totalDays: number, place: string): RouteStop[] {
-  const span = Math.max(totalDays - 1, 1);
-  const stops: RouteStop[] = [];
+// Consecutive days in the same city collapse into one stop. Dots are spaced by date between the
+// first and last stop. legs[i] is the number of nights between stop i and stop i + 1.
+function buildRoute(cities: Record<string, string> | undefined, start: Date, end: Date, place: string): { stops: RouteStop[]; legs: number[] } {
+  const raw: { name: string; date: Date }[] = [];
   Object.keys(cities ?? {})
     .sort()
     .forEach(key => {
       const d = safeParseDate(key);
       const name = (cities ?? {})[key];
       if (!d || !name) return;
-      if (stops.length && stops[stops.length - 1].name === name) return;
-      const pct = Math.min(Math.max(differenceInCalendarDays(d, start) / span, 0), 1) * 100;
-      stops.push({ name, date: d, pct });
+      if (raw.length && raw[raw.length - 1].name === name) return;
+      raw.push({ name, date: d });
     });
-  if (stops.length < 2) {
-    return [
-      { name: place || "Start", date: start, pct: 0 },
-      { name: "End", date: end, pct: 100 },
-    ];
-  }
-  const picked = stops.length > 5
-    ? [0, 1, 2, 3, 4].map(i => stops[Math.round((i * (stops.length - 1)) / 4)])
-    : stops;
-  // First dot sits at the start of the line and the last at the end, matching their labels.
-  return picked.map((st, i) => (i === 0 ? { ...st, pct: 0 } : i === picked.length - 1 ? { ...st, pct: 100 } : st));
+  let picked = raw.length > 5 ? [0, 1, 2, 3, 4].map(i => raw[Math.round((i * (raw.length - 1)) / 4)]) : raw;
+  if (picked.length < 2) picked = [{ name: place || "Start", date: start }, { name: "End", date: end }];
+
+  const origin = picked[0].date;
+  const span = Math.max(differenceInCalendarDays(picked[picked.length - 1].date, origin), 1);
+  const stops: RouteStop[] = picked.map((p, i) => ({
+    ...p,
+    pct: i === 0 ? 0 : i === picked.length - 1 ? 100 : Math.min((differenceInCalendarDays(p.date, origin) / span) * 100, 100),
+    label: true,
+  }));
+  // A middle label that would sit on top of the next one is dropped. Its dot and leg still show.
+  stops.forEach((st, i) => {
+    if (i > 0 && i < stops.length - 1 && stops[i + 1].pct - st.pct < 16) st.label = false;
+  });
+  const legs = stops.slice(1).map((st, i) => Math.max(differenceInCalendarDays(st.date, stops[i].date), 0));
+  return { stops, legs };
+}
+
+function RecapCard({ start, end, totalDays, cities, place, first }: { start: Date; end: Date; totalDays: number; cities?: Record<string, string>; place: string; first: boolean }) {
+  const { stops, legs } = buildRoute(cities, start, end, place);
+  const p = useProgress(first);
+  const reached = (pct: number) => p * 100 >= pct - 0.01;
+  const done = p >= 1;
+  const last = stops.length - 1;
+  const at = (pct: number) => `calc(${pct}% - ${(pct / 100) * 10}px)`;
+
+  return (
+    <div className={`${card} !rounded-[24px] flex flex-col gap-3 px-5 py-4`}>
+      <div className="flex items-center justify-between">
+        <Chip tone="green">
+          Completed
+          <Check className={`h-3.5 w-3.5 text-emerald-500 transition-transform duration-300 ${done ? "scale-100" : "scale-0"}`} strokeWidth={2.5} />
+        </Chip>
+        <span className="text-xs tabular-nums text-muted-foreground">{Math.round(p * totalDays)} days</span>
+      </div>
+
+      <div>
+        <div className="relative h-9">
+          <div className="absolute inset-x-[5px] top-[24px] h-[2px] bg-blue-500/20" />
+          <div className="absolute inset-x-[5px] top-[24px] h-[2px]">
+            <div className="h-full bg-blue-500" style={{ width: `${p * 100}%` }} />
+          </div>
+          {legs.map((n, i) => {
+            const mid = (stops[i].pct + stops[i + 1].pct) / 2;
+            return n > 0 ? (
+              <span
+                key={i}
+                className={`absolute top-0.5 -translate-x-1/2 text-[11px] font-semibold text-blue-500 transition-opacity duration-500 ${reached(mid) ? "opacity-100" : "opacity-0"}`}
+                style={{ left: `${mid}%` }}
+              >
+                {n}N
+              </span>
+            ) : null;
+          })}
+          {stops.map((st, i) => {
+            const on = reached(st.pct);
+            return (
+              <React.Fragment key={i}>
+                {on && first && !done && <span className="ov-ripple absolute top-5 h-2.5 w-2.5 rounded-full border-2 border-blue-500" style={{ left: at(st.pct) }} />}
+                <span
+                  className={`absolute top-5 h-2.5 w-2.5 rounded-full bg-blue-500 ring-[3px] ring-card transition-transform duration-300 ${on ? "scale-100" : "scale-0"}`}
+                  style={{ left: at(st.pct) }}
+                />
+              </React.Fragment>
+            );
+          })}
+          <span
+            className={`absolute top-5 h-2.5 w-2.5 rounded-full bg-blue-300 ring-4 ring-blue-500/30 transition-opacity duration-300 ${p > 0 && !done ? "opacity-100" : "opacity-0"}`}
+            style={{ left: at(p * 100) }}
+          />
+        </div>
+
+        <div className="relative mt-1 h-9 text-xs text-muted-foreground">
+          {stops.map((st, i) =>
+            st.label ? (
+              <div
+                key={i}
+                className={`absolute transition-all duration-500 ${reached(st.pct) ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0"}`}
+                style={i === 0 ? { left: 0 } : i === last ? { right: 0, textAlign: "right" } : { left: `${st.pct}%`, transform: "translateX(-50%)", textAlign: "center" }}
+              >
+                <p className="text-[13px] font-semibold text-foreground">{st.name}</p>
+              </div>
+            ) : null
+          )}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function RecapCard({ start, end, totalDays, spent, items, cities, place }: { start: Date; end: Date; totalDays: number; spent: number; items: number; cities?: Record<string, string>; place: string }) {
@@ -732,7 +828,7 @@ export default function OverviewTab({ trip }: { trip: Trip }) {
   } else if (phase === "ongoing") {
     topCard = <OngoingCard dayNum={dayNum} totalDays={totalDays} nextItem={nextItem} Icon={iconFor(nextItem)} />;
   } else if (phase === "completed" && tripStart && tripEnd) {
-    topCard = <RecapCard start={tripStart} end={tripEnd} totalDays={totalDays} spent={totalSpent} items={itinerary.length} cities={trip.dayCities} place={trip.state || trip.destination || ""} />;
+    topCard = <RecapCard start={tripStart} end={tripEnd} totalDays={totalDays} cities={trip.dayCities} place={trip.state || trip.destination || ""} first={first} />;
   } else if (phase === "nodates" && nextItem) {
     topCard = <NextUpRow item={nextItem} Icon={iconFor(nextItem)} />;
   }

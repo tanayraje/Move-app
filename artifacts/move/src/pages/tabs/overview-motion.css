@@ -72,6 +72,14 @@
 }
 .ov-twinkle { animation: ov-twinkle 3.6s ease-in-out infinite; }
 
+/* One ripple when the route reaches a stop */
+@keyframes ov-ripple {
+  from { opacity: 0.65; transform: scale(1); }
+  to { opacity: 0; transform: scale(2.8); }
+}
+.ov-ripple { animation: ov-ripple 0.9s ease-out both; }
+
+
 @media (prefers-reduced-motion: reduce) {
   .ov-rise,
   .ov-plane-idle,
@@ -82,6 +90,7 @@
   .ov-dot-amber,
   .ov-line-draw,
   .ov-wave,
+  .ov-ripple,
   .ov-twinkle {
     animation: none !important;
   }
