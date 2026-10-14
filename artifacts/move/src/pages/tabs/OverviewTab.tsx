@@ -350,14 +350,75 @@ function OngoingCard({ dayNum, totalDays, nextItem, Icon }: { dayNum: number; to
   );
 }
 
-function RecapCard({ start, end, totalDays, spent, items }: { start: Date; end: Date; totalDays: number; spent: number; items: number }) {
+type RouteStop = { name: string; date: Date; pct: number };
+
+// Consecutive days in the same city collapse into one stop. Falls back to start and end dates.
+function buildRoute(cities: Record<string, string> | undefined, start: Date, end: Date, totalDays: number, place: string): RouteStop[] {
+  const span = Math.max(totalDays - 1, 1);
+  const stops: RouteStop[] = [];
+  Object.keys(cities ?? {})
+    .sort()
+    .forEach(key => {
+      const d = safeParseDate(key);
+      const name = (cities ?? {})[key];
+      if (!d || !name) return;
+      if (stops.length && stops[stops.length - 1].name === name) return;
+      const pct = Math.min(Math.max(differenceInCalendarDays(d, start) / span, 0), 1) * 100;
+      stops.push({ name, date: d, pct });
+    });
+  if (stops.length < 2) {
+    return [
+      { name: place || "Start", date: start, pct: 0 },
+      { name: "End", date: end, pct: 100 },
+    ];
+  }
+  if (stops.length > 5) {
+    const keep = [0, 1, 2, 3, 4].map(i => Math.round((i * (stops.length - 1)) / 4));
+    return keep.map(i => stops[i]);
+  }
+  return stops;
+}
+
+function RecapCard({ start, end, totalDays, spent, items, cities, place }: { start: Date; end: Date; totalDays: number; spent: number; items: number; cities?: Record<string, string>; place: string }) {
+  const stops = buildRoute(cities, start, end, totalDays, place);
+  const last = stops.length - 1;
   return (
     <div className={`${card} !rounded-[24px] flex flex-col gap-3.5 px-5 py-4`}>
       <div className="flex items-center justify-between">
         <Chip tone="grey">Completed</Chip>
         <span className="text-xs text-muted-foreground">{format(start, "MMM d")} – {format(end, "MMM d")}</span>
       </div>
-      <DayStrip totalDays={totalDays} currentDay={totalDays} tone="blue" wave />
+      <div className="pt-1">
+        <div className="relative h-2.5">
+          <div className="absolute inset-x-[5px] top-1 h-[2px] bg-blue-500/20" />
+          <div className="ov-line-draw absolute inset-x-[5px] top-1 h-[2px] bg-blue-500/50" />
+          {stops.map((st, i) => (
+            <span
+              key={i}
+              className="absolute top-0 h-2.5 w-2.5 rounded-full bg-blue-500 ring-[3px] ring-card"
+              style={{ left: `calc(${st.pct}% - ${(st.pct / 100) * 10}px)` }}
+            />
+          ))}
+        </div>
+        <div className="relative mt-2 h-9 text-xs text-muted-foreground">
+          {stops.map((st, i) => (
+            <div
+              key={i}
+              className="absolute max-w-[110px]"
+              style={
+                i === 0
+                  ? { left: 0 }
+                  : i === last
+                  ? { right: 0, textAlign: "right" }
+                  : { left: `${st.pct}%`, transform: "translateX(-50%)", textAlign: "center" }
+              }
+            >
+              <p className="truncate text-[13px] font-semibold text-foreground">{st.name}</p>
+              <p>{format(st.date, "MMM d")}</p>
+            </div>
+          ))}
+        </div>
+      </div>
       <div className="grid grid-cols-3 border-t border-border pt-3.5">
         <div>
           <p className="font-display text-[22px] font-bold text-foreground">{totalDays}</p>
@@ -671,7 +732,7 @@ export default function OverviewTab({ trip }: { trip: Trip }) {
   } else if (phase === "ongoing") {
     topCard = <OngoingCard dayNum={dayNum} totalDays={totalDays} nextItem={nextItem} Icon={iconFor(nextItem)} />;
   } else if (phase === "completed" && tripStart && tripEnd) {
-    topCard = <RecapCard start={tripStart} end={tripEnd} totalDays={totalDays} spent={totalSpent} items={itinerary.length} />;
+    topCard = <RecapCard start={tripStart} end={tripEnd} totalDays={totalDays} spent={totalSpent} items={itinerary.length} cities={trip.dayCities} place={trip.state || trip.destination || ""} />;
   } else if (phase === "nodates" && nextItem) {
     topCard = <NextUpRow item={nextItem} Icon={iconFor(nextItem)} />;
   }
