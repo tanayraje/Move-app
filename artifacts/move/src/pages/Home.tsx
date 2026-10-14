@@ -235,14 +235,14 @@ const hasMembers = memberCount > 1;
 
   // Status chip: glass tinted by state (green = ongoing, blue = upcoming, pink = wishlist, grey = archived / past)
   const tone = isWishlist
-    ? { label: "Wishlist", glass: "bg-pink-500/40", dot: "bg-white" }
+    ? { label: "Wishlist", glass: "bg-pink-500/40", dot: "bg-pink-300" }
     : status === "archived"
-    ? { label: "Archived", glass: "bg-slate-500/40", dot: "bg-white" }
+    ? { label: "Archived", glass: "bg-slate-500/40", dot: "bg-slate-300" }
     : isPast
-    ? { label: "Past", glass: "bg-slate-500/40", dot: "bg-white" }
+    ? { label: "Past", glass: "bg-slate-500/40", dot: "bg-slate-300" }
     : isActiveNow
-    ? { label: "In progress", glass: "bg-emerald-500/40", dot: "bg-white" }
-    : { label: `In ${daysUntil}d`, glass: "bg-blue-500/40", dot: "bg-white" };
+    ? { label: "In progress", glass: "bg-emerald-500/40", dot: "bg-emerald-300" }
+    : { label: `In ${daysUntil}d`, glass: "bg-blue-500/40", dot: "bg-blue-300" };
 
   const heroStyle = trip.heroImage
     ? { backgroundImage: `url(${trip.heroImage})`, backgroundSize: "cover", backgroundPosition: "center" }
