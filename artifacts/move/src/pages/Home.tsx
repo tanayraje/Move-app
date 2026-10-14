@@ -270,7 +270,7 @@ const hasMembers = memberCount > 1;
             )}
             style={{ color: "#ffffff" }}
           >
-            <span className={cn("h-2 w-2 rounded-full shadow-[0_0_6px_rgba(255,255,255,0.8)]", tone.dot)} />
+            <span className={cn("h-2 w-2 rounded-full", tone.dot)} />
             {tone.label}
           </span>
 
