@@ -235,14 +235,14 @@ const hasMembers = memberCount > 1;
 
   // Status chip: glass tinted by state (green = ongoing, blue = upcoming, pink = wishlist, grey = archived / past)
   const tone = isWishlist
-    ? { label: "Wishlist", glass: "bg-white/70", dot: "bg-pink-500" }
+    ? { label: "Wishlist", glass: "bg-pink-500/40", dot: "bg-white" }
     : status === "archived"
-    ? { label: "Archived", glass: "bg-white/70", dot: "bg-slate-500" }
+    ? { label: "Archived", glass: "bg-slate-500/40", dot: "bg-white" }
     : isPast
-    ? { label: "Past", glass: "bg-white/70", dot: "bg-slate-500" }
+    ? { label: "Past", glass: "bg-slate-500/40", dot: "bg-white" }
     : isActiveNow
-    ? { label: "In progress", glass: "bg-white/70", dot: "bg-emerald-500" }
-    : { label: `In ${daysUntil}d`, glass: "bg-white/70", dot: "bg-blue-500" };
+    ? { label: "In progress", glass: "bg-emerald-500/40", dot: "bg-white" }
+    : { label: `In ${daysUntil}d`, glass: "bg-blue-500/40", dot: "bg-white" };
 
   const heroStyle = trip.heroImage
     ? { backgroundImage: `url(${trip.heroImage})`, backgroundSize: "cover", backgroundPosition: "center" }
@@ -262,15 +262,15 @@ const hasMembers = memberCount > 1;
         <div className="relative h-[300px]" style={heroStyle}>
           <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
           <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-transparent to-transparent" />
-
-                    <span
+          
+          <span
             className={cn(
-              "absolute left-4 top-4 z-10 inline-flex items-center gap-1.5 rounded-full border border-white/50 px-3 py-1.5 text-xs font-semibold shadow-[0_2px_10px_rgba(0,0,0,0.18)] backdrop-blur-md",
+              "absolute left-4 top-4 z-10 inline-flex items-center gap-1.5 rounded-full border border-white/30 px-3 py-1.5 text-xs font-semibold shadow-[0_2px_10px_rgba(0,0,0,0.2)] backdrop-blur-md [text-shadow:0_1px_6px_rgba(0,0,0,0.3)]",
               tone.glass
             )}
-            style={{ color: "#0f172a" }}
+            style={{ color: "#ffffff" }}
           >
-            <span className={cn("h-2 w-2 rounded-full", tone.dot)} />
+            <span className={cn("h-2 w-2 rounded-full shadow-[0_0_6px_rgba(255,255,255,0.8)]", tone.dot)} />
             {tone.label}
           </span>
 
