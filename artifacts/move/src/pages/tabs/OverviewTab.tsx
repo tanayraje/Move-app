@@ -169,11 +169,11 @@ function stayStage(stay: Stay, now: Date, tripFar: boolean): StayStage {
 /* Pieces                                                              */
 /* ------------------------------------------------------------------ */
 
-function Chip({ tone, children }: { tone: "blue" | "green" | "teal" | "amber" | "grey" | "pink"; children: React.ReactNode }) {
+function Chip({ tone, children }: { tone: "blue" | "green" | "violet" | "amber" | "grey" | "pink"; children: React.ReactNode }) {
   const tones = {
     blue: "bg-blue-500/15 border-blue-500/30 text-foreground",
     green: "bg-emerald-500/15 border-emerald-500/30 text-foreground",
-    teal: "bg-teal-500/15 border-teal-500/30 text-foreground",
+    violet: "bg-violet-500/15 border-violet-500/30 text-foreground",
     amber: "bg-amber-500/15 border-amber-500/30 text-foreground",
     grey: "bg-foreground/5 text-muted-foreground border-foreground/10",
     pink: "bg-pink-500/15 border-pink-500/30 text-foreground",
@@ -376,16 +376,16 @@ function RecapCard({ start, end, totalDays, spent, items }: { start: Date; end: 
   );
 }
 
-function StayIcon({ tone = "teal", twinkle = true }: { tone?: "teal" | "blue" | "amber"; twinkle?: boolean }) {
+function StayIcon({ tone = "violet", twinkle = true }: { tone?: "violet" | "blue" | "amber"; twinkle?: boolean }) {
   const t = {
-    teal: "bg-teal-500/15 text-teal-500",
+    violet: "bg-violet-500/15 text-violet-500",
     blue: "bg-blue-500/15 text-blue-500",
     amber: "bg-amber-500/15 text-amber-500",
   }[tone];
   return (
     <div className={`relative flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-xl ${t}`}>
       <BedDouble className="h-5 w-5" />
-      {twinkle && <span className="ov-twinkle absolute right-[7px] top-[7px] h-1 w-1 rounded-full bg-teal-200" />}
+      {twinkle && <span className="ov-twinkle absolute right-[7px] top-[7px] h-1 w-1 rounded-full bg-violet-200" />}
     </div>
   );
 }
@@ -394,7 +394,7 @@ function NightDots({ nights, current, amberLast = false }: { nights: number; cur
   if (nights > 10) {
     return (
       <div className="h-1.5 overflow-hidden rounded-full bg-foreground/10">
-        <div className="h-full rounded-full bg-teal-500 transition-[width]" style={{ width: `${Math.min(current / nights, 1) * 100}%` }} />
+        <div className="h-full rounded-full bg-violet-500 transition-[width]" style={{ width: `${Math.min(current / nights, 1) * 100}%` }} />
       </div>
     );
   }
@@ -409,7 +409,7 @@ function NightDots({ nights, current, amberLast = false }: { nights: number; cur
           <span
             key={i}
             className={`h-2.5 w-2.5 rounded-full ${
-              amber ? "bg-amber-500 ov-dot-amber" : isCur ? "bg-teal-500 ov-dot-teal" : filled ? "bg-teal-500" : "bg-foreground/10"
+              amber ? "bg-amber-500 ov-dot-amber" : isCur ? "bg-violet-500 ov-dot-violet" : filled ? "bg-violet-500" : "bg-foreground/10"
             }`}
           />
         );
@@ -428,10 +428,10 @@ function StayCard({ stay, now, tripFar, count, index }: { stay: Stay; now: Date;
   const checkInTime = format(stay.checkIn, "HH:mm");
   const checkOutTime = format(stay.checkOut, "HH:mm");
 
-    if (stage === "compact" || stage === "done") {
+  if (stage === "compact" || stage === "done") {
     return (
-      <div className={`${card} flex h-[72px] items-center gap-3 px-4`}>
-        <StayIcon twinkle={stage === "compact"} tone={stage === "done" ? "blue" : "teal"} />
+      <div className={`rounded-[22px] bg-violet-500/[0.12] ring-1 ring-inset ring-violet-500/25 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_rgba(15,23,42,0.06)] flex h-[72px] items-center gap-3 px-4`}>
+        <StayIcon twinkle={stage === "compact"} tone={stage === "done" ? "blue" : "violet"} />
         <div className="min-w-0 flex-1">
           <p className="text-[11px] font-medium uppercase tracking-[0.5px] text-muted-foreground">{label} · {nightsLabel}</p>
           <p className="truncate text-[15px] font-semibold text-foreground">{stay.name}</p>
@@ -446,7 +446,7 @@ function StayCard({ stay, now, tripFar, count, index }: { stay: Stay; now: Date;
 
   if (stage === "line") {
     return (
-      <div className={`${card} flex flex-col gap-3.5 px-4 pb-4 pt-3.5`}>
+      <div className={`rounded-[22px] bg-violet-500/[0.12] ring-1 ring-inset ring-violet-500/25 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_rgba(15,23,42,0.06)] flex flex-col gap-3.5 px-4 pb-4 pt-3.5`}>
         <div className="flex items-center gap-3">
           <StayIcon />
           <div className="min-w-0 flex-1">
@@ -457,13 +457,13 @@ function StayCard({ stay, now, tripFar, count, index }: { stay: Stay; now: Date;
         <div className="flex flex-col gap-2">
           <div className="relative flex h-2 items-center">
             <div className="absolute inset-x-1 h-[1.5px] bg-foreground/10" />
-            <div className="ov-line-draw absolute inset-x-1 h-[1.5px] bg-teal-500" />
-            <span className="absolute left-0 h-2 w-2 rounded-full bg-teal-500" />
-            <span className="absolute right-0 h-2 w-2 rounded-full bg-teal-500" />
+            <div className="ov-line-draw absolute inset-x-1 h-[1.5px] bg-violet-500" />
+            <span className="absolute left-0 h-2 w-2 rounded-full bg-violet-500" />
+            <span className="absolute right-0 h-2 w-2 rounded-full bg-violet-500" />
           </div>
           <div className="flex items-baseline justify-between text-xs text-muted-foreground">
             <span><b className="text-[13px] font-semibold text-foreground">{inDay}</b> · {checkInTime}</span>
-            <span className="font-semibold text-teal-500">{nightsLabel}</span>
+            <span className="font-semibold text-violet-500">{nightsLabel}</span>
             <span><b className="text-[13px] font-semibold text-foreground">{outDay}</b> · {checkOutTime}</span>
           </div>
         </div>
@@ -474,14 +474,14 @@ function StayCard({ stay, now, tripFar, count, index }: { stay: Stay; now: Date;
   const isCheckout = stage === "checkout";
   const left = stay.nights - nightNo;
   return (
-    <div className={`${card} flex flex-col gap-3 px-4 py-3.5`}>
+    <div className={`rounded-[22px] bg-violet-500/[0.12] ring-1 ring-inset ring-violet-500/25 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_rgba(15,23,42,0.06)] flex flex-col gap-3 px-4 py-3.5`}>
       <div className="flex items-center gap-3">
-        <StayIcon tone={isCheckout ? "amber" : "teal"} twinkle={!isCheckout} />
+        <StayIcon tone={isCheckout ? "amber" : "violet"} twinkle={!isCheckout} />
         <div className="min-w-0 flex-1">
           <p className="text-[11px] font-medium uppercase tracking-[0.5px] text-muted-foreground">{label}</p>
           <p className="truncate text-[15px] font-semibold text-foreground">{stay.name}</p>
         </div>
-        {isCheckout ? <Chip tone="amber">Check out by {checkOutTime}</Chip> : <Chip tone="teal">Night {nightNo} of {stay.nights}</Chip>}
+        {isCheckout ? <Chip tone="amber">Check out by {checkOutTime}</Chip> : <Chip tone="violet">Night {nightNo} of {stay.nights}</Chip>}
       </div>
       <div className="flex flex-col gap-2">
         <NightDots nights={stay.nights} current={isCheckout ? stay.nights : nightNo} amberLast={isCheckout} />

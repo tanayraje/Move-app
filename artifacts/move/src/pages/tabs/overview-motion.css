@@ -39,16 +39,16 @@
   0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5); }
   70%, 100% { box-shadow: 0 0 0 7px rgba(16, 185, 129, 0); }
 }
-@keyframes ov-dot-teal {
-  0% { box-shadow: 0 0 0 0 rgba(20, 184, 166, 0.55); }
-  70%, 100% { box-shadow: 0 0 0 7px rgba(20, 184, 166, 0); }
+@keyframes ov-dot-violet {
+  0% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.55); }
+  70%, 100% { box-shadow: 0 0 0 7px rgba(139, 92, 246, 0); }
 }
 @keyframes ov-dot-amber {
   0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.55); }
   70%, 100% { box-shadow: 0 0 0 7px rgba(245, 158, 11, 0); }
 }
 .ov-dot-green { animation: ov-dot-green 2.4s ease-out infinite; }
-.ov-dot-teal { animation: ov-dot-teal 2.6s ease-out infinite; }
+.ov-dot-violet { animation: ov-dot-violet 2.6s ease-out infinite; }
 .ov-dot-amber { animation: ov-dot-amber 2.2s ease-out infinite; }
 
 /* Stay line draws once */
@@ -78,7 +78,7 @@
   .ov-track,
   .ov-glow,
   .ov-dot-green,
-  .ov-dot-teal,
+  .ov-dot-violet,
   .ov-dot-amber,
   .ov-line-draw,
   .ov-wave,
