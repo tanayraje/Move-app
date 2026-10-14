@@ -229,7 +229,7 @@ function CountdownCard({ days, start, totalDays, first }: { days: number; start:
 
 function NextUpRow({ item, Icon }: { item: any; Icon: any }) {
   return (
-    <div className={`${card} flex h-[66px] items-center gap-3 !rounded-[20px] px-4`}>
+    <div className={`${card} flex h-[72px] items-center gap-3 px-4`}>
       <div className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
         <Icon className="h-5 w-5" />
       </div>
@@ -428,9 +428,9 @@ function StayCard({ stay, now, tripFar, count, index }: { stay: Stay; now: Date;
   const checkInTime = format(stay.checkIn, "HH:mm");
   const checkOutTime = format(stay.checkOut, "HH:mm");
 
-  if (stage === "compact" || stage === "done") {
+    if (stage === "compact" || stage === "done") {
     return (
-      <div className={`${card} flex h-[66px] items-center gap-3 !rounded-[20px] px-4`}>
+      <div className={`${card} flex h-[72px] items-center gap-3 px-4`}>
         <StayIcon twinkle={stage === "compact"} tone={stage === "done" ? "blue" : "teal"} />
         <div className="min-w-0 flex-1">
           <p className="text-[11px] font-medium uppercase tracking-[0.5px] text-muted-foreground">{label} · {nightsLabel}</p>
@@ -496,7 +496,7 @@ function StayCard({ stay, now, tripFar, count, index }: { stay: Stay; now: Date;
 
 function AddStayCard({ onAdd }: { onAdd: () => void }) {
   return (
-    <button onClick={onAdd} className="flex items-center gap-3 rounded-[22px] border border-dashed border-foreground/20 p-4 text-left transition-transform active:scale-[0.98]">
+    <button onClick={onAdd} className="flex h-[72px] w-full items-center gap-3 rounded-[22px] border border-dashed border-foreground/20 px-4 text-left transition-transform active:scale-[0.98]">
       <div className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-xl bg-foreground/5 text-muted-foreground">
         <BedDouble className="h-5 w-5" />
       </div>
