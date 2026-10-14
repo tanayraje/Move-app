@@ -235,14 +235,14 @@ const hasMembers = memberCount > 1;
 
   // Status chip: glass tinted by state (green = ongoing, blue = upcoming, pink = wishlist, grey = archived / past)
   const tone = isWishlist
-    ? { label: "Wishlist", glass: "bg-pink-500/45", dot: "bg-pink-200" }
+    ? { label: "Wishlist", glass: "bg-black/40", dot: "bg-pink-400" }
     : status === "archived"
-    ? { label: "Archived", glass: "bg-slate-500/45", dot: "bg-slate-200" }
+    ? { label: "Archived", glass: "bg-black/40", dot: "bg-slate-400" }
     : isPast
-    ? { label: "Past", glass: "bg-slate-500/45", dot: "bg-slate-200" }
+    ? { label: "Past", glass: "bg-black/40", dot: "bg-slate-400" }
     : isActiveNow
-    ? { label: "In progress", glass: "bg-emerald-500/45", dot: "bg-emerald-200" }
-    : { label: `In ${daysUntil}d`, glass: "bg-blue-500/45", dot: "bg-blue-200" };
+    ? { label: "In progress", glass: "bg-black/40", dot: "bg-emerald-400" }
+    : { label: `In ${daysUntil}d`, glass: "bg-black/40", dot: "bg-blue-400" };
 
   const heroStyle = trip.heroImage
     ? { backgroundImage: `url(${trip.heroImage})`, backgroundSize: "cover", backgroundPosition: "center" }
@@ -269,7 +269,7 @@ const hasMembers = memberCount > 1;
               tone.glass
             )}
           >
-            <span className={cn("h-1.5 w-1.5 rounded-full", tone.dot)} />
+            <span className={cn("h-2 w-2 rounded-full ring-2 ring-white/20", tone.dot)} />
             {tone.label}
           </span>
 
