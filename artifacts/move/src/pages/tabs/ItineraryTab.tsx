@@ -74,7 +74,7 @@ const ELEMENT_BORDER: Record<ElementType, string> = {
 
 const ELEMENT_BADGES: Record<ElementType, string> = {
   travel:
-    "bg-blue-50 text-blue-700 border border-blue-100 dark:bg-blue-500/10 dark:text-blue-300 dark:border-blue-500/20",
+    "bg-blue-50 text-blue-700 border border-blue-100 dark:bg-[#73580d] dark:text-amber-100 dark:border-[#73580d]",
 
   accommodation:
     "bg-violet-50 text-violet-700 border border-violet-100 dark:bg-violet-500/10 dark:text-violet-300 dark:border-violet-500/20",
