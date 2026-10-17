@@ -13,7 +13,7 @@ import { useTripWeather, WEATHER_ICONS, CityStretch } from "@/hooks/use-weather"
 import { motion, AnimatePresence, LayoutGroup, MotionConfig } from "framer-motion";
 
 // iOS widget feel: unhurried, with a very slight settle at the end
-const widgetSpring = { type: "spring", duration: 0.75, bounce: 0.12 } as const;
+const widgetSpring = { type: "spring", duration: 0.65, bounce: 0.12 } as const;
 import { formatCurrency } from "@/lib/countries";
 import { safeFormatDate, safeParseDate } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
