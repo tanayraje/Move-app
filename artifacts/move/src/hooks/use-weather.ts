@@ -222,8 +222,8 @@ async function loadCity(city: string, hint: string, needForecast: boolean, needC
  * Weather for every remaining day of a trip.
  * byDate: one entry per date (used by the Timeline header).
  * stretches: one entry per city visit, in trip order (used by the Overview tile).
- * Days without a city use the previous day's city. Past days, wishlist trips and
- * failed lookups simply have no entry, so the UI hides weather for them.
+ * Only days with a city added get weather. Days without a city, past days, wishlist
+ * trips and failed lookups have no entry, so the UI shows nothing for them.
  */
 export function useTripWeather(trip: Trip) {
   const now = new Date();
@@ -234,19 +234,18 @@ export function useTripWeather(trip: Trip) {
 
   const days: { date: string; city: string; forecast: boolean }[] = [];
   if (!isWishlist && start && end) {
-    let lastCity = "";
     const total = differenceInCalendarDays(end, start);
     for (let i = 0; i <= total; i++) {
       const day = addDays(start, i);
       const date = format(day, "yyyy-MM-dd");
-      lastCity = (trip.dayCities?.[date] || lastCity).trim();
       const ahead = differenceInCalendarDays(day, now);
-      if (ahead < 0 || !lastCity) continue;
-      days.push({ date, city: lastCity, forecast: ahead <= FORECAST_WINDOW });
+      if (ahead < 0) continue;
+      const city = (trip.dayCities?.[date] ?? "").trim();
+      days.push({ date, city, forecast: ahead <= FORECAST_WINDOW });
     }
   }
 
-  const cities = Array.from(new Set(days.map(d => d.city)));
+  const cities = Array.from(new Set(days.map(d => d.city).filter(Boolean)));
   const results = useQueries({
     queries: cities.map(city => {
       const needForecast = days.some(d => d.city === city && d.forecast);
@@ -260,8 +259,9 @@ export function useTripWeather(trip: Trip) {
     }),
   });
 
-  const byDate: Record<string, DayWeather> = {};
+    const byDate: Record<string, DayWeather> = {};
   days.forEach(d => {
+    if (!d.city) return;
     const data = results[cities.indexOf(d.city)]?.data;
     if (!data) return;
     const f = d.forecast ? data.forecast?.[d.date] : undefined;
@@ -288,9 +288,12 @@ export function useTripWeather(trip: Trip) {
     });
     run = [];
   };
-  days.forEach(d => {
+    days.forEach(d => {
     const w = byDate[d.date];
-    if (!w) return;
+    if (!w) {
+      flush();
+      return;
+    }
     if (run.length && run[0].city !== w.city) flush();
     run.push(w);
   });

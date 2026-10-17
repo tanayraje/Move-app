@@ -10,6 +10,10 @@ import {
   Train, Bus, Car, BedDouble, Plus, Check, ChevronUp,
 } from "lucide-react";
 import { useTripWeather, WEATHER_ICONS, CityStretch } from "@/hooks/use-weather";
+import { motion, LayoutGroup, MotionConfig } from "framer-motion";
+
+// iOS widget feel: quick, settles without bounce
+const widgetSpring = { type: "spring", stiffness: 420, damping: 38, mass: 0.9 } as const;
 import { formatCurrency } from "@/lib/countries";
 import { safeFormatDate, safeParseDate } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
@@ -663,18 +667,21 @@ function AddStayCard({ onAdd }: { onAdd: () => void }) {
 
 function TallTile({ icon: Icon, label, value, onClick, flat = false }: { icon: any; label: string; value: string; onClick: () => void; flat?: boolean }) {
   return (
-    <button
+    <motion.button
+      layoutId="bento-spent"
       onClick={onClick}
-      className={`${flat ? "flex items-center gap-3 px-3.5" : "row-span-2 flex flex-col justify-between p-4"} rounded-[22px] bg-emerald-500/[0.12] text-left ring-1 ring-inset ring-emerald-500/25 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_rgba(15,23,42,0.06)] transition-transform active:scale-[0.98]`}
+      whileTap={{ scale: 0.98 }}
+      style={{ borderRadius: 22 }}
+      className={`${flat ? "flex items-center gap-3 px-3.5" : "row-span-2 flex flex-col justify-between p-4"} bg-emerald-500/[0.12] text-left ring-1 ring-inset ring-emerald-500/25 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_rgba(15,23,42,0.06)]`}
     >
-      <div className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-xl bg-card text-emerald-500 shadow-[0_1px_3px_rgba(15,23,42,0.12)]">
+      <motion.div layout="position" className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-xl bg-card text-emerald-500 shadow-[0_1px_3px_rgba(15,23,42,0.12)]">
         <Icon className="h-[18px] w-[18px]" />
-      </div>
-      <div>
+      </motion.div>
+      <motion.div layout="position">
         <p className={`font-display font-bold tracking-tight text-foreground ${flat ? "text-xl leading-[22px]" : "text-[25px] leading-7"}`}>{value}</p>
         <p className={`text-xs text-muted-foreground ${flat ? "" : "mt-1"}`}>{label}</p>
-      </div>
-    </button>
+      </motion.div>
+    </motion.button>
   );
 }
 
@@ -691,64 +698,98 @@ function stretchDates(s: CityStretch) {
 function WeatherTile({ stretch, onClick }: { stretch: CityStretch; onClick: () => void }) {
   const Icon = WEATHER_ICONS[stretch.kind];
   return (
-    <button onClick={onClick} className={`${card} flex items-center gap-3 px-3.5 text-left transition-transform active:scale-[0.98]`}>
-      <div className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-xl bg-foreground/5 text-foreground/70">
-        <Icon className="h-[18px] w-[18px]" />
-      </div>
-      <div className="min-w-0">
-        <p className="font-display text-xl font-bold leading-[22px] text-foreground">
-          {stretch.high}° <span className="text-sm font-medium text-muted-foreground">/ {stretch.low}°</span>
-        </p>
-        <p className="truncate text-xs text-muted-foreground">
-          {stretch.city}
-          {stretch.source === "typical" ? " · typical" : ""}
-        </p>
-      </div>
-    </button>
+    <motion.button
+      layoutId="bento-weather"
+      onClick={onClick}
+      whileTap={{ scale: 0.98 }}
+      style={{ borderRadius: 22 }}
+      className={`${card} flex items-center gap-3 overflow-hidden px-3.5 text-left`}
+    >
+      <motion.div
+        layout="position"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.18, delay: 0.06 }}
+        className="flex min-w-0 items-center gap-3"
+      >
+        <div className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-xl bg-foreground/5 text-foreground/70">
+          <Icon className="h-[18px] w-[18px]" />
+        </div>
+        <div className="min-w-0">
+          <p className="font-display text-xl font-bold leading-[22px] text-foreground">
+            {stretch.high}° <span className="text-sm font-medium text-muted-foreground">/ {stretch.low}°</span>
+          </p>
+          <p className="truncate text-xs text-muted-foreground">
+            {stretch.city}
+            {stretch.source === "typical" ? " · typical" : ""}
+          </p>
+        </div>
+      </motion.div>
+    </motion.button>
   );
 }
 
 function WeatherPanel({ stretches, onClose }: { stretches: CityStretch[]; onClose: () => void }) {
   return (
-    <button onClick={onClose} className={`${card} ov-rise flex w-full flex-col px-4 py-3 text-left`}>
-      <div className="flex items-center justify-between">
-        <p className="text-[11px] font-medium uppercase tracking-[0.5px] text-muted-foreground">Weather</p>
-        <ChevronUp className="h-4 w-4 text-muted-foreground" />
-      </div>
-      {stretches.map((s, i) => {
-        const Icon = WEATHER_ICONS[s.kind];
-        return (
-          <div key={`${s.city}-${s.from}`} className={`flex items-center gap-3 py-2.5 ${i > 0 ? "border-t border-border" : ""}`}>
-            <Icon className="h-5 w-5 shrink-0 text-foreground/70" />
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-[15px] font-semibold text-foreground">{s.city}</p>
-              <p className="text-xs text-muted-foreground">
-                {stretchDates(s)}
-                {s.source === "typical" ? " · typical" : ""}
+    <motion.button
+      layoutId="bento-weather"
+      onClick={onClose}
+      whileTap={{ scale: 0.99 }}
+      style={{ borderRadius: 22 }}
+      className={`${card} flex w-full flex-col overflow-hidden px-4 py-3 text-left`}
+    >
+      <motion.div
+        layout="position"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.22, delay: 0.1 }}
+        className="flex w-full flex-col"
+      >
+        <div className="flex items-center justify-between">
+          <p className="text-[11px] font-medium uppercase tracking-[0.5px] text-muted-foreground">Weather</p>
+          <ChevronUp className="h-4 w-4 text-muted-foreground" />
+        </div>
+        {stretches.map((s, i) => {
+          const Icon = WEATHER_ICONS[s.kind];
+          return (
+            <div key={`${s.city}-${s.from}`} className={`flex items-center gap-3 py-2.5 ${i > 0 ? "border-t border-border" : ""}`}>
+              <Icon className="h-5 w-5 shrink-0 text-foreground/70" />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-[15px] font-semibold text-foreground">{s.city}</p>
+                <p className="text-xs text-muted-foreground">
+                  {stretchDates(s)}
+                  {s.source === "typical" ? " · typical" : ""}
+                </p>
+              </div>
+              <p className="text-[15px] font-semibold text-foreground">
+                {s.high}° <span className="font-medium text-muted-foreground">/ {s.low}°</span>
               </p>
             </div>
-            <p className="text-[15px] font-semibold text-foreground">
-              {s.high}° <span className="font-medium text-muted-foreground">/ {s.low}°</span>
-            </p>
-          </div>
-        );
-      })}
-      <p className="mt-1 text-[11px] text-muted-foreground/70">Weather data by Open-Meteo.com</p>
-    </button>
+          );
+        })}
+        <p className="mt-1 text-[11px] text-muted-foreground/70">Weather data by Open-Meteo.com</p>
+      </motion.div>
+    </motion.button>
   );
 }
 
-function SmallTile({ icon: Icon, tint, label, value, onClick }: { icon: any; tint: string; label: string; value: string | number; onClick: () => void }) {
+function SmallTile({ icon: Icon, tint, label, value, onClick, layoutId }: { icon: any; tint: string; label: string; value: string | number; onClick: () => void; layoutId?: string }) {
   return (
-    <button onClick={onClick} className={`${card} flex items-center gap-3 px-3.5 text-left transition-transform active:scale-[0.98]`}>
-      <div className={`flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-xl ${tint}`}>
+    <motion.button
+      layoutId={layoutId}
+      onClick={onClick}
+      whileTap={{ scale: 0.98 }}
+      style={{ borderRadius: 22 }}
+      className={`${card} flex items-center gap-3 px-3.5 text-left`}
+    >
+      <motion.div layout="position" className={`flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-xl ${tint}`}>
         <Icon className="h-[18px] w-[18px]" />
-      </div>
-      <div>
+      </motion.div>
+      <motion.div layout="position">
         <p className="font-display text-xl font-bold leading-[22px] text-foreground">{value}</p>
         <p className="text-xs text-muted-foreground">{label}</p>
-      </div>
-    </button>
+      </motion.div>
+    </motion.button>
   );
 }
 
@@ -948,66 +989,77 @@ export default function OverviewTab({ trip }: { trip: Trip }) {
           </Rise>
         )}
 
-                {/* Bento: weather tile replaces the Timeline tile when there is weather to show */}
-        <Rise i={2} first={first}>
-          {weatherOpen && firstStretch ? (
-            <div className="flex flex-col gap-2.5">
-              <WeatherPanel stretches={stretches} onClose={() => setWeatherOpen(false)} />
-              <div className="grid grid-cols-2 grid-rows-[70px] gap-2.5">
-                <TallTile flat icon={Receipt} label="Total spent" value={formatCurrency(Math.round(spentShown), "INR")} onClick={() => navigate(`/trip/${trip.id}/expenses`)} />
-                <SmallTile icon={FileText} tint="bg-violet-500/15 text-violet-500" label="Documents" value={docsShown} onClick={() => navigate(`/trip/${trip.id}/documents`)} />
-              </div>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 grid-rows-[70px_70px] gap-2.5">
-              <TallTile icon={Receipt} label="Total spent" value={formatCurrency(Math.round(spentShown), "INR")} onClick={() => navigate(`/trip/${trip.id}/expenses`)} />
-              {firstStretch ? (
-                <WeatherTile stretch={firstStretch} onClick={() => setWeatherOpen(true)} />
+                 <MotionConfig transition={widgetSpring} reducedMotion="user">
+          <LayoutGroup>
+            {/* Bento: weather tile replaces the Timeline tile when there is weather to show.
+                Tapping it grows into the full-width panel; the other tiles and everything below glide into place. */}
+            <Rise i={2} first={first}>
+              {weatherOpen && firstStretch ? (
+                <div className="flex flex-col gap-2.5">
+                  <WeatherPanel stretches={stretches} onClose={() => setWeatherOpen(false)} />
+                  <div className="grid grid-cols-2 grid-rows-[70px] gap-2.5">
+                    <TallTile flat icon={Receipt} label="Total spent" value={formatCurrency(Math.round(spentShown), "INR")} onClick={() => navigate(`/trip/${trip.id}/expenses`)} />
+                    <SmallTile layoutId="bento-docs" icon={FileText} tint="bg-violet-500/15 text-violet-500" label="Documents" value={docsShown} onClick={() => navigate(`/trip/${trip.id}/documents`)} />
+                  </div>
+                </div>
               ) : (
-                <SmallTile icon={Calendar} tint="bg-blue-500/15 text-blue-500" label="Timeline" value={timelineShown} onClick={goItinerary} />
+                <div className="grid grid-cols-2 grid-rows-[70px_70px] gap-2.5">
+                  <TallTile icon={Receipt} label="Total spent" value={formatCurrency(Math.round(spentShown), "INR")} onClick={() => navigate(`/trip/${trip.id}/expenses`)} />
+                  {firstStretch ? (
+                    <WeatherTile stretch={firstStretch} onClick={() => setWeatherOpen(true)} />
+                  ) : (
+                    <SmallTile layoutId="bento-timeline" icon={Calendar} tint="bg-blue-500/15 text-blue-500" label="Timeline" value={timelineShown} onClick={goItinerary} />
+                  )}
+                  <SmallTile layoutId="bento-docs" icon={FileText} tint="bg-violet-500/15 text-violet-500" label="Documents" value={docsShown} onClick={() => navigate(`/trip/${trip.id}/documents`)} />
+                </div>
               )}
-              <SmallTile icon={FileText} tint="bg-violet-500/15 text-violet-500" label="Documents" value={docsShown} onClick={() => navigate(`/trip/${trip.id}/documents`)} />
-            </div>
-          )}
-        </Rise>
+            </Rise>
 
-        <Rise i={3} first={first}>
-          <button
-            onClick={() => navigate(`/trip/${trip.id}/places`)}
-            className={`${card} flex h-[60px] w-full items-center gap-3 px-3.5 text-left transition-transform active:scale-[0.98]`}
-          >
-            <div className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-xl bg-orange-500/15 text-orange-500">
-              <MapPin className="h-[18px] w-[18px]" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-[15px] font-semibold text-foreground">{visitedPlaces}/{places.length} places visited</p>
-              <p className="text-xs text-muted-foreground">{places.length === 0 ? "Nothing saved yet" : `${places.length - visitedPlaces} to go`}</p>
-            </div>
-            <span className="flex h-8 w-8 items-center justify-center rounded-full border border-foreground/15 text-muted-foreground">
-              <Plus className="h-4 w-4" />
-            </span>
-          </button>
-        </Rise>
+            <motion.div layout="position">
+              <Rise i={3} first={first}>
+                <button
+                  onClick={() => navigate(`/trip/${trip.id}/places`)}
+                  className={`${card} flex h-[60px] w-full items-center gap-3 px-3.5 text-left transition-transform active:scale-[0.98]`}
+                >
+                  <div className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-xl bg-orange-500/15 text-orange-500">
+                    <MapPin className="h-[18px] w-[18px]" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[15px] font-semibold text-foreground">{visitedPlaces}/{places.length} places visited</p>
+                    <p className="text-xs text-muted-foreground">{places.length === 0 ? "Nothing saved yet" : `${places.length - visitedPlaces} to go`}</p>
+                  </div>
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full border border-foreground/15 text-muted-foreground">
+                    <Plus className="h-4 w-4" />
+                  </span>
+                </button>
+              </Rise>
+            </motion.div>
 
-        {budgetTotal > 0 && (
-          <Rise i={4} first={first}>
-            <div
-              className={`rounded-[22px] px-[18px] py-4 text-white shadow-[0_12px_28px_rgba(37,99,235,0.3)] ${
-                overBudget ? "bg-gradient-to-br from-red-500 to-red-400 dark:from-red-500/80 dark:to-red-400/60" : "bg-gradient-to-br from-primary to-blue-400 dark:from-primary/80 dark:to-blue-400/60"
-              }`}
-            >
-              <div className="flex items-center justify-between text-xs text-white/90">
-                <span>{formatCurrency(totalSpent, "INR")} of {formatCurrency(budgetTotal, "INR")}</span>
-                <span className="font-semibold">{overBudget ? "Over budget" : formatCurrency(budgetTotal - totalSpent, "INR") + " left"}</span>
-              </div>
-              <div className="mt-2.5 h-[7px] overflow-hidden rounded-full bg-white/30">
-                <div className="h-full rounded-full bg-white transition-[width]" style={{ width: `${Math.min((totalSpent / budgetTotal) * 100, 100)}%` }} />
-              </div>
-            </div>
-          </Rise>
-        )}
+            {budgetTotal > 0 && (
+              <motion.div layout="position">
+                <Rise i={4} first={first}>
+                  <div
+                    className={`rounded-[22px] px-[18px] py-4 text-white shadow-[0_12px_28px_rgba(37,99,235,0.3)] ${
+                      overBudget ? "bg-gradient-to-br from-red-500 to-red-400 dark:from-red-500/80 dark:to-red-400/60" : "bg-gradient-to-br from-primary to-blue-400 dark:from-primary/80 dark:to-blue-400/60"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between text-xs text-white/90">
+                      <span>{formatCurrency(totalSpent, "INR")} of {formatCurrency(budgetTotal, "INR")}</span>
+                      <span className="font-semibold">{overBudget ? "Over budget" : formatCurrency(budgetTotal - totalSpent, "INR") + " left"}</span>
+                    </div>
+                    <div className="mt-2.5 h-[7px] overflow-hidden rounded-full bg-white/30">
+                      <div className="h-full rounded-full bg-white transition-[width]" style={{ width: `${Math.min((totalSpent / budgetTotal) * 100, 100)}%` }} />
+                    </div>
+                  </div>
+                </Rise>
+              </motion.div>
+            )}
 
-        <TripMap trip={trip} />
+            <motion.div layout="position">
+              <TripMap trip={trip} />
+            </motion.div>
+          </LayoutGroup>
+        </MotionConfig>
       </div>
     </div>
   );
