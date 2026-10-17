@@ -7,8 +7,9 @@ import { Trip } from "@/lib/types";
 import { HeroScrim } from "@/components/ui";
 import {
   Calendar, FileText, Receipt, MapPin, Plane, Clock, Heart, Building2, UtensilsCrossed, Bike,
-  Train, Bus, Car, BedDouble, Plus, Check,
+  Train, Bus, Car, BedDouble, Plus, Check, ChevronUp,
 } from "lucide-react";
+import { useTripWeather, WEATHER_ICONS, CityStretch } from "@/hooks/use-weather";
 import { formatCurrency } from "@/lib/countries";
 import { safeFormatDate, safeParseDate } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
@@ -660,19 +661,79 @@ function AddStayCard({ onAdd }: { onAdd: () => void }) {
   );
 }
 
-function TallTile({ icon: Icon, label, value, onClick }: { icon: any; label: string; value: string; onClick: () => void }) {
+function TallTile({ icon: Icon, label, value, onClick, flat = false }: { icon: any; label: string; value: string; onClick: () => void; flat?: boolean }) {
   return (
     <button
       onClick={onClick}
-      className="row-span-2 flex flex-col justify-between rounded-[22px] bg-emerald-500/[0.12] p-4 text-left ring-1 ring-inset ring-emerald-500/25 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_rgba(15,23,42,0.06)] transition-transform active:scale-[0.98]"
+      className={`${flat ? "flex items-center gap-3 px-3.5" : "row-span-2 flex flex-col justify-between p-4"} rounded-[22px] bg-emerald-500/[0.12] text-left ring-1 ring-inset ring-emerald-500/25 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_rgba(15,23,42,0.06)] transition-transform active:scale-[0.98]`}
     >
-      <div className="flex h-[34px] w-[34px] items-center justify-center rounded-xl bg-card text-emerald-500 shadow-[0_1px_3px_rgba(15,23,42,0.12)]">
+      <div className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-xl bg-card text-emerald-500 shadow-[0_1px_3px_rgba(15,23,42,0.12)]">
         <Icon className="h-[18px] w-[18px]" />
       </div>
       <div>
-        <p className="font-display text-[25px] font-bold leading-7 tracking-tight text-foreground">{value}</p>
-        <p className="mt-1 text-xs text-muted-foreground">{label}</p>
+        <p className={`font-display font-bold tracking-tight text-foreground ${flat ? "text-xl leading-[22px]" : "text-[25px] leading-7"}`}>{value}</p>
+        <p className={`text-xs text-muted-foreground ${flat ? "" : "mt-1"}`}>{label}</p>
       </div>
+    </button>
+  );
+}
+
+function stretchDates(s: CityStretch) {
+  const from = safeParseDate(s.from);
+  const to = safeParseDate(s.to);
+  if (!from || !to) return "";
+  if (s.from === s.to) return format(from, "MMM d");
+  return from.getMonth() === to.getMonth()
+    ? `${format(from, "MMM d")} – ${format(to, "d")}`
+    : `${format(from, "MMM d")} – ${format(to, "MMM d")}`;
+}
+
+function WeatherTile({ stretch, onClick }: { stretch: CityStretch; onClick: () => void }) {
+  const Icon = WEATHER_ICONS[stretch.kind];
+  return (
+    <button onClick={onClick} className={`${card} flex items-center gap-3 px-3.5 text-left transition-transform active:scale-[0.98]`}>
+      <div className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-xl bg-foreground/5 text-foreground/70">
+        <Icon className="h-[18px] w-[18px]" />
+      </div>
+      <div className="min-w-0">
+        <p className="font-display text-xl font-bold leading-[22px] text-foreground">
+          {stretch.high}° <span className="text-sm font-medium text-muted-foreground">/ {stretch.low}°</span>
+        </p>
+        <p className="truncate text-xs text-muted-foreground">
+          {stretch.city}
+          {stretch.source === "typical" ? " · typical" : ""}
+        </p>
+      </div>
+    </button>
+  );
+}
+
+function WeatherPanel({ stretches, onClose }: { stretches: CityStretch[]; onClose: () => void }) {
+  return (
+    <button onClick={onClose} className={`${card} ov-rise flex w-full flex-col px-4 py-3 text-left`}>
+      <div className="flex items-center justify-between">
+        <p className="text-[11px] font-medium uppercase tracking-[0.5px] text-muted-foreground">Weather</p>
+        <ChevronUp className="h-4 w-4 text-muted-foreground" />
+      </div>
+      {stretches.map((s, i) => {
+        const Icon = WEATHER_ICONS[s.kind];
+        return (
+          <div key={`${s.city}-${s.from}`} className={`flex items-center gap-3 py-2.5 ${i > 0 ? "border-t border-border" : ""}`}>
+            <Icon className="h-5 w-5 shrink-0 text-foreground/70" />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[15px] font-semibold text-foreground">{s.city}</p>
+              <p className="text-xs text-muted-foreground">
+                {stretchDates(s)}
+                {s.source === "typical" ? " · typical" : ""}
+              </p>
+            </div>
+            <p className="text-[15px] font-semibold text-foreground">
+              {s.high}° <span className="font-medium text-muted-foreground">/ {s.low}°</span>
+            </p>
+          </div>
+        );
+      })}
+      <p className="mt-1 text-[11px] text-muted-foreground/70">Weather data by Open-Meteo.com</p>
     </button>
   );
 }
@@ -704,6 +765,9 @@ export default function OverviewTab({ trip }: { trip: Trip }) {
   const { data: places = [] } = usePlaces(trip.id);
   const first = useFirstView(trip.id);
   const now = useNow();
+  const { stretches } = useTripWeather(trip);
+  const [weatherOpen, setWeatherOpen] = useState(false);
+  const firstStretch = stretches[0];
 
   const status = trip.status || (trip.archived ? "archived" : "active");
   const isWishlist = status === "wishlist";
@@ -884,13 +948,27 @@ export default function OverviewTab({ trip }: { trip: Trip }) {
           </Rise>
         )}
 
-        {/* Bento */}
+                {/* Bento: weather tile replaces the Timeline tile when there is weather to show */}
         <Rise i={2} first={first}>
-          <div className="grid grid-cols-2 grid-rows-[70px_70px] gap-2.5">
-            <TallTile icon={Receipt} label="Total spent" value={formatCurrency(Math.round(spentShown), "INR")} onClick={() => navigate(`/trip/${trip.id}/expenses`)} />
-            <SmallTile icon={Calendar} tint="bg-blue-500/15 text-blue-500" label="Timeline" value={timelineShown} onClick={goItinerary} />
-            <SmallTile icon={FileText} tint="bg-violet-500/15 text-violet-500" label="Documents" value={docsShown} onClick={() => navigate(`/trip/${trip.id}/documents`)} />
-          </div>
+          {weatherOpen && firstStretch ? (
+            <div className="flex flex-col gap-2.5">
+              <WeatherPanel stretches={stretches} onClose={() => setWeatherOpen(false)} />
+              <div className="grid grid-cols-2 grid-rows-[70px] gap-2.5">
+                <TallTile flat icon={Receipt} label="Total spent" value={formatCurrency(Math.round(spentShown), "INR")} onClick={() => navigate(`/trip/${trip.id}/expenses`)} />
+                <SmallTile icon={FileText} tint="bg-violet-500/15 text-violet-500" label="Documents" value={docsShown} onClick={() => navigate(`/trip/${trip.id}/documents`)} />
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 grid-rows-[70px_70px] gap-2.5">
+              <TallTile icon={Receipt} label="Total spent" value={formatCurrency(Math.round(spentShown), "INR")} onClick={() => navigate(`/trip/${trip.id}/expenses`)} />
+              {firstStretch ? (
+                <WeatherTile stretch={firstStretch} onClick={() => setWeatherOpen(true)} />
+              ) : (
+                <SmallTile icon={Calendar} tint="bg-blue-500/15 text-blue-500" label="Timeline" value={timelineShown} onClick={goItinerary} />
+              )}
+              <SmallTile icon={FileText} tint="bg-violet-500/15 text-violet-500" label="Documents" value={docsShown} onClick={() => navigate(`/trip/${trip.id}/documents`)} />
+            </div>
+          )}
         </Rise>
 
         <Rise i={3} first={first}>

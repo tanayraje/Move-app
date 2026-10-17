@@ -31,6 +31,7 @@ import {
 import { generateId, cn, safeFormatDate, safeParseDate, isDayLabel, getTripStatus } from "@/lib/utils";
 import { Button, Input, Label, Select, BottomSheet, FAB, HeroScrim } from "@/components/ui";
 import { AddMenu } from "@/components/AddMenu";
+import { useTripWeather, WEATHER_ICONS } from "@/hooks/use-weather";
 import { formatCurrency, convertFromINR, RATES_PER_INR } from "@/lib/countries";
 
 import {
@@ -434,6 +435,9 @@ const handleTouchEnd = (e: React.TouchEvent) => {
 
   const dayCities = trip.dayCities ?? {};
   const currentCity = dayCities[selectedDate] ?? '';
+  const { byDate: weatherByDate } = useTripWeather(trip);
+  const dayWeather = weatherByDate[selectedDate];
+  const DayWeatherIcon = dayWeather ? WEATHER_ICONS[dayWeather.kind] : null;
 
   // Timeline header photo follows the city of the selected day (everywhere else uses the trip photo)
   const cityHint = trip.state || trip.destination;
@@ -745,10 +749,18 @@ const dur = Math.max(
               </button>
             )}
           </div>
-          {dayIndex >= 0 && (
-            <span className="shrink-0 rounded-full bg-white px-3 py-1.5 text-xs font-semibold shadow-md [text-shadow:none]" style={{ color: "#0f172a" }}>
-              {isWishlist ? selectedDate : `Day ${dayIndex + 1} of ${days.length}`}
-            </span>
+                    {dayIndex >= 0 && (
+            <div className="flex shrink-0 flex-col items-end gap-1.5">
+              {dayWeather && DayWeatherIcon && (
+                <span className="flex items-center gap-1.5 rounded-full bg-white/20 px-2.5 py-1 text-xs font-semibold text-white ring-1 ring-inset ring-white/25 backdrop-blur-md [text-shadow:none]">
+                  <DayWeatherIcon className="h-3.5 w-3.5" />
+                  {dayWeather.rainFrom ? `${dayWeather.high}° · rain ${dayWeather.rainFrom}` : `${dayWeather.high}° / ${dayWeather.low}°`}
+                </span>
+              )}
+              <span className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold shadow-md [text-shadow:none]" style={{ color: "#0f172a" }}>
+                {isWishlist ? selectedDate : `Day ${dayIndex + 1} of ${days.length}`}
+              </span>
+            </div>
           )}
         </div>
       </div>
