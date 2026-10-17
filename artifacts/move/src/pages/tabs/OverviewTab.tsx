@@ -7,7 +7,7 @@ import { Trip } from "@/lib/types";
 import { HeroScrim } from "@/components/ui";
 import {
   Calendar, FileText, Receipt, MapPin, Plane, Clock, Heart, Building2, UtensilsCrossed, Bike,
-  Train, Bus, Car, BedDouble, Plus, Check, ChevronUp, X,
+    Train, Bus, Car, BedDouble, Plus, Check, ChevronUp, X, Maximize2,
 } from "lucide-react";
 import { useTripWeather, WEATHER_ICONS, CityStretch } from "@/hooks/use-weather";
 import { motion, AnimatePresence, LayoutGroup, MotionConfig } from "framer-motion";
@@ -714,14 +714,19 @@ const widgetFade = {
 function WeatherWidget({ stretches, open, onToggle }: { stretches: CityStretch[]; open: boolean; onToggle: () => void }) {
   const lead = stretches[0];
   const LeadIcon = WEATHER_ICONS[lead.kind];
+  // Only expandable when there is more than the first city to show
+  const expandable = stretches.length > 1;
+  const otherCities = new Set(stretches.slice(1).map(s => s.city.toLowerCase()).filter(c => c !== lead.city.toLowerCase())).size;
+  const subline = otherCities > 0 ? `+${otherCities} ${otherCities === 1 ? "city" : "cities"}` : lead.source === "typical" ? "typical" : "";
+
   return (
     <motion.button
       layout
-      onClick={onToggle}
-      whileTap={{ scale: 0.98 }}
-      aria-expanded={open}
+      onClick={expandable ? onToggle : undefined}
+      whileTap={expandable ? { scale: 0.98 } : undefined}
+      aria-expanded={expandable ? open : undefined}
       style={{ gridArea: "weather", borderRadius: 22 }}
-      className={`${card} relative overflow-hidden text-left`}
+      className={`${card} relative overflow-hidden text-left ${expandable ? "" : "cursor-default"}`}
     >
       <AnimatePresence mode="popLayout" initial={false}>
         {open ? (
@@ -761,9 +766,17 @@ function WeatherWidget({ stretches, open, onToggle }: { stretches: CityStretch[]
               </p>
               <p className="truncate text-xs text-muted-foreground">
                 {lead.city}
-                {lead.source === "typical" ? " · typical" : ""}
+                {subline && (
+                  <>
+                    {" · "}
+                    <span className={otherCities > 0 ? "text-foreground/80" : ""}>{subline}</span>
+                  </>
+                )}
               </p>
             </div>
+            {expandable && (
+              <Maximize2 aria-hidden className="absolute right-2.5 top-2.5 h-3 w-3 text-muted-foreground/60" />
+            )}
           </motion.div>
         )}
       </AnimatePresence>
