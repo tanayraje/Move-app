@@ -7,13 +7,13 @@ import { Trip } from "@/lib/types";
 import { HeroScrim } from "@/components/ui";
 import {
   Calendar, FileText, Receipt, MapPin, Plane, Clock, Heart, Building2, UtensilsCrossed, Bike,
-  Train, Bus, Car, BedDouble, Plus, Check, ChevronUp,
+  Train, Bus, Car, BedDouble, Plus, Check, ChevronUp, X,
 } from "lucide-react";
 import { useTripWeather, WEATHER_ICONS, CityStretch } from "@/hooks/use-weather";
 import { motion, AnimatePresence, LayoutGroup, MotionConfig } from "framer-motion";
 
 // iOS widget feel: unhurried, with a very slight settle at the end
-const widgetSpring = { type: "spring", duration: 0.5, bounce: 0.12 } as const;
+const widgetSpring = { type: "spring", duration: 0.75, bounce: 0.12 } as const;
 import { formatCurrency } from "@/lib/countries";
 import { safeFormatDate, safeParseDate } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
@@ -650,18 +650,27 @@ function StayCard({ stay, now, tripFar, count, index }: { stay: Stay; now: Date;
   );
 }
 
-function AddStayCard({ onAdd }: { onAdd: () => void }) {
+function AddStayCard({ onAdd, onDismiss }: { onAdd: () => void; onDismiss: () => void }) {
   return (
-    <button onClick={onAdd} className="flex h-[72px] w-full items-center gap-3 rounded-[22px] border border-dashed border-violet-500/50 bg-violet-500/[0.04] px-4 text-left transition-transform active:scale-[0.98]">
-      <div className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-xl bg-violet-500/10 text-violet-500">
-        <BedDouble className="h-5 w-5" />
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="text-[15px] font-semibold text-foreground">Add where you're staying</p>
-        <p className="text-xs text-muted-foreground">Hotel, homestay or a friend's place</p>
-      </div>
-      <span className="flex h-8 items-center rounded-full border border-violet-500/40 bg-violet-500/10 px-3.5 text-[13px] font-semibold text-foreground">Add stay</span>
-    </button>
+    <div className="flex h-[72px] w-full items-center gap-1.5 rounded-[22px] border border-dashed border-violet-500/50 bg-violet-500/[0.04] pl-4 pr-2">
+      <button onClick={onAdd} className="flex min-w-0 flex-1 items-center gap-3 text-left transition-transform active:scale-[0.98]">
+        <div className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-xl bg-violet-500/10 text-violet-500">
+          <BedDouble className="h-5 w-5" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-[15px] font-semibold text-foreground">Add where you're staying</p>
+          <p className="truncate text-xs text-muted-foreground">Hotel, homestay or a friend's place</p>
+        </div>
+        <span className="flex h-8 shrink-0 items-center rounded-full border border-violet-500/40 bg-violet-500/10 px-3.5 text-[13px] font-semibold text-foreground">Add stay</span>
+      </button>
+      <button
+        onClick={onDismiss}
+        aria-label="Dismiss"
+        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-foreground/5 active:scale-95"
+      >
+        <X className="h-4 w-4" />
+      </button>
+    </div>
   );
 }
 
@@ -796,7 +805,25 @@ export default function OverviewTab({ trip }: { trip: Trip }) {
   const first = useFirstView(trip.id);
   const now = useNow();
   const { stretches } = useTripWeather(trip);
-  const [weatherOpen, setWeatherOpen] = useState(false);
+    const [weatherOpen, setWeatherOpen] = useState(false);
+
+  // "Add stay" prompt can be dismissed per trip; remembered on this device
+  const stayPromptKey = `move-hide-stay-prompt:${trip.id}`;
+  const [stayPromptHidden, setStayPromptHidden] = useState(() => {
+    try {
+      return localStorage.getItem(stayPromptKey) === "1";
+    } catch {
+      return false;
+    }
+  });
+  const hideStayPrompt = () => {
+    setStayPromptHidden(true);
+    try {
+      localStorage.setItem(stayPromptKey, "1");
+    } catch {
+      /* storage blocked: hidden for this visit only */
+    }
+  };
   const firstStretch = stretches[0];
 
   const status = trip.status || (trip.archived ? "archived" : "active");
@@ -967,16 +994,20 @@ export default function OverviewTab({ trip }: { trip: Trip }) {
           </Rise>
         )}
 
-        {/* Stay: shows a few days around the stay. Empty prompt only when no stay exists at all. */}
-        {!isWishlist && (stay || stays.length === 0) && (
-          <Rise i={1} first={first}>
-            {stay ? (
-              <StayCard stay={stay} now={now} tripFar={phase === "far" && daysUntil > 1} count={stays.length} index={activeIndex} />
-            ) : (
-              <AddStayCard onAdd={goItinerary} />
-            )}
-          </Rise>
-        )}
+                {/* Stay: shows a few days around the stay. Empty prompt only when no stay exists at all and it hasn't been dismissed. */}
+        <AnimatePresence mode="popLayout" initial={false}>
+          {!isWishlist && (stay || (stays.length === 0 && !stayPromptHidden)) && (
+            <motion.div key="stay-slot" exit={{ opacity: 0, scale: 0.96, transition: { duration: 0.22 } }}>
+              <Rise i={1} first={first}>
+                {stay ? (
+                  <StayCard stay={stay} now={now} tripFar={phase === "far" && daysUntil > 1} count={stays.length} index={activeIndex} />
+                ) : (
+                  <AddStayCard onAdd={goItinerary} onDismiss={hideStayPrompt} />
+                )}
+              </Rise>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
                  <MotionConfig transition={widgetSpring} reducedMotion="user">
           <LayoutGroup>
