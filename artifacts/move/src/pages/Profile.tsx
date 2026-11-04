@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Link } from "wouter";
-import { ChevronLeft, Pencil, Check, LogOut, Mail, Sun, Moon, Monitor } from "lucide-react";
+import { ChevronLeft, Pencil, Check, LogOut, Mail, Sun, Moon, Monitor, Bell } from "lucide-react";
 import { useSupabaseAuth } from "@/contexts/AuthContext";
 import { useProfile, useUpdateProfile } from "@/hooks/use-profile";
 import { useTrips } from "@/hooks/use-store";
@@ -8,6 +8,7 @@ import { getAvatarUrl } from "@/lib/avatar";
 import { BottomSheet, Button, Input, Label } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import { setThemeMode, useThemeMode, type ThemeMode } from "@/lib/theme";
+import { getPushState, enablePush, disablePush, type PushState } from "@/lib/push";
 
 const AVATARS = Array.from({ length: 24 }, (_, i) => `avatar-${i + 1}`);
 
@@ -161,6 +162,9 @@ export default function Profile() {
         <ThemeSwitch value={themeMode} onChange={setThemeMode} />
       </div>
 
+      {/* Notifications */}
+      <NotificationsCard />
+
       <button
         onClick={signOut}
         className="mt-4 flex h-14 w-full items-center justify-center gap-2 rounded-[22px] bg-card text-[15px] font-semibold text-red-500 shadow-[0_8px_30px_rgba(15,23,42,0.06)] dark:shadow-none dark:ring-1 dark:ring-border"
@@ -197,6 +201,75 @@ export default function Profile() {
         </div>
         <Button size="lg" className="mt-6 w-full" onClick={() => setShowPicker(false)}>Done</Button>
       </BottomSheet>
+    </div>
+  );
+}
+
+const PUSH_COPY: Record<PushState, string> = {
+  on: "Flights and trains 2 hours before, everything else 15 minutes before.",
+  off: "Get a heads-up before the next item on your timeline.",
+  denied: "Notifications are blocked for Move. Allow them in your phone's settings, then come back.",
+  "needs-install": "On iPhone, add Move to your Home Screen first (Share, then Add to Home Screen), then open it from there.",
+  unsupported: "This browser can't show notifications.",
+};
+
+function NotificationsCard() {
+  const [state, setState] = useState<PushState | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    getPushState().then(setState).catch(() => setState("unsupported"));
+  }, []);
+
+  const on = state === "on";
+  const canToggle = state === "on" || state === "off";
+
+  const toggle = async () => {
+    if (!canToggle || busy) return;
+    setBusy(true);
+    setError("");
+    try {
+      setState(on ? await disablePush() : await enablePush());
+    } catch (err) {
+      console.error(err);
+      setError("Could not update notifications. Try again.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="mt-4 rounded-[28px] bg-card p-6 shadow-[0_8px_30px_rgba(15,23,42,0.06)] dark:shadow-none dark:ring-1 dark:ring-border">
+      <div className="flex items-start gap-4">
+        <div className="min-w-0 flex-1">
+          <p className="mb-1 flex items-center gap-2 font-display text-[17px] font-bold tracking-[-0.01em]">
+            <Bell className="h-4 w-4" /> Notifications
+          </p>
+          <p className="text-sm text-muted-foreground">{state ? PUSH_COPY[state] : "Checking..."}</p>
+        </div>
+        {canToggle && (
+          <button
+            type="button"
+            role="switch"
+            aria-checked={on}
+            aria-label="Next item notifications"
+            disabled={busy}
+            onClick={toggle}
+            className={cn(
+              "relative mt-0.5 h-8 w-[52px] shrink-0 rounded-full transition-colors duration-200 disabled:opacity-60",
+              on ? "bg-primary" : "bg-muted"
+            )}
+          >
+            <span
+              aria-hidden
+              className="absolute left-1 top-1 h-6 w-6 rounded-full bg-white shadow-[0_2px_6px_rgba(15,23,42,0.2)] transition-transform duration-[250ms] ease-[cubic-bezier(0.23,1,0.32,1)]"
+              style={{ transform: on ? "translateX(20px)" : "translateX(0)" }}
+            />
+          </button>
+        )}
+      </div>
+      {error && <p className="mt-3 text-sm font-medium text-red-500">{error}</p>}
     </div>
   );
 }

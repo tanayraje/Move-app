@@ -9,6 +9,7 @@ import { useSupabaseAuth } from "@/contexts/AuthContext";
 import { LogIn } from "lucide-react";
 import { AuthProvider } from "@/contexts/AuthContext";
 import NotFound from "@/pages/not-found";
+import { refreshPushSubscription } from "@/lib/push";
 
 import Home from "@/pages/Home";
 import TripDashboard from "@/pages/TripDashboard";
@@ -80,6 +81,11 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     signInWithGoogle,
   } = useSupabaseAuth();
   const [, setLocation] = useLocation();
+
+  // Keep this device's push subscription (and its time zone) current.
+  useEffect(() => {
+    if (user) refreshPushSubscription();
+  }, [user]);
 
   // After Google sign-in the browser lands on "/"; send an invitee back to the link they opened.
   useEffect(() => {

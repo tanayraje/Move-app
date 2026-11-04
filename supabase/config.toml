@@ -14,3 +14,9 @@ entrypoint = "./functions/hero-image/index.ts"
 enabled = true
 verify_jwt = true
 entrypoint = "./functions/city-image/index.ts"
+
+[functions.notify-next]
+enabled = true
+# Called by pg_cron with an x-cron-secret header (or a signed-in user's test ping), so no JWT gate.
+verify_jwt = false
+entrypoint = "./functions/notify-next/index.ts"
