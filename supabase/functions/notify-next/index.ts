@@ -53,9 +53,17 @@ function inWords(min: number) {
   return `${min} min`;
 }
 
+// "14:05" -> "2:05 PM"
+function to12h(hhmm: string) {
+  const m = hhmm.match(/^(\d{1,2}):(\d{2})/);
+  if (!m) return hhmm;
+  const h = Number(m[1]);
+  return `${h % 12 === 0 ? 12 : h % 12}:${m[2]} ${h >= 12 ? "PM" : "AM"}`;
+}
+
 function messageFor(item: any, tripName: string, lead: number) {
   const when = inWords(lead);
-  const time = (item.start_time || "").slice(0, 5);
+  const time = to12h((item.start_time || "").slice(0, 5));
   const route = item.from_location && item.to_location ? `${item.from_location} → ${item.to_location}` : "";
   let title: string;
   let detail: string;

@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import { differenceInCalendarDays, differenceInMinutes, format, addDays } from "date-fns";
+import { formatTime12, formatDateTime12 } from "@/lib/time";
 import { useItinerary, useExpenses, useDocuments, usePlaces } from "@/hooks/use-store";
 import { Trip } from "@/lib/types";
 import { HeroScrim } from "@/components/ui";
@@ -316,7 +317,7 @@ function NextUpRow({ item, Icon }: { item: any; Icon: any }) {
         </p>
         <p className="truncate text-[15px] font-semibold text-foreground">{item.title}</p>
       </div>
-      {item.startTime && <span className="text-[13px] text-muted-foreground">{item.startTime}</span>}
+      {item.startTime && <span className="text-[13px] text-muted-foreground">{formatTime12(item.startTime)}</span>}
     </div>
   );
 }
@@ -385,12 +386,12 @@ function TicketCard({ item, route, now }: { item: any; route: { from: string; to
       <div className="flex items-center justify-between border-t-[1.5px] border-dashed border-foreground/10 bg-foreground/[0.025] px-5 py-3">
         <div>
           <p className="text-[10px] uppercase tracking-[0.5px] text-muted-foreground">Departs</p>
-          <p className="text-lg font-bold text-foreground">{item.startTime || format(start, "HH:mm")}</p>
+          <p className="text-lg font-bold text-foreground">{item.startTime ? formatTime12(item.startTime) : formatDateTime12(start)}</p>
         </div>
         <span className="text-xs text-muted-foreground">{fmtDuration(total)}</span>
         <div className="text-right">
           <p className="text-[10px] uppercase tracking-[0.5px] text-muted-foreground">Arrives</p>
-          <p className="text-lg font-bold text-foreground">{item.endTime || format(end, "HH:mm")}</p>
+          <p className="text-lg font-bold text-foreground">{item.endTime ? formatTime12(item.endTime) : formatDateTime12(end)}</p>
         </div>
       </div>
     </div>
@@ -419,7 +420,7 @@ function OngoingCard({ dayNum, totalDays, nextItem, Icon }: { dayNum: number; to
             <p className="truncate text-[15px] font-semibold text-foreground">{nextItem.title}</p>
           </div>
           <span className="text-xs text-muted-foreground">
-            {nextItem.date === format(new Date(), "yyyy-MM-dd") ? "Today" : safeFormatDate(nextItem.date, (d: Date) => format(d, "MMM d"), nextItem.date)} {nextItem.startTime}
+            {nextItem.date === format(new Date(), "yyyy-MM-dd") ? "Today" : safeFormatDate(nextItem.date, (d: Date) => format(d, "MMM d"), nextItem.date)} {formatTime12(nextItem.startTime)}
           </span>
         </div>
       )}
@@ -581,8 +582,8 @@ function StayCard({ stay, now, tripFar, count, index }: { stay: Stay; now: Date;
   const outDay = format(stay.checkOut, "MMM d");
   const nightNo = Math.min(Math.max(differenceInCalendarDays(now, stay.checkIn) + 1, 1), stay.nights);
   const nightsLabel = `${stay.nights} night${stay.nights === 1 ? "" : "s"}`;
-  const checkInTime = format(stay.checkIn, "HH:mm");
-  const checkOutTime = format(stay.checkOut, "HH:mm");
+  const checkInTime = formatDateTime12(stay.checkIn);
+  const checkOutTime = formatDateTime12(stay.checkOut);
 
   if (stage === "compact" || stage === "done") {
     return (

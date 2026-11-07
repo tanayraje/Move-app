@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { addDays, format } from "date-fns";
+import { formatTime12 } from "@/lib/time";
 import {
   Plus,
   Search,
@@ -463,7 +464,7 @@ function BoardingPass({ entry, onOpen }: { entry: Entry; onOpen: () => void }) {
             {travel ? (
               <>
                 <span className="font-display text-[18px] font-bold leading-none text-blue-950">{dateLabel(travel.date)}</span>
-                {travel.startTime && <span className="text-[12px] text-blue-900/70">{travel.startTime}</span>}
+                {travel.startTime && <span className="text-[12px] text-blue-900/70">{formatTime12(travel.startTime)}</span>}
               </>
             ) : (
               <span className="font-display text-[18px] font-bold leading-none text-blue-950">{kindLabel(doc)}</span>
@@ -497,7 +498,7 @@ function TicketCard({ entry, onOpen }: { entry: Entry; onOpen: () => void }) {
             {link ? (
               <>
                 <span className="font-display text-[18px] font-bold leading-none text-teal-950">{dateLabel(link.date)}</span>
-                {link.startTime && <span className="text-[12px] text-teal-900/70">{link.startTime}</span>}
+                {link.startTime && <span className="text-[12px] text-teal-900/70">{formatTime12(link.startTime)}</span>}
               </>
             ) : (
               <span className="font-display text-[18px] font-bold leading-none text-teal-950">{kindLabel(doc)}</span>
@@ -638,7 +639,7 @@ function SoonTile({ entry, onOpen }: { entry: Entry; onOpen: () => void }) {
         <span className="block truncate text-[14.5px] font-semibold">{doc.name}</span>
         <span className="block truncate text-[12px] text-muted-foreground">
           {link?.date === today ? "Today" : "Tomorrow"}
-          {link?.startTime ? `, ${link.startTime}` : ""}
+          {link?.startTime ? `, ${formatTime12(link.startTime)}` : ""}
         </span>
       </span>
     </button>

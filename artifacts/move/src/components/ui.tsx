@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion, useDragControls } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { splitTime, joinTime, type Period } from "@/lib/time";
 import { X } from "lucide-react";
 
 export function Button({ className, variant = 'primary', size = 'default', isLoading, children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primary'|'secondary'|'outline'|'ghost'|'danger', size?: 'default'|'sm'|'lg'|'icon', isLoading?: boolean }) {
@@ -54,6 +55,87 @@ export function Select({ className, children, ...props }: React.SelectHTMLAttrib
     >
       {children}
     </select>
+  );
+}
+
+const HOURS_12 = [12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+const MINUTES_60 = Array.from({ length: 60 }, (_, i) => i);
+
+/**
+ * 12-hour time picker: hour, minute and an AM / PM toggle.
+ * Value in and out is still 24-hour "HH:mm", so storage and sorting don't change.
+ * Works controlled (value + onChange) or uncontrolled (defaultValue + name for FormData).
+ */
+export function TimeInput({ id, name, value, defaultValue, onChange, required, className }: {
+  id?: string;
+  name?: string;
+  value?: string;
+  defaultValue?: string;
+  onChange?: (hhmm: string) => void;
+  required?: boolean;
+  className?: string;
+}) {
+  const controlled = value !== undefined;
+  const [inner, setInner] = React.useState(defaultValue || "");
+  const current = controlled ? value : inner;
+  const parts = splitTime(current);
+
+  const commit = (hour: number, minute: number, period: Period) => {
+    const next = joinTime(hour, minute, period);
+    if (!controlled) setInner(next);
+    onChange?.(next);
+  };
+  const hour = parts?.hour ?? 12;
+  const minute = parts?.minute ?? 0;
+  const period = parts?.period ?? "PM";
+
+  const selectCls = "bg-transparent appearance-none px-0 border-0 text-center tabular-nums font-medium focus:outline-none cursor-pointer";
+
+  return (
+    <div
+      className={cn(
+        "flex h-12 w-full items-center gap-1.5 rounded-xl border-2 border-border bg-card pl-3 pr-1.5 transition focus-within:border-primary focus-within:ring-4 focus-within:ring-primary/10",
+        className
+      )}
+    >
+      {name && <input type="hidden" name={name} value={current} required={required} />}
+      <select
+        id={id}
+        aria-label="Hour"
+        value={parts ? hour : ""}
+        onChange={e => commit(Number(e.target.value), minute, period)}
+        className={cn(selectCls, "w-7")}
+      >
+        {!parts && <option value="" disabled>--</option>}
+        {HOURS_12.map(h => <option key={h} value={h}>{h}</option>)}
+      </select>
+      <span className="text-muted-foreground -mx-0.5">:</span>
+      <select
+        aria-label="Minute"
+        value={parts ? minute : ""}
+        onChange={e => commit(hour, Number(e.target.value), period)}
+        className={cn(selectCls, "w-7")}
+      >
+        {!parts && <option value="" disabled>--</option>}
+        {MINUTES_60.map(m => <option key={m} value={m}>{String(m).padStart(2, "0")}</option>)}
+      </select>
+      <div className="ml-auto flex shrink-0 rounded-lg bg-muted p-0.5" role="group" aria-label="AM or PM">
+        {(["AM", "PM"] as const).map(p => (
+          <button
+            key={p}
+            type="button"
+            aria-pressed={parts ? period === p : false}
+            onClick={() => commit(hour, minute, p)}
+            className={cn(
+              "rounded-md px-2 py-1 text-xs font-semibold transition",
+              parts && period === p ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
+            )}
+          >
+            {p}
+          </button>
+        ))}
+      </div>
+    </div>
   );
 }
 

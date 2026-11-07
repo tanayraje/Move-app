@@ -29,7 +29,8 @@ import {
   TripDocument, ChecklistItem, ExpenseCategory
 } from "@/lib/types";
 import { generateId, cn, safeFormatDate, safeParseDate, isDayLabel, getTripStatus } from "@/lib/utils";
-import { Button, Input, Label, Select, BottomSheet, FAB, HeroScrim } from "@/components/ui";
+import { Button, Input, Label, Select, TimeInput, BottomSheet, FAB, HeroScrim } from "@/components/ui";
+import { formatTime12 } from "@/lib/time";
 import { AddMenu } from "@/components/AddMenu";
 import { useTripWeather, WEATHER_ICONS } from "@/hooks/use-weather";
 import { formatCurrency, convertFromINR, RATES_PER_INR } from "@/lib/countries";
@@ -1108,7 +1109,7 @@ const toggleChecklistItem = (checkId: string) => {
         </p>
 
         <p className="mt-0.5 text-[12px] italic text-muted-foreground">
-          {item.startTime || "—"}
+          {formatTime12(item.startTime, "—")}
         </p>
 
       </div>
@@ -1180,7 +1181,7 @@ const toggleChecklistItem = (checkId: string) => {
         </p>
 
         <p className="mt-1 text-[12px] italic text-muted-foreground">
-          {item.endTime || "—"}
+          {formatTime12(item.endTime, "—")}
         </p>
 
       </div>
@@ -1592,7 +1593,8 @@ function SortableItem({
     <div className="flex">
       {/* Time */}
       <div className="w-11 shrink-0 pt-3.5 text-right">
-        <p className="text-[13px] font-bold leading-none tabular-nums">{item.startTime}</p>
+        <p className="text-[13px] font-bold leading-none tabular-nums">{formatTime12(item.startTime).split(" ")[0]}</p>
+        <p className="mt-0.5 text-[10px] font-semibold leading-none text-muted-foreground">{formatTime12(item.startTime).split(" ")[1]}</p>
         {duration && <p className="mt-1 text-[10.5px] text-muted-foreground">{duration}</p>}
       </div>
 
@@ -1651,7 +1653,7 @@ function SortableItem({
                         <PlaceCode place={item.toLocation} right />
                       </div>
                       <p className="mt-3 text-[12.5px] font-medium text-blue-900/70">
-                        {item.startTime || "—"} to {item.endTime || "—"}
+                        {formatTime12(item.startTime, "—")} to {formatTime12(item.endTime, "—")}
                       </p>
                     </div>
                     <div className="flex min-w-0 flex-col items-center justify-center gap-2 bg-blue-100/60 dark:bg-blue-100 px-2 py-4 text-center">
@@ -1691,7 +1693,7 @@ function SortableItem({
                   </div>
                   <div className="mt-3 flex items-center justify-between border-t border-dashed border-amber-300/80 pt-2.5 text-[12.5px]">
                     <span className="text-amber-900/70">
-                      {item.startTime || "—"}
+                      {formatTime12(item.startTime, "—")}
                       {duration ? ` · ${duration}` : ""}
                     </span>
                     {item.cost ? (
@@ -1714,8 +1716,8 @@ function SortableItem({
                         Activity
                       </span>
                       <span>
-                        {item.startTime || "—"}
-                        {item.endTime ? ` – ${item.endTime}` : ""}
+                        {formatTime12(item.startTime, "—")}
+                        {item.endTime ? ` – ${formatTime12(item.endTime)}` : ""}
                       </span>
                     </div>
                   </div>
@@ -2329,11 +2331,11 @@ function AddEditSheet({ isOpen, onClose, trip, defaultDate, documents, allItems,
             <div className="grid grid-cols-2 gap-3 [&>*]:min-w-0">
               <div>
                 <Label htmlFor="departureTime">Departure</Label>
-                <Input id="departureTime" name="departureTime" type="time" defaultValue={existingItem?.startTime || '10:00'} required />
+                <TimeInput id="departureTime" name="departureTime" defaultValue={existingItem?.startTime || '10:00'} required />
               </div>
               <div>
                 <Label htmlFor="arrivalTime">Arrival</Label>
-                <Input id="arrivalTime" name="arrivalTime" type="time" defaultValue={existingItem?.endTime || '13:00'} required />
+                <TimeInput id="arrivalTime" name="arrivalTime" defaultValue={existingItem?.endTime || '13:00'} required />
               </div>
             </div>
           </>
@@ -2357,7 +2359,7 @@ function AddEditSheet({ isOpen, onClose, trip, defaultDate, documents, allItems,
               </div>
               <div>
                 <Label htmlFor="checkInTime">Check-in Time</Label>
-                <Input id="checkInTime" name="checkInTime" type="time" defaultValue={existingItem?.startTime || '14:00'} />
+                <TimeInput id="checkInTime" name="checkInTime" defaultValue={existingItem?.startTime || '14:00'} />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3 [&>*]:min-w-0">
@@ -2367,7 +2369,7 @@ function AddEditSheet({ isOpen, onClose, trip, defaultDate, documents, allItems,
               </div>
               <div>
                 <Label htmlFor="checkOutTime">Check-out Time</Label>
-                <Input id="checkOutTime" name="checkOutTime" type="time" defaultValue={existingItem?.endTime || '11:00'} />
+                <TimeInput id="checkOutTime" name="checkOutTime" defaultValue={existingItem?.endTime || '11:00'} />
               </div>
             </div>
           </>
@@ -2401,16 +2403,15 @@ function AddEditSheet({ isOpen, onClose, trip, defaultDate, documents, allItems,
             </div>
             <div>
               <Label htmlFor="mealTime">Time</Label>
-              <Input
+              <TimeInput
                 id="mealTime"
                 name="mealTime"
-                type="time"
                 value={mealTime}
-                onChange={e => setMealTime(e.target.value)}
+                onChange={setMealTime}
                 required
               />
               <p className="text-xs text-muted-foreground mt-1 ml-1 flex items-center gap-1">
-                <Clock className="w-3 h-3" /> Ends at {addMinutesToTime(mealTime, 60)} (1 hour)
+                <Clock className="w-3 h-3" /> Ends at {formatTime12(addMinutesToTime(mealTime, 60))} (1 hour)
               </p>
             </div>
           </>
@@ -2430,7 +2431,7 @@ function AddEditSheet({ isOpen, onClose, trip, defaultDate, documents, allItems,
             <div className="grid grid-cols-2 gap-3 [&>*]:min-w-0">
               <div>
                 <Label htmlFor="startTime">Start Time</Label>
-                <Input id="startTime" name="startTime" type="time" value={startTime} onChange={e => setStartTime(e.target.value)} required />
+                <TimeInput id="startTime" name="startTime" value={startTime} onChange={setStartTime} required />
               </div>
               <div>
                 <Label>Duration</Label>
@@ -2448,7 +2449,7 @@ function AddEditSheet({ isOpen, onClose, trip, defaultDate, documents, allItems,
             </div>
             {startTime && (
               <p className="text-xs text-muted-foreground -mt-3 ml-1 flex items-center gap-1">
-                <Clock className="w-3 h-3" /> Ends at {addMinutesToTime(startTime, duration)}
+                <Clock className="w-3 h-3" /> Ends at {formatTime12(addMinutesToTime(startTime, duration))}
               </p>
             )}
           </>
