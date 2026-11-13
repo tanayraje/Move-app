@@ -20,7 +20,8 @@ function urlBase64ToUint8Array(base64: string) {
 }
 
 async function registration() {
-  return navigator.serviceWorker.register("/push-sw.js", { scope: "/" });
+  // Same worker the app registers on load, so the two never compete for the scope.
+  return navigator.serviceWorker.register("/sw.js", { scope: "/" });
 }
 
 export async function getPushState(): Promise<PushState> {

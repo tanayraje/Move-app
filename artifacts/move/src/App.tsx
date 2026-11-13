@@ -48,11 +48,12 @@ function App() {
       return;
     }
 
-    /*
-    if (import.meta.env.PROD) {
-      navigator.serviceWorker.register('/sw.js').catch(console.error);
+    // One worker for both the app shell and push (see public/sw.js).
+    // Skipped inside the native Android shell, which serves its own files.
+    const isNative = (window as any).Capacitor?.isNativePlatform?.() === true;
+    if (import.meta.env.PROD && 'serviceWorker' in navigator && !isNative) {
+      navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(console.error);
     }
-    */
   }, []);
 
   return (
