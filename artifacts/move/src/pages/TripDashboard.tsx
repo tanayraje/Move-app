@@ -2,7 +2,8 @@ import { notify, confirmDialog } from "@/lib/dialogs";
 import React, { useState, useEffect } from "react";
 import { useRoute, Link, Route, Switch } from "wouter";
 import { format } from "date-fns";
-import { useTrip, useUpdateTrip } from "@/hooks/use-store";
+import { useTrip, tripLoadProblem, type TripLoadProblem } from "@/hooks/use-store";
+import { TabErrorBoundary } from "@/components/TabErrorBoundary";
 import {
   CalendarDays, FileText, Receipt, MapPin, LayoutDashboard,
   ChevronLeft, Users, Settings, ArrowRight, Heart, Copy, Archive
@@ -23,7 +24,7 @@ import { getAvatarUrl } from "@/lib/avatar";
 
 export default function TripDashboard({ params }: { params: { id: string, tab?: string } }) {
   const tripId = params.id;
-  const { data: trip, isLoading } = useTrip(tripId);
+  const { data: trip, isLoading, error, refetch, isFetching } = useTrip(tripId);
   const [, paramsActive] = useRoute("/trip/:id/:tab");
   const activeTab = paramsActive?.tab || 'overview';
 
@@ -39,7 +40,15 @@ export default function TripDashboard({ params }: { params: { id: string, tab?: 
   const onPhoto = heroTab && !scrolled;
 
   if (isLoading) return <div className="p-8 text-center">Loading trip...</div>;
-  if (!trip) return <div className="p-8 text-center text-muted-foreground">Trip not found. <Link href="/" className="text-primary ml-2">Go back</Link></div>;
+  if (!trip) {
+    return (
+      <TripProblem
+        kind={error ? tripLoadProblem(error) : 'not-found'}
+        retrying={isFetching}
+        onRetry={() => refetch()}
+      />
+    );
+  }
 
   const status = (trip.status || 'active') as TripStatus;
   const isWishlist = status === 'wishlist';
@@ -106,12 +115,12 @@ export default function TripDashboard({ params }: { params: { id: string, tab?: 
   }}
 >
         <Switch>
-          <Route path="/trip/:id/overview"><OverviewTab trip={trip} /></Route>
-          <Route path="/trip/:id/itinerary"><ItineraryTab trip={trip} /></Route>
-          <Route path="/trip/:id/documents"><DocumentsTab trip={trip} /></Route>
-          <Route path="/trip/:id/expenses"><ExpensesTab trip={trip} /></Route>
-          <Route path="/trip/:id/places"><PlacesTab trip={trip} /></Route>
-          <Route path="/trip/:id"><OverviewTab trip={trip} /></Route>
+          <Route path="/trip/:id/overview"><TabErrorBoundary key="overview" label="Overview"><OverviewTab trip={trip} /></TabErrorBoundary></Route>
+          <Route path="/trip/:id/itinerary"><TabErrorBoundary key="itinerary" label="Timeline"><ItineraryTab trip={trip} /></TabErrorBoundary></Route>
+          <Route path="/trip/:id/documents"><TabErrorBoundary key="documents" label="Docs"><DocumentsTab trip={trip} /></TabErrorBoundary></Route>
+          <Route path="/trip/:id/expenses"><TabErrorBoundary key="expenses" label="Costs"><ExpensesTab trip={trip} /></TabErrorBoundary></Route>
+          <Route path="/trip/:id/places"><TabErrorBoundary key="places" label="Places"><PlacesTab trip={trip} /></TabErrorBoundary></Route>
+          <Route path="/trip/:id"><TabErrorBoundary key="overview" label="Overview"><OverviewTab trip={trip} /></TabErrorBoundary></Route>
         </Switch>
       </main>
 
@@ -120,6 +129,42 @@ export default function TripDashboard({ params }: { params: { id: string, tab?: 
         activeId={activeTab}
         items={tabs.map(t => ({ id: t.id, label: t.label, icon: t.icon, href: `/trip/${trip.id}/${t.id}` }))}
       />
+    </div>
+  );
+}
+
+const tripProblemCopy: Record<TripLoadProblem, { title: string; body: string }> = {
+  'not-found': {
+    title: "This trip is not available",
+    body: "It may have been deleted, or you are no longer a member.",
+  },
+  offline: {
+    title: "You are offline",
+    body: "This trip has not been opened on this phone before, so there is no saved copy. Connect and try again.",
+  },
+  error: {
+    title: "Could not load this trip",
+    body: "Something went wrong while loading it. Please try again.",
+  },
+};
+
+// Calm full-screen state for a trip that cannot be opened. Each cause gets its own words.
+function TripProblem({ kind, retrying, onRetry }: { kind: TripLoadProblem; retrying: boolean; onRetry: () => void }) {
+  const copy = tripProblemCopy[kind];
+  return (
+    <div className="flex min-h-[100dvh] flex-col items-center justify-center gap-2 bg-background px-8 text-center">
+      <p className="font-display text-lg font-bold text-foreground">{copy.title}</p>
+      <p className="text-sm text-muted-foreground">{copy.body}</p>
+      <div className="mt-3 flex items-center gap-2">
+        {kind !== 'not-found' && (
+          <Button variant="secondary" size="sm" isLoading={retrying} onClick={onRetry}>
+            Try again
+          </Button>
+        )}
+        <Link href="/" className="px-3 py-2 text-sm font-semibold text-primary">
+          Back to trips
+        </Link>
+      </div>
     </div>
   );
 }

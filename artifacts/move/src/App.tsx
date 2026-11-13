@@ -1,7 +1,8 @@
 import { useEffect } from "react";
 import { MotionConfig } from "framer-motion";
 import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
+import { queryClient, persistOptions, watchAuthForCache } from "@/lib/query-client";
 import { Toaster } from "@/components/ui/toaster";
 import { ConfirmHost } from "@/components/ConfirmHost";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -15,16 +16,6 @@ import Home from "@/pages/Home";
 import TripDashboard from "@/pages/TripDashboard";
 import Profile from "@/pages/Profile";
 import JoinInvite from "@/pages/JoinInvite";
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 0,
-      refetchOnWindowFocus: true,
-      refetchOnReconnect: true,
-    },
-  },
-});
 
 function Router() {
   return (
@@ -40,6 +31,8 @@ function Router() {
 }
 
 function App() {
+  useEffect(() => watchAuthForCache(), []);
+
   useEffect(() => {
     if (import.meta.env.DEV && 'serviceWorker' in navigator) {
       navigator.serviceWorker.getRegistrations().then(registrations => {
@@ -58,7 +51,7 @@ function App() {
 
   return (
   <MotionConfig reducedMotion="user">
-  <QueryClientProvider client={queryClient}>
+  <PersistQueryClientProvider client={queryClient} persistOptions={persistOptions}>
     <AuthProvider>
       <TooltipProvider>
         <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
@@ -70,7 +63,7 @@ function App() {
         <ConfirmHost />
       </TooltipProvider>
     </AuthProvider>
-  </QueryClientProvider>
+  </PersistQueryClientProvider>
   </MotionConfig>
 );
 }

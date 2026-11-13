@@ -1,13 +1,14 @@
 // Sends a push notification before each upcoming timeline item.
 // Called every minute by pg_cron (see the push_notifications migration).
 // Lead times: flights and trains 2 hours before, everything else 15 minutes before.
+// Item times are local time at the place, so each item's time zone comes from the
+// place it happens in (see zoneCandidates in time.ts), not from the user's phone.
 // Deploy:  supabase functions deploy notify-next --no-verify-jwt
 //          (it checks its own x-cron-secret header, or a user JWT for the test ping)
 import { createClient } from "npm:@supabase/supabase-js@2";
 import webpush from "npm:web-push@3.6.7";
+import { fireInstant, isValidZone, leadFor, zoneCandidates } from "./time.ts";
 
-const LONG_LEAD_MIN = 120; // flights, trains
-const SHORT_LEAD_MIN = 15; // everything else
 const CATCH_UP_MIN = 10; // still send if a run was missed by up to this long
 
 const corsHeaders = {
@@ -18,32 +19,30 @@ const corsHeaders = {
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
-// Offset (ms) of a time zone at a given instant: local wall clock minus UTC.
-function tzOffsetMs(tz: string, at: Date): number {
-  const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: tz, hourCycle: "h23",
-    year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit",
-  }).formatToParts(at);
-  const get = (t: string) => Number(parts.find(p => p.type === t)?.value);
-  const asUtc = Date.UTC(get("year"), get("month") - 1, get("day"), get("hour"), get("minute"), get("second"));
-  return asUtc - at.getTime();
+// Finds the time zone of a named place (Open-Meteo geocoding, free, no key).
+// hint is the trip's state and destination, used to pick between places that share a name.
+async function lookupZone(name: string, hint: string): Promise<string | null> {
+  try {
+    const res = await fetch(
+      `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(name)}&count=5&language=en&format=json`,
+      { signal: AbortSignal.timeout(5000) },
+    );
+    if (!res.ok) return null;
+    const results: any[] = (await res.json())?.results ?? [];
+    if (!results.length) return null;
+    const h = hint.toLowerCase();
+    const match = results.find(r =>
+      [r.country, r.admin1].some((part: unknown) => typeof part === "string" && part && h.includes(part.toLowerCase()))
+    );
+    const tz = (match ?? results[0]).timezone;
+    return isValidZone(tz) ? tz : null;
+  } catch {
+    return null;
+  }
 }
 
-// "2026-11-04" + "14:30" read as wall-clock time in tz -> real instant.
-function localToInstant(date: string, time: string, tz: string): Date | null {
-  const m = /^(\d{1,2}):(\d{2})/.exec(time || "");
-  if (!date || !m) return null;
-  const [y, mo, d] = date.split("-").map(Number);
-  const guess = Date.UTC(y, mo - 1, d, Number(m[1]), Number(m[2]));
-  let ts = guess - tzOffsetMs(tz, new Date(guess));
-  ts = guess - tzOffsetMs(tz, new Date(ts)); // second pass settles DST edges
-  return new Date(ts);
-}
-
-function leadFor(item: any): number {
-  if (item.element_type === "travel" && (item.travel_type === "flight" || item.travel_type === "train")) return LONG_LEAD_MIN;
-  return SHORT_LEAD_MIN;
-}
+// Survives between runs while the function instance stays warm. "" means "looked up, nothing found".
+const zoneMemory = new Map<string, string>();
 
 function inWords(min: number) {
   if (min >= 60) {
@@ -151,12 +150,37 @@ Deno.serve(async (req) => {
     return json({ sent, removed });
   }
 
+  // Place name -> time zone, kept in public.city_timezones so each place is looked up once.
+  // If that table is not there yet, the in-memory copy still avoids repeat lookups.
+  const { data: savedZones } = await db.from("city_timezones").select("name, tz");
+  for (const row of savedZones ?? []) zoneMemory.set(row.name, row.tz ?? "");
+
+  const zoneOfPlace = async (name: string, hint: string): Promise<string | null> => {
+    const key = name.toLowerCase();
+    if (zoneMemory.has(key)) return zoneMemory.get(key) || null;
+    const tz = await lookupZone(name, hint);
+    zoneMemory.set(key, tz ?? "");
+    await db.from("city_timezones").upsert({ name: key, tz });
+    return tz;
+  };
+
+  const zoneOfItem = async (item: any, trip: any, deviceZone: string): Promise<string> => {
+    const hint = [trip?.state, trip?.destination].filter(Boolean).join(" ");
+    for (const name of zoneCandidates(item, trip ?? {})) {
+      const tz = await zoneOfPlace(name, hint);
+      if (tz) return tz;
+    }
+    return deviceZone; // no place could be resolved: fall back to the phone's zone
+  };
+
   // Look a few days either side of today so every time zone is covered.
   const from = new Date(now - 2 * 86400000).toISOString().slice(0, 10);
   const to = new Date(now + 2 * 86400000).toISOString().slice(0, 10);
 
   for (const [userId, userSubs] of byUser) {
-    const tz = userSubs[userSubs.length - 1].tz || "Asia/Kolkata"; // most recent device's zone
+    // Last resort only, for items whose place cannot be resolved.
+    const lastZone = userSubs[userSubs.length - 1].tz;
+    const deviceZone = isValidZone(lastZone) ? lastZone : "Asia/Kolkata";
 
     const [{ data: owned }, { data: memberOf }] = await Promise.all([
       db.from("trips").select("id, name, status").eq("owner_id", userId),
@@ -165,10 +189,14 @@ Deno.serve(async (req) => {
     const tripIds = new Set<string>([...(owned ?? []).map(t => t.id), ...(memberOf ?? []).map(m => m.trip_id)]);
     if (!tripIds.size) continue;
 
-    const { data: trips } = await db.from("trips").select("id, name, status").in("id", [...tripIds]);
+    const { data: trips } = await db
+      .from("trips")
+      .select("id, name, status, destination, state, day_cities")
+      .in("id", [...tripIds]);
     const live = (trips ?? []).filter(t => (t.status ?? "active") === "active");
     if (!live.length) continue;
     const tripName = new Map(live.map(t => [t.id, t.name]));
+    const tripById = new Map(live.map(t => [t.id, t]));
 
     const { data: items } = await db
       .from("itinerary_items")
@@ -178,10 +206,12 @@ Deno.serve(async (req) => {
       .lte("date", to);
 
     for (const item of items ?? []) {
-      const start = localToInstant(item.date, item.start_time, tz);
-      if (!start) continue;
+      if (!item.start_time) continue;
+      const tz = await zoneOfItem(item, tripById.get(item.trip_id), deviceZone);
+      const fire = fireInstant(item, tz);
+      if (!fire) continue;
       const lead = leadFor(item);
-      const fireAt = start.getTime() - lead * 60000;
+      const fireAt = fire.getTime();
       if (fireAt > now || now - fireAt > CATCH_UP_MIN * 60000) continue;
 
       // Claim it first so overlapping runs never double-send.

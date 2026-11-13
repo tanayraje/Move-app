@@ -24,6 +24,22 @@ function round2(value: number) {
   return Math.round(value * 100) / 100;
 }
 
+/**
+ * Splits an amount equally, to the paisa, with nothing lost to rounding:
+ * the shares always add up to exactly the amount. Any leftover paise go to
+ * the first people in the list, one each.
+ */
+export function splitEqually(amount: number, memberIds: string[]): { memberId: string; amount: number }[] {
+  if (memberIds.length === 0) return [];
+  const totalCents = Math.round(amount * 100);
+  const base = Math.floor(totalCents / memberIds.length);
+  const remainder = totalCents % memberIds.length;
+  return memberIds.map((memberId, index) => ({
+    memberId,
+    amount: (base + (index < remainder ? 1 : 0)) / 100,
+  }));
+}
+
 export function buildExpenseLedger(
   expenses: Expense[],
   currentMembers: TripMember[]
@@ -197,14 +213,6 @@ net[receiver.memberId] = round2(
     if (Math.abs(creditors[c].amount) < 0.01) c++;
 if (Math.abs(debtors[d].amount) < 0.01) d++;
   }
-
-    console.table(
-  members.map(m => ({
-    id: m.id,
-    name: m.name,
-    historical: m.historical,
-  }))
-);
 
   return {
     members,

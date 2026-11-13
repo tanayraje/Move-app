@@ -797,7 +797,7 @@ const textarea =
   "flex min-h-[96px] w-full min-w-0 rounded-xl border-2 border-border bg-card px-4 py-3 text-base focus:border-primary focus:outline-none";
 
 function EditDocSheet({ doc, onClose }: { doc: TripDocument | null; onClose: () => void }) {
-  const { mutateAsync: update, isPending } = useUpdateDocument();
+  const { mutateAsync: update, isPending } = useUpdateDocument({ quiet: true });
   const [error, setError] = useState("");
 
   const submit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -861,7 +861,7 @@ interface UploadRow {
 }
 
 function AddDocSheet({ isOpen, onClose, tripId }: { isOpen: boolean; onClose: () => void; tripId: string }) {
-  const { mutateAsync: addDoc } = useAddDocument();
+  const { mutateAsync: addDoc } = useAddDocument({ quiet: true });
   const [rows, setRows] = useState<UploadRow[]>([]);
   const [progress, setProgress] = useState<string>("");
   const [error, setError] = useState("");

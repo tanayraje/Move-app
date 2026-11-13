@@ -24,6 +24,8 @@ export function useUpdateProfile(userId?: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
+    // The profile screen shows its own inline message.
+    meta: { quiet: true },
     mutationFn: async ({
       username,
       name,

@@ -14,7 +14,7 @@ import { generateId, cn, safeFormatDate, getTripStatus } from "@/lib/utils";
 import { Button, Input, Label, Select, BottomSheet, FAB } from "@/components/ui";
 import { formatCurrency, convertFromINR, RATES_PER_INR } from "@/lib/countries";
 import { useSupabaseAuth } from "@/contexts/AuthContext";
-import { buildExpenseLedger } from "@/lib/expense-ledger";
+import { buildExpenseLedger, splitEqually } from "@/lib/expense-ledger";
 import { getAvatarUrl } from "@/lib/avatar";
 
 const EXPENSE_ICONS: Record<ExpenseCategory, React.ElementType> = {
@@ -1030,17 +1030,10 @@ if (expenseCurrency !== 'INR') {
       const involved = selectedMemberIds;
       if (involved.length === 0) { notify('Select at least one member', 'error'); return; }
       if (splitMode === 'equal') {
-        const totalCents = Math.round(amount * 100);
-const base = Math.floor(totalCents / involved.length);
-const remainder = totalCents % involved.length;
-
-split = involved.map((mid, index) => ({
-  memberId: mid,
-  memberName:
-    members.find(m => m.id === mid)?.name || "",
-  amount:
-    (base + (index < remainder ? 1 : 0)) / 100,
-}));
+        split = splitEqually(amount, involved).map(share => ({
+          ...share,
+          memberName: members.find(m => m.id === share.memberId)?.name || "",
+        }));
       } else {
         const rate =
   expenseCurrency !== 'INR'

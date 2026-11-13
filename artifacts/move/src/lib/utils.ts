@@ -27,6 +27,9 @@ export function safeParseDate(str: string | undefined | null): Date | null {
     if (isNaN(d.getTime())) return null;
     return d;
   }
+  // Wishlist labels like "Day 2" are not dates. Browsers will happily read
+  // "Day 2" as 1 February 2001, so stop them here.
+  if (/^Day\s+\d+$/i.test(str.trim())) return null;
   // Try full ISO parse as fallback
   const d = new Date(str);
   if (isNaN(d.getTime())) return null;

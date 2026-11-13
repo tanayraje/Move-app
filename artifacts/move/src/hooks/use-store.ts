@@ -1,19 +1,47 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Trip, ItineraryItem, TripDocument, Expense, Place, TripBudget } from '@/lib/types';
+import { useQuery, useMutation, useQueryClient, type QueryClient, type QueryKey } from '@tanstack/react-query';
+import { Trip, ItineraryItem, Expense, Place } from '@/lib/types';
 import { supabase } from '@/lib/supabase';
+import { isOfflineError } from '@/lib/errors';
 
-const getLS = <T>(key: string, fallback: T): T => {
-  try {
-    const item = localStorage.getItem(key);
-    return item ? JSON.parse(item) : fallback;
-  } catch {
-    return fallback;
+// Shows a change on screen straight away. Returns what was there before so a
+// failed save can put it back (see restoreList).
+async function applyOptimistic<T>(
+  qc: QueryClient,
+  queryKey: QueryKey,
+  change: (list: T[]) => T[],
+): Promise<{ previous: T[] | undefined }> {
+  await qc.cancelQueries({ queryKey });
+  const previous = qc.getQueryData<T[]>(queryKey);
+  if (previous) qc.setQueryData<T[]>(queryKey, change(previous));
+  return { previous };
+}
+
+function restoreList<T>(qc: QueryClient, queryKey: QueryKey, context: { previous: T[] | undefined } | undefined) {
+  if (context?.previous) qc.setQueryData<T[]>(queryKey, context.previous);
+}
+
+function upsertById<T extends { id: string }>(list: T[], item: T): T[] {
+  return list.some(existing => existing.id === item.id)
+    ? list.map(existing => (existing.id === item.id ? { ...existing, ...item } : existing))
+    : [...list, item];
+}
+
+/** Why a trip could not be opened. The dashboard shows a different message for each. */
+export type TripLoadProblem = 'not-found' | 'offline' | 'error';
+
+export class TripLoadError extends Error {
+  kind: TripLoadProblem;
+  constructor(kind: TripLoadProblem, message?: string) {
+    super(message ?? kind);
+    this.name = 'TripLoadError';
+    this.kind = kind;
   }
-};
+}
 
-const setLS = <T>(key: string, value: T): void => {
-  localStorage.setItem(key, JSON.stringify(value));
-};
+export function tripLoadProblem(error: unknown): TripLoadProblem {
+  if (error instanceof TripLoadError) return error.kind;
+  return isOfflineError(error) ? 'offline' : 'error';
+}
 
 export async function joinTripByCode(inviteCode: string) {
   const { data, error } = await supabase.rpc(
@@ -96,12 +124,16 @@ export function useTrip(id: string) {
         .from('trips')
         .select('*')
         .eq('id', id)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('USETRIP ERROR', error);
-        return null;
+        throw new TripLoadError(isOfflineError(error) ? 'offline' : 'error', error.message);
       }
+
+      // No row: the trip was deleted, or this account is not allowed to see it.
+      // The database gives the same answer for both, on purpose.
+      if (!data) throw new TripLoadError('not-found');
 
     return {
   id: data.id,
@@ -123,6 +155,7 @@ export function useTrip(id: string) {
 };
     },
     enabled: !!id,
+    retry: (failureCount, error) => tripLoadProblem(error) === 'error' && failureCount < 2,
   });
 }
 
@@ -130,6 +163,7 @@ export function useCreateTrip() {
   const qc = useQueryClient();
 
   return useMutation({
+    meta: { errorLabel: 'Could not create the trip' },
     mutationFn: async (trip: Trip) => {
       const {
   data: { user },
@@ -203,6 +237,7 @@ export function useUpdateTrip() {
   const qc = useQueryClient();
 
   return useMutation({
+    meta: { errorLabel: 'Could not save the trip' },
     mutationFn: async (trip: Trip) => {
       const response = await supabase
   .from("trips")
@@ -253,6 +288,7 @@ export function useDeleteTrip() {
   const qc = useQueryClient();
 
   return useMutation({
+    meta: { errorLabel: 'Could not delete the trip' },
     mutationFn: async (id: string) => {
       const { error } = await supabase
         .from('trips')
@@ -313,6 +349,7 @@ export function useSaveItineraryItem() {
   const qc = useQueryClient();
 
   return useMutation({
+    meta: { errorLabel: 'Could not save this timeline item' },
     mutationFn: async (item: ItineraryItem) => {
       const { error } = await supabase
         .from('itinerary_items')
@@ -357,6 +394,7 @@ export function useDeleteItineraryItem() {
   const qc = useQueryClient();
 
   return useMutation({
+    meta: { errorLabel: 'Could not delete this timeline item' },
     mutationFn: async ({ tripId, id }: { tripId: string; id: string }) => {
       const { error } = await supabase
         .from('itinerary_items')
@@ -378,6 +416,7 @@ export function useReorderItinerary() {
   const qc = useQueryClient();
 
   return useMutation({
+    meta: { errorLabel: 'Could not save the new order' },
     mutationFn: async ({
       tripId,
       items,
@@ -385,22 +424,46 @@ export function useReorderItinerary() {
       tripId: string;
       items: ItineraryItem[];
     }) => {
-      const updates = items.map((item, index) => ({
-        id: item.id,
-        order_index: index,
-      }));
+      const ids = items.map(item => item.id);
 
-      for (const update of updates) {
-        await supabase
-          .from('itinerary_items')
-          .update({
-            order_index: update.order_index,
-          })
-          .eq('id', update.id);
-      }
+      // One database call: the whole order is saved, or none of it is.
+      const { error } = await supabase.rpc('reorder_itinerary_items', {
+        p_trip_id: tripId,
+        p_ids: ids,
+      });
+      if (!error) return;
+
+      // PGRST202 = the function is not in the database yet
+      // (supabase/migrations/20261113000000_reorder_itinerary_items.sql).
+      // Until it is, save item by item but stop pretending a failure is a success.
+      if (error.code !== 'PGRST202') throw error;
+
+      const results = await Promise.all(
+        ids.map((id, index) =>
+          supabase
+            .from('itinerary_items')
+            .update({ order_index: index })
+            .eq('id', id)
+        )
+      );
+      const failed = results.find(result => result.error);
+      if (failed?.error) throw failed.error;
     },
 
-    onSuccess: (_, vars) => {
+    onMutate: ({ tripId, items }) => {
+      const position = new Map(items.map((item, index) => [item.id, index]));
+      return applyOptimistic<ItineraryItem>(qc, ['itinerary', tripId], list =>
+        list
+          .map(item => (position.has(item.id) ? { ...item, order: position.get(item.id)! } : item))
+          .sort((a, b) => a.date.localeCompare(b.date) || a.order - b.order)
+      );
+    },
+
+    onError: (_error, vars, context) => {
+      restoreList(qc, ['itinerary', vars.tripId], context);
+    },
+
+    onSettled: (_data, _error, vars) => {
       qc.invalidateQueries({
         queryKey: ['itinerary', vars.tripId]
       });
@@ -408,14 +471,25 @@ export function useReorderItinerary() {
   });
 }
 
-function storagePathFromUrl(url?: string | null): string | null {
-  const part = url?.split('/trip-documents/')[1];
+// documents.file_url holds the storage path ("<trip_id>/<document_id>_<file name>").
+// Older rows hold a full public link instead, so both are understood here.
+export function storagePathFromUrl(value?: string | null): string | null {
+  if (!value) return null;
+  if (!/^https?:\/\//i.test(value)) return value;
+  const part = value.split('/trip-documents/')[1];
   if (!part) return null;
   try {
     return decodeURIComponent(part.split('?')[0]);
   } catch {
     return null;
   }
+}
+
+// Link to use when a signed link could not be made (bucket rules not applied yet).
+function unsignedDocumentUrl(value?: string | null): string | undefined {
+  if (!value) return undefined;
+  if (/^https?:\/\//i.test(value)) return value;
+  return supabase.storage.from('trip-documents').getPublicUrl(value).data.publicUrl;
 }
 
 // --- DOCUMENTS ---
@@ -454,7 +528,7 @@ export function useDocuments(tripId: string) {
   fileName: doc.file_name,
   fileType: doc.file_type,
   fileSize: doc.file_size,
-  file_url: signed.get(storagePathFromUrl(doc.file_url) ?? '') ?? doc.file_url,
+  file_url: signed.get(storagePathFromUrl(doc.file_url) ?? '') ?? unsignedDocumentUrl(doc.file_url),
   createdAt: doc.created_at_ms,
 }));
     },
@@ -462,10 +536,11 @@ export function useDocuments(tripId: string) {
   });
 }
 
-export function useAddDocument() {
+export function useAddDocument(options: { quiet?: boolean } = {}) {
   const qc = useQueryClient();
 
   return useMutation({
+    meta: { errorLabel: 'Could not upload the document', quiet: options.quiet },
     mutationFn: async (doc: any) => {
       const filePath = `${doc.tripId}/${doc.id}_${doc.fileName}`;
 
@@ -474,10 +549,6 @@ export function useAddDocument() {
         .upload(filePath, doc.blob);
 
       if (uploadError) throw uploadError;
-
-      const { data: urlData } = supabase.storage
-        .from('trip-documents')
-        .getPublicUrl(filePath);
 
       const { error: dbError } = await supabase
         .from('documents')
@@ -490,11 +561,15 @@ export function useAddDocument() {
           file_name: doc.fileName,
           file_type: doc.fileType,
           file_size: doc.fileSize,
-          file_url: urlData.publicUrl,
+          file_url: filePath,
           created_at_ms: doc.createdAt,
         });
 
-      if (dbError) throw dbError;
+      if (dbError) {
+        // Do not leave a file behind with no document row pointing at it.
+        await supabase.storage.from('trip-documents').remove([filePath]);
+        throw dbError;
+      }
 
       return doc;
     },
@@ -507,10 +582,11 @@ export function useAddDocument() {
   });
 }
 
-export function useUpdateDocument() {
+export function useUpdateDocument(options: { quiet?: boolean } = {}) {
   const qc = useQueryClient();
 
   return useMutation({
+    meta: { errorLabel: 'Could not save the document', quiet: options.quiet },
     mutationFn: async ({
       id,
       tripId,
@@ -543,6 +619,7 @@ export function useDeleteDocument() {
   const qc = useQueryClient();
 
   return useMutation({
+    meta: { errorLabel: 'Could not delete the document' },
     mutationFn: async ({
       id,
       tripId,
@@ -556,22 +633,21 @@ export function useDeleteDocument() {
         .eq('id', id)
         .single();
 
-      if (doc?.file_url) {
-        const path = decodeURIComponent(
-          doc.file_url.split('/trip-documents/')[1]
-        );
-
-        await supabase.storage
-          .from('trip-documents')
-          .remove([path]);
-      }
-
+      // Row first: if this fails nothing is lost. The file is removed after,
+      // so a failure there leaves an unused file, never a document with no file.
       const { error } = await supabase
         .from('documents')
         .delete()
         .eq('id', id);
 
       if (error) throw error;
+
+      const path = storagePathFromUrl(doc?.file_url);
+      if (path) {
+        await supabase.storage
+          .from('trip-documents')
+          .remove([path]);
+      }
     },
 
     onSuccess: (_, vars) => {
@@ -617,6 +693,7 @@ export function useSaveExpense() {
   const qc = useQueryClient();
 
   return useMutation({
+    meta: { errorLabel: 'Could not save the expense' },
     mutationFn: async (item: Expense) => {
       const { error } = await supabase
         .from('expenses')
@@ -639,7 +716,16 @@ export function useSaveExpense() {
       return item;
     },
 
-    onSuccess: (_, item) => {
+    onMutate: (item) =>
+      applyOptimistic<Expense>(qc, ['expenses', item.tripId], list =>
+        upsertById(list, item).sort((a, b) => a.date.localeCompare(b.date))
+      ),
+
+    onError: (_error, item, context) => {
+      restoreList(qc, ['expenses', item.tripId], context);
+    },
+
+    onSettled: (_data, _error, item) => {
       qc.invalidateQueries({
         queryKey: ['expenses', item.tripId]
       });
@@ -651,6 +737,7 @@ export function useDeleteExpense() {
   const qc = useQueryClient();
 
   return useMutation({
+    meta: { errorLabel: 'Could not delete the expense' },
     mutationFn: async ({
       tripId,
       id,
@@ -707,6 +794,7 @@ export function useSavePlace() {
   const qc = useQueryClient();
 
   return useMutation({
+    meta: { errorLabel: 'Could not save the place' },
     mutationFn: async (item: Place) => {
       const { error } = await supabase
         .from('places')
@@ -728,7 +816,14 @@ export function useSavePlace() {
       return item;
     },
 
-    onSuccess: (_, item) => {
+    onMutate: (item) =>
+      applyOptimistic<Place>(qc, ['places', item.tripId], list => upsertById(list, item)),
+
+    onError: (_error, item, context) => {
+      restoreList(qc, ['places', item.tripId], context);
+    },
+
+    onSettled: (_data, _error, item) => {
       qc.invalidateQueries({
         queryKey: ['places', item.tripId]
       });
@@ -740,6 +835,7 @@ export function useDeletePlace() {
   const qc = useQueryClient();
 
   return useMutation({
+    meta: { errorLabel: 'Could not delete the place' },
     mutationFn: async ({
       tripId,
       id,
