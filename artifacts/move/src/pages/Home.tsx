@@ -443,7 +443,7 @@ const handleWishlist = () => {
 
    return (
     <>
-      <button
+      <button aria-label="Trip options"
   onClick={(e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -667,7 +667,7 @@ function CountryPicker({ value, onChange }: { value: Country | null; onChange: (
               <Search className="w-4 h-4 text-muted-foreground shrink-0" />
               <input autoFocus value={query} onChange={e => setQuery(e.target.value)} placeholder="Search country..."
                 className="flex-1 bg-transparent text-base outline-none text-foreground placeholder:text-muted-foreground" />
-              <button onClick={() => setOpen(false)}><X className="w-4 h-4 text-muted-foreground" /></button>
+              <button aria-label="Close" onClick={() => setOpen(false)}><X className="w-4 h-4 text-muted-foreground" /></button>
             </div>
             <div className="max-h-64 overflow-y-auto">
               {filtered.length === 0 && <div className="p-4 text-center text-muted-foreground text-sm">No results</div>}

@@ -495,7 +495,7 @@ export function AddEditSheet({ isOpen, onClose, trip, defaultDate, documents, al
                 <div key={ci.id} className="flex items-center gap-2">
                   <Square className="w-4 h-4 text-muted-foreground shrink-0" />
                   <span className="flex-1 text-sm text-foreground">{ci.text}</span>
-                  <button type="button" onClick={() => setChecklist(prev => prev.filter((_, i) => i !== idx))} className="text-muted-foreground hover:text-red-500 p-1">
+                  <button aria-label="Remove checklist item" type="button" onClick={() => setChecklist(prev => prev.filter((_, i) => i !== idx))} className="text-muted-foreground hover:text-red-500 p-1">
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </div>

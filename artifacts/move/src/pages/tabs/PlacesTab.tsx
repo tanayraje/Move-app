@@ -428,7 +428,7 @@ function AddPlaceSheet({
                 <div key={ci.id} className="flex items-center gap-2">
                   <Circle className="w-4 h-4 text-muted-foreground shrink-0" />
                   <span className="text-sm flex-1">{ci.text}</span>
-                  <button type="button" onClick={() => setChecklist(prev => prev.filter((_, i) => i !== idx))} className="text-muted-foreground hover:text-red-500">
+                  <button aria-label="Remove checklist item" type="button" onClick={() => setChecklist(prev => prev.filter((_, i) => i !== idx))} className="text-muted-foreground hover:text-red-500">
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </div>
